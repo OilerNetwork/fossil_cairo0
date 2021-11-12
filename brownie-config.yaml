@@ -1,0 +1,21 @@
+project_structure:
+  build: build
+  contracts: contracts/ethereum
+  interfaces: contracts/ethereum/interfaces
+  reports: reports
+  scripts: scripts
+  tests: tests/ethereum
+
+dotenv: .env
+
+compiler:
+  solc:
+    version: 0.8.10
+    remappings:
+      - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.3.2"
+
+dependencies:
+  - OpenZeppelin/openzeppelin-contracts@4.3.2
+
+console:
+  show_colors: false

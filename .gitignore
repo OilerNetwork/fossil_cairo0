@@ -1,0 +1,7 @@
+.tox
+**/__pycache__
+venv
+**/**.egg-info
+.python-version
+
+.env
