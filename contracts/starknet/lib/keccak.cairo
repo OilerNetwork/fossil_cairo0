@@ -75,8 +75,7 @@ func load_block_with_padding{range_check_ptr, keccak_ptr_start: felt*, keccak_pt
         input : felt*, n_bytes : felt, n_word : felt) -> (formatted_input : felt*):
     alloc_locals
 
-    let (_, is_full_word) = unsigned_div_rem(n_bytes, 8)
-    # %{ ids.is_full_word = int(ids.n_bytes >= 8) %}
+    let (is_full_word, _) = unsigned_div_rem(n_bytes, 8)
 
     # If the current word is full (8 bytes, 64 bits) - we just copy it to the state
     if is_full_word != 0:

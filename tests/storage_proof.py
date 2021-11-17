@@ -1,4 +1,6 @@
+from hexbytes.main import HexBytes
 import pytest
+from typing import Callable
 
 from starkware.starknet.testing.starknet import Starknet
 from utils.create_account import create_account
@@ -33,15 +35,24 @@ async def test_submit_hash():
     message = Web3.keccak(text="hello world")
     chunked_message = [message[i:i+8] for i in range(0, len(message), 8)]
 
-    keccak256Struct = storage_proof.Keccak256Hash(
-        word_1=chunked_message[0],
-        word_2=chunked_message[1],
-        word_3=chunked_message[2],
-        word_4=chunked_message[3]
-    )
+    assert len(chunked_message) == 4
+
+    hexbyte_to_int: Callable[[HexBytes], int] = lambda word: int(word.hex(), 16)
+    formatted_words = list(map(hexbyte_to_int, chunked_message))
 
     await l1_relayer_signer.send_transaction(
-        l1_relayer_account, storage_proof.contract_address, 'submit_l1_blockhash', [keccak256Struct], 0)
+        l1_relayer_account,
+        storage_proof.contract_address,
+        'submit_l1_blockhash',
+        [4] + formatted_words
+    )
+
+    get_submitted_hash_call = await storage_proof.get_l1_blockhash().call()
+    (word_1, word_2, word_3, word_4) = get_submitted_hash_call.result.res
+    assert formatted_words[0] == word_1
+    assert formatted_words[1] == word_2
+    assert formatted_words[2] == word_3
+    assert formatted_words[3] == word_4
 
 
 

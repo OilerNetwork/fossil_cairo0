@@ -71,17 +71,37 @@ func initialize{
     return ()
 end
 
+@view
+func get_l1_blockhash{
+        pedersen_ptr: HashBuiltin*,
+        syscall_ptr: felt*,
+        range_check_ptr
+    } () -> (res: Keccak256Hash):
+    alloc_locals
+    let (local res: Keccak256Hash) = _l1_blockhash.read()
+    return (res)
+end
+
 # TODO convert to L1 handler once the rest is tested
 @external
 func submit_l1_blockhash{
         pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
         range_check_ptr
-    } (blockhash: Keccak256Hash):
+    } (blockhash_len: felt, blockhash: felt*):
+    alloc_locals
     let (caller) = get_caller_address()
     let (l1_messages_origin) = _l1_messages_origin.read()
     assert caller = l1_messages_origin
-    _l1_blockhash.write(blockhash)
+
+    local hash: Keccak256Hash = Keccak256Hash(
+        word_1=blockhash[0],
+        word_2=blockhash[1],
+        word_3=blockhash[2],
+        word_4=blockhash[3]
+    )
+
+    _l1_blockhash.write(hash)
     return ()
 end
 

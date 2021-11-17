@@ -14,5 +14,5 @@ func test_keccak256{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(input_len : 
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
     let (keccak_hash) = keccak256{keccak_ptr=keccak_ptr}(input, input_len)
-    return (output_len=4, output=keccak_hash)
+    return (output_len=32, output=keccak_hash)
 end
