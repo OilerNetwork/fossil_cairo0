@@ -1,6 +1,5 @@
 from starknet.lib.packed_keccak import BLOCK_SIZE, packed_keccak_func
 from starknet.lib.xor_state import state_xor, mask_garbage
-
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.cairo.common.math import assert_nn_le, unsigned_div_rem
@@ -81,6 +80,7 @@ func load_block_with_padding{range_check_ptr, keccak_ptr_start: felt*, keccak_pt
     if is_full_word != 0:
         assert keccak_ptr[0] = input[0]
         let keccak_ptr = keccak_ptr + 1
+
         load_block_with_padding(input=input + 1, n_bytes=n_bytes - 8, n_word=n_word - 1)
         return (keccak_ptr_start)
     # Else, if the word is less than 8 bytes - we consider to add padding
@@ -88,7 +88,7 @@ func load_block_with_padding{range_check_ptr, keccak_ptr_start: felt*, keccak_pt
         local final_padding
 
         # If it is the last word
-        if n_word == 1: 
+        if n_word == 1:
             assert final_padding = 2 * 2 ** 62 # Add a padding 0x80 00 00 00 00 00 00 00
         else:
             assert final_padding = 0 # No 0x80 padding will be added
@@ -138,7 +138,7 @@ end
 # and performind a keccak permutation on that xor
 func recursive_keccak{range_check_ptr, keccak_ptr : felt*, bitwise_ptr : BitwiseBuiltin*}(state: felt*, input : felt*, n_bytes : felt) -> (output : felt*):
     alloc_locals
-    let (is_n_bytes_above_136) = is_le(136, n_bytes)
+    let (is_n_bytes_above_136) = is_le(n_bytes, 136)
     local n_bytes_in_current_block
     if is_n_bytes_above_136 == 0:
         assert n_bytes_in_current_block = 136
