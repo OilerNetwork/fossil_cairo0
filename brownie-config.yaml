@@ -10,7 +10,7 @@ dotenv: .env
 
 compiler:
   solc:
-    version: 0.8.10
+    version: 0.8.9
     remappings:
       - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.3.2"
 

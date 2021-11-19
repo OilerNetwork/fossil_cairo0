@@ -3,12 +3,8 @@ from web3 import Web3
 from rlp import encode
 from eth_utils import encode_hex
 from utils.block_header import build_block_header
+from mocks.blocks import mocked_blocks
 from starkware.starknet.testing.starknet import Starknet
-
-
-config = {
-    "JSON_RPC_PROVIDER_URL": "https://eth-ropsten.alchemyapi.io/v2/sgu74vE7DFD1ePkfwC9SW0lCeFDC3K6o"
-}
 
 
 # The testing library uses python's asyncio. So the following
@@ -22,11 +18,8 @@ async def test_decode_rlp():
     # Deploy the contract.
     decoder = await starknet.deploy("contracts/starknet/test/TestRlpDecoder.cairo")
 
-
     # Retrieve rlp block header
-    http_provider = Web3.HTTPProvider(config['JSON_RPC_PROVIDER_URL'])
-    web3 = Web3(http_provider)
-    block = web3.eth.get_block('latest')
+    block = mocked_blocks[0]
     block_header = build_block_header(block)
     block_rlp = encode(block_header)
     assert block_header.hash() == block["hash"]
@@ -36,7 +29,11 @@ async def test_decode_rlp():
 
     decoded = await decoder.extract_from_rlp(block_rlp_formatted).call()
     (block_number, parent_hash, state_root, receipts_root) = decoded.result
-    print(block_number, parent_hash, state_root, receipts_root)
+
+    assert block_number > 0
+    assert parent_hash > 0
+    assert state_root > 0
+    assert receipts_root > 0
 
 
 
