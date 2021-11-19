@@ -120,7 +120,7 @@ func process_block{
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
 
-    let (submitted_block_hash) = keccak256{keccak_ptr=keccak_ptr}(block_header_rlp, block_header_rlp_len)
+    let (submitted_block_hash) = keccak256{keccak_ptr=keccak_ptr}(block_header_rlp, block_header_rlp_words_len)
     let (oldest_processed_block) = _oldest_processed_block.read()
 
     # Storage slot not initialized
