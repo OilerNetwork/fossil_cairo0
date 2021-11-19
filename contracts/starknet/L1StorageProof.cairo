@@ -111,7 +111,10 @@ func process_block{
         syscall_ptr: felt*,
         bitwise_ptr : BitwiseBuiltin*,
         range_check_ptr,
-    } (block_header_rlp_len: felt, block_header_rlp: felt*):
+    } (block_header_rlp_words_len: felt,
+       block_header_rlp_len: felt,
+       block_header_rlp: felt*
+    ):
     alloc_locals
     local bitwise_ptr_start : BitwiseBuiltin* = bitwise_ptr
     let (local keccak_ptr : felt*) = alloc()
