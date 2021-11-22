@@ -1,8 +1,7 @@
 import pytest
 from starkware.starknet.testing.starknet import Starknet
 from web3 import Web3
-import functools
-from typing import Callable, List
+from utils.helpers import concat_arr, string_to_byte
 
 
 # The testing library uses python's asyncio. So the following
@@ -53,10 +52,7 @@ async def test_keccak256():
         "sgoma"
     ]
     
-    concat_arr: Callable[[List[str]], str] = lambda arr: functools.reduce(lambda a, b: a + b, arr)
     web3_computed_hash = Web3.keccak(text=concat_arr(keccak_input)).hex()
-
-    string_to_byte: Callable[[str], int] = lambda word: int.from_bytes(word.encode("UTF-8"), 'little')
 
     test_keccak_call = await contract.test_keccak256(
         len(concat_arr(keccak_input)),

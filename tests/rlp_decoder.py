@@ -1,9 +1,9 @@
 import pytest
-from web3 import Web3
 from rlp import encode
 from eth_utils import encode_hex
 from utils.block_header import build_block_header
 from mocks.blocks import mocked_blocks
+from utils.helpers import chunk_hex_input, string_to_byte
 from starkware.starknet.testing.starknet import Starknet
 
 
@@ -23,8 +23,8 @@ async def test_decode_rlp():
     block_header = build_block_header(block)
     block_rlp = encode(block_header)
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = [encode_hex(block_rlp)[i+0:i+8] for i in range(2, len(block_rlp), 8)]
-    block_rlp_formatted = list(map(lambda word: int.from_bytes(word.encode("UTF-8"), 'little'), block_rlp_chunked))
+    block_rlp_chunked = chunk_hex_input(encode_hex(block_rlp))
+    block_rlp_formatted = list(map(string_to_byte, block_rlp_chunked))
 
 
     decoded = await decoder.extract_from_rlp(block_rlp_formatted).call()

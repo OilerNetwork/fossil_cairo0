@@ -1,50 +1,58 @@
-from hexbytes.main import HexBytes
 import pytest
-from typing import Callable, List
-import functools
-
-from starkware.starknet.testing.starknet import Starknet
-from utils.create_account import create_account
+from typing import NamedTuple
 from web3 import Web3
+
+from starkware.starknet.testing.contract import StarknetContract
+from starkware.starknet.testing.starknet import Starknet
 
 from rlp import encode
 from eth_utils import encode_hex
+from utils.Signer import Signer
 from utils.block_header import build_block_header
+from utils.create_account import create_account
+from utils.helpers import hexbyte_to_int, concat_arr, chunk_hex_input, string_to_byte
+
 
 from mocks.blocks import mocked_blocks
 
 
+class TestsDeps(NamedTuple):
+    starknet: Starknet
+    storage_proof: StarknetContract
+    account: StarknetContract
+    signer: Signer
+    l1_relayer_account: StarknetContract
+    l1_relayer_signer: Signer
+
+async def setup():
+    starknet = await Starknet.empty()
+    storage_proof = await starknet.deploy(source="contracts/starknet/L1StorageProof.cairo", cairo_path=["contracts"])
+    account, signer = await create_account(starknet)
+    l1_relayer_account, l1_relayer_signer = await create_account(starknet)
+    await signer.send_transaction(
+        account, storage_proof.contract_address, 'initialize', [l1_relayer_account.contract_address])
+    
+    return TestsDeps(
+        starknet=starknet,
+        storage_proof=storage_proof,
+        account=account,
+        signer=signer,
+        l1_relayer_account=l1_relayer_account,
+        l1_relayer_signer=l1_relayer_signer
+    )
+
+
 # The path to the contract source code.
-
-hexbyte_to_int: Callable[[HexBytes], int] = lambda word: int(word.hex(), 16)
-concat_arr: Callable[[List[str]], str] = lambda arr: functools.reduce(lambda a, b: a + b, arr)
-
 
 
 # The testing library uses python's asyncio. So the following
 # decorator and the ``async`` keyword are needed.
 @pytest.mark.asyncio
 async def test_submit_hash():
-    # Create a new Starknet class that simulates the StarkNet
-    # system.
-    starknet = await Starknet.empty()
-
-    # Deploy the storage proof contract.
-    storage_proof = await starknet.deploy(source="contracts/starknet/L1StorageProof.cairo", cairo_path=["contracts"])
-
-    # Create a default account to interact with the contract
-    account, signer = await create_account(starknet)
-
-    # Create a L1 messages relayer mock
-    l1_relayer_account, l1_relayer_signer = account, signer = await create_account(starknet)
-
-    # Initialize storage proof contract
-    await signer.send_transaction(
-        account, storage_proof.contract_address, 'initialize', [l1_relayer_account.contract_address], 0)
-
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
     # Submit message using l1_relayer_account
     message = Web3.keccak(text="hello world")
-    chunked_message = [message[i:i+8] for i in range(0, len(message), 8)]
+    chunked_message = chunk_hex_input(message, False)
 
     assert len(chunked_message) == 4
 
@@ -67,33 +75,16 @@ async def test_submit_hash():
 
 @pytest.mark.asyncio
 async def test_process_block():
-        # Create a new Starknet class that simulates the StarkNet
-    # system.
-    starknet = await Starknet.empty()
-
-    # Deploy the storage proof contract.
-    storage_proof = await starknet.deploy(source="contracts/starknet/L1StorageProof.cairo", cairo_path=["contracts"])
-
-    # Create a default account to interact with the contract
-    account, signer = await create_account(starknet)
-
-    # Create a L1 messages relayer mock
-    l1_relayer_account, l1_relayer_signer = account, signer = await create_account(starknet)
-
-    # Initialize storage proof contract
-    await signer.send_transaction(
-        account, storage_proof.contract_address, 'initialize', [l1_relayer_account.contract_address], 0)
-
-
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
     block = mocked_blocks[0]
     block_header = build_block_header(block)
     block_rlp = encode(block_header)
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = [encode_hex(block_rlp)[i+0:i+8] for i in range(2, len(block_rlp), 8)]
-    block_rlp_formatted = list(map(lambda word: int.from_bytes(word.encode("UTF-8"), 'little'), block_rlp_chunked))
+    block_rlp_chunked = chunk_hex_input(encode_hex(block_rlp))
+    block_rlp_formatted = list(map(string_to_byte, block_rlp_chunked))
 
     message = block["hash"]
-    chunked_message = [message[i:i+8] for i in range(0, len(message), 8)]
+    chunked_message = chunk_hex_input(message, False)
 
     formatted_words = list(map(hexbyte_to_int, chunked_message))
 
@@ -104,11 +95,13 @@ async def test_process_block():
         [4] + formatted_words
     )
 
+    print("About to fail")
+
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [len(concat_arr(block_rlp_chunked))] + formatted_words
+        [len(concat_arr(block_rlp_chunked))] + [len(block_rlp_formatted)] + block_rlp_formatted
     )
 
 
