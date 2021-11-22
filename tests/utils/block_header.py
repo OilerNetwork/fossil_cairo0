@@ -39,6 +39,9 @@ class BlockHeader(Serializable):
     def hash(self) -> str:
         _rlp = encode(self)
         return Web3.keccak(_rlp)
+    
+    def raw_rlp(self) -> bytes:
+        return encode(self)
 
 def build_block_header(block: BlockData) -> BlockHeader:
     header = BlockHeader(
