@@ -11,8 +11,6 @@ from utils.helpers import (
     concat_arr,
     string_to_byte,
     bytes_to_int,
-    chunk_hex_input,
-    hex_string_to_byte,
     chunk_bytes_input
 )
 from utils.block_header import build_block_header

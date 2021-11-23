@@ -5,12 +5,10 @@ from web3 import Web3
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 
-from rlp import encode
-from eth_utils import encode_hex
 from utils.Signer import Signer
 from utils.block_header import build_block_header
 from utils.create_account import create_account
-from utils.helpers import hexbyte_to_int, concat_arr, chunk_hex_input, string_to_byte
+from utils.helpers import chunk_bytes_input, bytes_to_int, chunk_input, string_to_byte
 
 
 from mocks.blocks import mocked_blocks
@@ -51,18 +49,22 @@ async def setup():
 async def test_submit_hash():
     starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
     # Submit message using l1_relayer_account
-    message = Web3.keccak(text="hello world")
-    chunked_message = chunk_hex_input(message, False)
+    
+    block = mocked_blocks[0]
+    block_header = build_block_header(block)
+    block_rlp = block_header.raw_rlp()
+    assert block_header.hash() == block["hash"]
+    block_rlp_chunked = chunk_bytes_input(block_rlp)
 
-    assert len(chunked_message) == 4
-
-    formatted_words = list(map(hexbyte_to_int, chunked_message))
+    message = bytearray.fromhex(block["hash"].hex()[2:])
+    chunked_message = chunk_bytes_input(message)
+    formatted_words = list(map(bytes_to_int, chunked_message))
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'submit_l1_blockhash',
-        [4] + formatted_words
+        [len(formatted_words)] + formatted_words
     )
 
     get_submitted_hash_call = await storage_proof.get_l1_blockhash().call()
@@ -76,32 +78,43 @@ async def test_submit_hash():
 @pytest.mark.asyncio
 async def test_process_block():
     starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
+
     block = mocked_blocks[0]
     block_header = build_block_header(block)
-    block_rlp = encode(block_header)
+    block_rlp = block_header.raw_rlp()
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_hex_input(encode_hex(block_rlp))
-    block_rlp_formatted = list(map(string_to_byte, block_rlp_chunked))
+    block_rlp_chunked = chunk_bytes_input(block_rlp)
+    block_rlp_formatted = list(map(bytes_to_int, block_rlp_chunked))
 
-    message = block["hash"]
-    chunked_message = chunk_hex_input(message, False)
-
-    formatted_words = list(map(hexbyte_to_int, chunked_message))
+    message = bytearray.fromhex(block["hash"].hex()[2:])
+    chunked_message = chunk_bytes_input(message)
+    formatted_words = list(map(bytes_to_int, chunked_message))
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'submit_l1_blockhash',
-        [4] + formatted_words
+        [len(formatted_words)] + formatted_words
     )
 
-    print("About to fail")
+    get_submitted_hash_call = await storage_proof.get_l1_blockhash().call()
+    set_hash_words = get_submitted_hash_call.result.res
+
+    keccak_contract = await starknet.deploy(source="contracts/starknet/test/TestKeccak256.cairo", cairo_path=["contracts"])
+    test_keccak_call = await keccak_contract.test_keccak256(
+        len(block_rlp),
+        block_rlp_formatted
+    ).call()
+    starknet_hashed_words = test_keccak_call.result.res
+
+    for i in range(0, 3):
+        assert list(set_hash_words)[i] == list(starknet_hashed_words)[i]
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [len(concat_arr(block_rlp_chunked))] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [len(block_rlp)] + [len(block_rlp_formatted)] + block_rlp_formatted
     )
 
 
