@@ -118,7 +118,6 @@ func load_block_with_padding{ bitwise_ptr : BitwiseBuiltin*, range_check_ptr, ke
         assert keccak_ptr[0] = swapped_input_0
 
         let keccak_ptr = keccak_ptr + 1
-        local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
 
         load_block_with_padding(input=input + 1, n_bytes=n_bytes - 8, n_word=n_word - 1)
         return (keccak_ptr_start)
@@ -136,23 +135,24 @@ func load_block_with_padding{ bitwise_ptr : BitwiseBuiltin*, range_check_ptr, ke
         assert_nn_le(n_bytes, 7)
         let (padding) = pow(256, n_bytes) # This adds a 0x01 based on how many input bytes are left, straight to the left of them
         local range_check_ptr = range_check_ptr
-        local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
 
         # If there are no bytes, then we just add the 0x01 padding to the right (and 0x80 to the left)
         if n_bytes == 0:
-            local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
             if n_word != 0:
-                local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
                 assert keccak_ptr[0] = 1 + final_padding
             end
+            tempvar bitwise_ptr = bitwise_ptr
+            tempvar range_check_ptr = range_check_ptr
         # If there is some input data left in current word, we add 0x01 and 0x80 paddings to the left of the data
         else:
             let (local swapped_input_0) = swap_endianness_64(input[0])
             assert keccak_ptr[0] = swapped_input_0 + padding + final_padding
-            local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
+            tempvar bitwise_ptr = bitwise_ptr
+            tempvar range_check_ptr = range_check_ptr
         end
 
-        local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
+        local bitwise_ptr : BitwiseBuiltin* = bitwise_ptr
+        local range_check_ptr = range_check_ptr
 
         # If the input data finished at the last word - we add 8 words of capacity zeroes after it (64 bits)
         if n_word == 1:
