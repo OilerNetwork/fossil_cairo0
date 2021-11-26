@@ -24,23 +24,23 @@ func load_full_block{range_check_ptr, keccak_ptr_start: felt*, keccak_ptr : felt
         input : felt*) -> (formatted_input : felt*):
     alloc_locals
 
-    assert keccak_ptr[0] = input[0]
-    assert keccak_ptr[1] = input[1]
-    assert keccak_ptr[2] = input[2]
-    assert keccak_ptr[3] = input[3]
-    assert keccak_ptr[4] = input[4]
-    assert keccak_ptr[5] = input[5]
-    assert keccak_ptr[6] = input[6]
-    assert keccak_ptr[7] = input[7]
-    assert keccak_ptr[8] = input[8]
-    assert keccak_ptr[9] = input[9]
-    assert keccak_ptr[10] = input[10]
-    assert keccak_ptr[11] = input[11]
-    assert keccak_ptr[12] = input[12]
-    assert keccak_ptr[13] = input[13]
-    assert keccak_ptr[14] = input[14]
-    assert keccak_ptr[15] = input[15]
-    assert keccak_ptr[16] = input[16]
+    assert keccak_ptr[0] = swap_endianness(input[0])
+    assert keccak_ptr[1] = swap_endianness(input[1])
+    assert keccak_ptr[2] = swap_endianness(input[2])
+    assert keccak_ptr[3] = swap_endianness(input[3])
+    assert keccak_ptr[4] = swap_endianness(input[4])
+    assert keccak_ptr[5] = swap_endianness(input[5])
+    assert keccak_ptr[6] = swap_endianness(input[6])
+    assert keccak_ptr[7] = swap_endianness(input[7])
+    assert keccak_ptr[8] = swap_endianness(input[8])
+    assert keccak_ptr[9] = swap_endianness(input[9])
+    assert keccak_ptr[10] = swap_endianness(input[10])
+    assert keccak_ptr[11] = swap_endianness(input[11])
+    assert keccak_ptr[12] = swap_endianness(input[12])
+    assert keccak_ptr[13] = swap_endianness(input[13])
+    assert keccak_ptr[14] = swap_endianness(input[14])
+    assert keccak_ptr[15] = swap_endianness(input[15])
+    assert keccak_ptr[16] = swap_endianness(input[16])
     assert keccak_ptr[17] = 0
     assert keccak_ptr[18] = 0
     assert keccak_ptr[19] = 0
@@ -78,7 +78,7 @@ func load_block_with_padding{range_check_ptr, keccak_ptr_start: felt*, keccak_pt
 
     # If the current word is full (8 bytes, 64 bits) - we just copy it to the state
     if is_full_word != 0:
-        assert keccak_ptr[0] = input[0]
+        assert keccak_ptr[0] = swap_endianness(input[0])
         let keccak_ptr = keccak_ptr + 1
 
         load_block_with_padding(input=input + 1, n_bytes=n_bytes - 8, n_word=n_word - 1)
@@ -105,7 +105,7 @@ func load_block_with_padding{range_check_ptr, keccak_ptr_start: felt*, keccak_pt
             end
         # If there is some input data left in current word, we add 0x01 and 0x80 paddings to the left of the data
         else:
-            assert keccak_ptr[0] = input[0] + padding + final_padding
+            assert keccak_ptr[0] = swap_endianness(input[0]) + padding + final_padding
         end
 
         # If the input data finished at the last word - we add 8 words of capacity zeroes after it (64 bits)
