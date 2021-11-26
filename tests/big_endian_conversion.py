@@ -31,28 +31,36 @@ async def test_to_big_endian():
 
     print('\n')
 
-    big_endian_input = int.from_bytes(bytearray.fromhex(input_str), 'big')
     little_endian_input = int.from_bytes(bytearray.fromhex(input_str), 'little')
-    print("Input as BigEndian: ", hex(big_endian_input))
-    print("Input as LittleEndian: ", hex(little_endian_input))
 
-    little_swapped = byteswap_64bit_word(big_endian_input)
     big_swapped = byteswap_64bit_word(little_endian_input)
 
-    print("Converted Big to Little:", hex(little_swapped))
-    print("Converted Little to Big:", hex(big_swapped))
+    convert_call = await converter.test_to_big_endian(little_endian_input).call()
+    output = convert_call.result.res
 
-    # print("Vanilla python: ", int.from_bytes(bytes.fromhex(swapped_hex), 'little'))
+    assert output == big_swapped
 
+@pytest.mark.asyncio
+async def test_to_little_endian():
+    starknet, converter = await setup()
 
-    # convert_call = await converter.test_to_big_endian(little_endian_input).call()
-    # output = convert_call.result.res
+    input_str = 'f90218a089abcdef'
+    # print("Input hex: ", input_str)
 
-    # assert output == int.from_bytes(input_str.encode("UTF-8"), 'big')
+    print('\n')
+
+    big_endian_input = int.from_bytes(bytearray.fromhex(input_str), 'big')
+
+    little_swapped = byteswap_64bit_word(big_endian_input)
+
+    convert_call = await converter.test_to_big_endian(big_endian_input).call()
+    output = convert_call.result.res
+
+    assert output == little_swapped
 
 @pytest.mark.asyncio
 async def test_revert_word_size_above_64bit():
     starknet, converter = await setup()
     with pytest.raises(Exception):
-        max_word = 9223372036854775807 + 1
+        max_word = 2 ** 64 + 1
         await converter.test_to_big_endian(max_word).call()
