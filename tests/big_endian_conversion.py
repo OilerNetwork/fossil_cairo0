@@ -17,7 +17,6 @@ def byteswap_64bit_word(word: int):
     swapped_4byte_pair = (swapped_2byte_pair >> 32) | ((swapped_2byte_pair << 32) % 2**64)
     return swapped_4byte_pair
 
-
 async def setup():
     starknet = await Starknet.empty()
     converter = await starknet.deploy("contracts/starknet/test/TestToBigEndian.cairo", cairo_path=["contracts"])
@@ -28,23 +27,23 @@ async def test_to_big_endian():
     starknet, converter = await setup()
 
     input_str = 'f90218a089abcdef'
-
-    print(bin(int(input_str, 16)))
-
-    big_endian_input = int.from_bytes(input_str.encode("UTF-8"), 'big')
-    little_endian_input = string_to_byte(input_str)
+    # print("Input hex: ", input_str)
 
     print('\n')
 
-    swapped = byteswap_64bit_word(int(input_str, 16))
-    swapped_hex = hex(swapped)[2:]
+    big_endian_input = int.from_bytes(bytearray.fromhex(input_str), 'big')
+    little_endian_input = int.from_bytes(bytearray.fromhex(input_str), 'little')
+    print("Input as BigEndian: ", hex(big_endian_input))
+    print("Input as LittleEndian: ", hex(little_endian_input))
 
-    print(swapped_hex)
+    little_swapped = byteswap_64bit_word(big_endian_input)
+    big_swapped = byteswap_64bit_word(little_endian_input)
 
-    print("Vanilla python: ", int.from_bytes(bytes.fromhex(swapped_hex), 'little'))
+    print("Converted Big to Little:", hex(little_swapped))
+    print("Converted Little to Big:", hex(big_swapped))
 
-    print("Big: ", (big_endian_input))
-    print("Lit: ", (little_endian_input))
+    # print("Vanilla python: ", int.from_bytes(bytes.fromhex(swapped_hex), 'little'))
+
 
     # convert_call = await converter.test_to_big_endian(little_endian_input).call()
     # output = convert_call.result.res
