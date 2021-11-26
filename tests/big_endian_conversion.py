@@ -29,8 +29,6 @@ async def test_to_big_endian():
     input_str = 'f90218a089abcdef'
     # print("Input hex: ", input_str)
 
-    print('\n')
-
     little_endian_input = int.from_bytes(bytearray.fromhex(input_str), 'little')
 
     big_swapped = byteswap_64bit_word(little_endian_input)
@@ -46,8 +44,6 @@ async def test_to_little_endian():
 
     input_str = 'f90218a089abcdef'
     # print("Input hex: ", input_str)
-
-    print('\n')
 
     big_endian_input = int.from_bytes(bytearray.fromhex(input_str), 'big')
 
