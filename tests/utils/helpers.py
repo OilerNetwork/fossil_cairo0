@@ -16,4 +16,8 @@ concat_arr: Callable[[List[str]], str] = lambda arr: reduce(lambda a, b: a + b, 
 
 chunk_bytes_input: Callable[[bytes], List[bytes]] = lambda input: [input[i+0:i+8] for i in range(0, len(input), 8)]
 
+print_bytes_array: Callable[[List[str]], str] = lambda arr: concat_arr(list(map(lambda a: a.hex()+'\n', arr)))
 
+print_ints_array: Callable[[List[str]], str] = lambda arr: concat_arr(list(map(lambda a: hex(a)+'\n', arr)))
+
+ints_array_to_bytes: Callable[[List[str]], str] = lambda arr: concat_arr(map(lambda a: bytes.fromhex(hex(a)[2:] if len(hex(a)[2:]) % 2 == 0 else "0"+hex(a)[2:]), arr))
