@@ -8,7 +8,7 @@ from starkware.starknet.testing.starknet import Starknet
 from utils.Signer import Signer
 from utils.block_header import build_block_header
 from utils.create_account import create_account
-from utils.helpers import chunk_bytes_input, bytes_to_int, chunk_input, string_to_byte
+from utils.helpers import chunk_bytes_input, bytes_to_int
 
 
 from mocks.blocks import mocked_blocks
