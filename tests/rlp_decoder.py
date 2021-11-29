@@ -67,30 +67,50 @@ def decode_value_from_rlp(block_rlp_formatted: List[int], pos: int, size: int) -
 
     print(print_ints_array(words))
 
-    # If only one word or last word
+    # If only one and only word - we just crop needed part from it
     if (end_word == start_word):
+        # Shift right (cropping out right not-needed part)
         words[0] = words[0] >> (8*(7-end_pos))
+        # Mask is the size: (end_pos - start_pos + 1) = aka size
         mask = 2**(8*(end_pos - start_pos + 1)) - 1
+        # We apply the mask to leave just the needed part on the right (size bytes)
         words[0] = words[0] & mask
     else:
+        # If two words
         if (end_word == start_word + 1):
+            # If no shifting is needed - we just cut the second word
             if (shift == 0):
-                mask = 2 ** (8 * (end_pos + 1)) - 1
+                # Shift right (cropping out right not-needed part)
                 words[1] = words[1] >> (8*(7-end_pos))
+                # Mask is the size of the remainder+1 (end_pos + 1)
+                mask = 2 ** (8 * (end_pos + 1)) - 1
+                # We apply the mask to leave just the needed part on the right
                 words[1] = words[1] & mask
+            # If there's a shift - we combine first and word with cutting both
             else:
-                words[0] = (words[0] << (8 * start_pos)) & (2**64 - 1)
-                words[0] = words[0] + (words[1] >> (8 * (8 - start_pos)))
+                # TODO: This will not work if we cut just the end of first word, and beginning of second
+                # Shift first word to the left, cutting not-needed bytes from the left
+                words[0] = (words[0] << (8 * start_pos))                
+                # Shift the second word right, cutting not-needed bytes from the right
+                shifted_right_word = words[1] >> (8 * (8 - start_pos))
+                # TODO: From here - it goes all wrong...
+                words[0] = words[0] + shifted_right_word
+                mask = (2**64 - 1)
+                words[0] = words[0] & mask
+        # If many words
         else:
+            # If no shift is needed - we just leave all words as the are except the last one - we cut last one
             if (shift == 0):
                 lastword_i = len(words)-1
                 mask = 2 ** (8 * (end_pos + 1)) - 1
                 words[lastword_i] = words[lastword_i] >> (8*(7-end_pos))
                 words[lastword_i] = words[lastword_i] & mask
+            # If there's shift - we repeatedly cut all words
             else:
                 for i in range(len(words) - 1):
                     words[i] = (words[i] << (8 * start_pos)) & (2**64 - 1)
                     words[i] = words[i] + (words[i+1] >> (8 * (8 - start_pos)))
+                    # TODO: I guess there might be a situation that we need to mask the last word?
     
     return words[0:size_in_words]
 
