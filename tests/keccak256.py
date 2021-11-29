@@ -6,9 +6,7 @@ from web3 import Web3
 
 from utils.helpers import (
     concat_arr,
-    string_to_byte_big,
     bytes_to_int_big,
-    bytes_to_int_little,
     chunk_bytes_input
 )
 from utils.block_header import build_block_header
@@ -43,8 +41,6 @@ async def test_small_input():
         b'\x0c\x00\x20\x87\x95\xac\x93\x7c',
     ]
     
-    print("\nconcatenated array:", concat_arr(keccak_input).hex())
-
     web3_computed_hash = Web3.keccak(concat_arr(keccak_input)).hex()
 
     test_keccak_call = await keccak_contract.test_keccak256(
@@ -54,9 +50,6 @@ async def test_small_input():
 
     starknet_hashed = test_keccak_call.result.res
     output = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed)
-
-    print("\ncairo keccak:", output)
-    print("web3 keccak:", web3_computed_hash)
 
     assert output == web3_computed_hash
 
@@ -134,12 +127,6 @@ async def test_huge_input():
         b'\x03\x88\x3f\x40\xad\x5a\x09\xe2',
         b'\xd5\x00\x18',
     ]
-    
-    print("concat input arr:", concat_arr(keccak_input))
-
-    print("len:", len(concat_arr(keccak_input)))
-
-    print("cairo input:", list(map(bytes_to_int_big, keccak_input)))
 
     web3_computed_hash = Web3.keccak(concat_arr(keccak_input)).hex()
 
@@ -149,9 +136,6 @@ async def test_huge_input():
 
     starknet_hashed = test_keccak_call.result.res
     output = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed)
-
-    print("\ncairo keccak:", output)
-    print("web3 keccak:", web3_computed_hash)
 
     assert output == web3_computed_hash
 
@@ -167,22 +151,6 @@ async def test_blockheader_input():
     assert block_header.hash() == block["hash"]
     block_rlp_chunked = chunk_bytes_input(block_rlp)
 
-    test_keccak_call_little = await keccak_contract.test_keccak256(
-        len(block_rlp),
-        list(map(bytes_to_int_little, block_rlp_chunked))
-    ).call()
-    starknet_hashed_little = test_keccak_call_little.result.res
-
-    print(
-        "Reassemlbled little endian: big: ", '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in starknet_hashed_little)
-    )
-
-    print(
-        "Reassemlbled little endian: little: ", '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed_little)
-    )
-
-    print("Lengths: ", len(block_rlp), len(block_rlp_chunked))
-
     test_keccak_call_big = await keccak_contract.test_keccak256(
         len(block_rlp),
         list(map(bytes_to_int_big, block_rlp_chunked))
@@ -190,16 +158,6 @@ async def test_blockheader_input():
     starknet_hashed_big = test_keccak_call_big.result.res
 
 
-    print(
-        "Reassemlbled big endian: big: ", '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in starknet_hashed_big)
-    )
-
-    print(
-        "Reassemlbled big endian: little: ", '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed_big)
-    )
-
-    print("Expected: ", block["hash"].hex())
-
-    # output = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed_big)
-    # assert output == block["hash"].hex()
+    output = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed_big)
+    assert output == block["hash"].hex()
 
