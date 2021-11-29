@@ -110,6 +110,10 @@ func load_block_with_padding{ bitwise_ptr : BitwiseBuiltin*, range_check_ptr, ke
         input : felt*, n_bytes : felt, n_word : felt) -> (formatted_input : felt*):
     alloc_locals
 
+    # Actually we are checking if n_bytes is less than 8
+    # n_bytes < 8: is_full_word = 0
+    # n_bytes >= 8: is_full_word != 0
+    # TODO: Can't we just use is_le() here?
     let (is_full_word, _) = unsigned_div_rem(n_bytes, 8)
 
     # If the current word is full (8 bytes, 64 bits) - we just copy it to the state
