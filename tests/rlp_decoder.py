@@ -3,7 +3,7 @@ import pytest
 from starkware.starknet.testing.contract import StarknetContract
 from utils.block_header import build_block_header
 from mocks.blocks import mocked_blocks
-from utils.helpers import chunk_bytes_input, bytes_to_int
+from utils.helpers import chunk_bytes_input, bytes_to_int_big
 from starkware.starknet.testing.starknet import Starknet
 
 
@@ -80,7 +80,7 @@ async def test_decode_parent_hash():
 
     assert block_header.hash() == block["hash"]
     block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int, block_rlp_chunked))
+    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
 
     print("Block rlp formatted: ", block_rlp_formatted)
 
@@ -93,7 +93,7 @@ async def test_decode_parent_hash():
 
     message = bytearray.fromhex(block["hash"].hex()[2:])
     chunked_message = chunk_bytes_input(message)
-    formatted_words = list(map(bytes_to_int, chunked_message))
+    formatted_words = list(map(bytes_to_int_big, chunked_message))
 
     print("Expected hash int words representation: ", formatted_words)
 
