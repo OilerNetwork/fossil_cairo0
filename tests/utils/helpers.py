@@ -1,3 +1,4 @@
+from secrets import token_bytes
 from eth_typing.encoding import HexStr
 from typing import Callable, List
 from functools import reduce
@@ -21,3 +22,5 @@ print_bytes_array: Callable[[List[str]], str] = lambda arr: concat_arr(list(map(
 print_ints_array: Callable[[List[str]], str] = lambda arr: concat_arr(list(map(lambda a: hex(a)+'\n', arr)))
 
 ints_array_to_bytes: Callable[[List[str]], str] = lambda arr: concat_arr(map(lambda a: bytes.fromhex(hex(a)[2:] if len(hex(a)[2:]) % 2 == 0 else "0"+hex(a)[2:]), arr))
+
+random_bytes: Callable[[int], bytes] = lambda size: token_bytes(size) 

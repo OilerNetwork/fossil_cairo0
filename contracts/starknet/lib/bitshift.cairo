@@ -1,4 +1,3 @@
-from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.cairo.common.math import assert_le
 from starkware.cairo.common.math import unsigned_div_rem
 from starknet.lib.pow import pow
