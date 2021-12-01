@@ -38,7 +38,7 @@ func extract_from_block_rlp{
     let (words_shifted : felt*) = alloc()
 
     shift_words{ range_check_ptr = range_check_ptr, bitwise_ptr = bitwise_ptr }(
-        current_index=words_affected,
+        current_index=words_affected - 1,
         start_word=start_word,
         left_shift=left_shift,
         right_shift=right_shift,
@@ -65,7 +65,11 @@ func shift_words{
     accumulator_len: felt):
     alloc_locals
 
-    if current_index == 0:
+    if current_index == -1:
+        tempvar bitwise_ptr = bitwise_ptr
+        tempvar range_check_ptr = range_check_ptr
+        ret
+    else:
         tempvar bitwise_ptr = bitwise_ptr
         tempvar range_check_ptr = range_check_ptr
 
@@ -73,11 +77,7 @@ func shift_words{
         let (right_part) = bitshift_right(block_rlp[start_word + current_index + 1], right_shift)
     
         local new_word = left_part + right_part
-
         assert accumulator[current_index] = new_word
-    else:
-        tempvar bitwise_ptr = bitwise_ptr
-        tempvar range_check_ptr = range_check_ptr
 
         shift_words{ range_check_ptr = range_check_ptr, bitwise_ptr = bitwise_ptr }(
             current_index=current_index - 1,
