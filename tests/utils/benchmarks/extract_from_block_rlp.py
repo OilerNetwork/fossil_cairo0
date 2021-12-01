@@ -23,13 +23,12 @@ def extract_from_block_rlp(rlp: List[int], bit_pos: int, size_bits: int) -> List
 
     return new_words
 
+# parent_hash_words = extract_from_block_rlp(input, 32, 32 * 8)
 parent_hash_words = extract_from_block_rlp(input, 32, 32 * 8)
-
-parent_hash_words = extract_from_block_rlp(input, 16, 12 * 8)
-
-for i in range(0, len(parent_hash_words)):
-    print("Mod:Orig ===> ", parent_hash_words[i], "   ", hex(input[i]))
+ommers_hash_words = extract_from_block_rlp(input, 32 + 256, 32 * 8)
 
 print('0x' + ''.join(v.to_bytes(8, 'big').hex() for v in parent_hash_words))
-print('0x03b016cc9387cb3cef86d9d4afb52c3789528c530c00208795ac937ce045596a')
+
+print('0x' + ''.join(v.to_bytes(8, 'big').hex() for v in ommers_hash_words))
+
 

@@ -143,35 +143,6 @@ def decode_parent_hash(block_rlp_formatted: List[int]) -> str:
     return '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in [word_1_bitwised, word_2_bitwised, word_3_bitwised, word_4_bitwised])
 
 
-# @pytest.mark.asyncio
-# async def test_decode_parent_hash():
-#     starknet, decoder = await setup()
-
-#     # Retrieve rlp block header
-#     block = mocked_blocks[0]
-#     block_header = build_block_header(block)
-#     block_rlp = block_header.raw_rlp()
-
-#     assert block_header.hash() == block["hash"]
-#     block_rlp_chunked = chunk_bytes_input(block_rlp)
-#     block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
-
-#     print("Block rlp formatted: ", block_rlp_formatted)
-
-#     decoded = await decoder.test_decode_parent_hash(block_rlp_formatted).call()
-#     output = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in decoded.result.res)
-
-#     print("Cairo output: ", output)
-#     print("Python output: ", decode_parent_hash(block_rlp_formatted))
-#     print("Expected output: ", block_header.parentHash.hex())
-
-#     message = bytearray.fromhex(block["hash"].hex()[2:])
-#     chunked_message = chunk_bytes_input(message)
-#     formatted_words = list(map(bytes_to_int_big, chunked_message))
-
-#     print("Expected hash int words representation: ", formatted_words)
-
-
 @pytest.mark.asyncio
 async def test_decode_parent_hash():
     starknet, decoder = await setup()
@@ -180,27 +151,56 @@ async def test_decode_parent_hash():
     block = mocked_blocks[0]
     block_header = build_block_header(block)
     block_rlp = block_header.raw_rlp()
-    print("\n\nBlock rlp:", block_rlp.hex())
 
     assert block_header.hash() == block["hash"]
-
     block_rlp_chunked = chunk_bytes_input(block_rlp)
     block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
 
-    print(block_rlp_formatted)
+    print("Block rlp formatted: ", block_rlp_formatted)
 
-    print("Decoded:" ,decode_parent_hash(block_rlp_formatted))
-    print(block["parentHash"].hex()[2:])
+    decoded = await decoder.test_decode_parent_hash(block_rlp_formatted).call()
+    output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
 
-    result = decode_value_from_rlp(block_rlp_formatted, 4, 32)
-    # result_bytes = ints_array_to_bytes(result)
+    print("Cairo output: ", output)
+    print("Python output: ", decode_parent_hash(block_rlp_formatted))
+    print("Expected output: ", block_header.parentHash.hex())
 
-    assert 1 == 2
+    message = bytearray.fromhex(block["hash"].hex()[2:])
+    chunked_message = chunk_bytes_input(message)
+    formatted_words = list(map(bytes_to_int_big, chunked_message))
 
-    # print(result_bytes.hex())
-    print(block["parentHash"].hex()[2:])
-
-    print("Parent Hash: ", decode_parent_hash(block_rlp_formatted))
+    print("Expected hash int words representation: ", formatted_words)
 
 
-    # assert result_bytes == block["parentHash"]
+# @pytest.mark.asyncio
+# async def test_decode_parent_hash():
+#     starknet, decoder = await setup()
+
+#     # Retrieve rlp block header
+#     block = mocked_blocks[0]
+#     block_header = build_block_header(block)
+#     block_rlp = block_header.raw_rlp()
+#     print("\n\nBlock rlp:", block_rlp.hex())
+
+#     assert block_header.hash() == block["hash"]
+
+#     block_rlp_chunked = chunk_bytes_input(block_rlp)
+#     block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+
+#     print(block_rlp_formatted)
+
+#     print("Decoded:" ,decode_parent_hash(block_rlp_formatted))
+#     print(block["parentHash"].hex()[2:])
+
+#     result = decode_value_from_rlp(block_rlp_formatted, 4, 32)
+#     # result_bytes = ints_array_to_bytes(result)
+
+#     assert 1 == 2
+
+#     # print(result_bytes.hex())
+#     print(block["parentHash"].hex()[2:])
+
+#     print("Parent Hash: ", decode_parent_hash(block_rlp_formatted))
+
+
+#     # assert result_bytes == block["parentHash"]
