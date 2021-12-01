@@ -39,4 +39,8 @@ async def test_decode_parent_hash():
     expected_words = extract_from_block_rlp(block_rlp_formatted, 32, 32 * 8)
     expected_hash = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in expected_words)
 
+    print("Python: " ,expected_hash)
+    print("Cairo: ", output)
+    print("Block: ", block["parentHash"].hex())
+
     assert output == expected_hash

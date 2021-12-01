@@ -14,10 +14,7 @@ end
 const parent_hash_start_bit = 16
 const parent_hash_end_bit = 16 + 256
 
-func extract_from_block_rlp{
-        range_check_ptr,
-        bitwise_ptr: BitwiseBuiltin*
-    }(bit_pos: felt, size_bits: felt, block_rlp: felt*, block_rlp_len: felt) -> (res: felt*):
+func extract_from_block_rlp{ range_check_ptr }(bit_pos: felt, size_bits: felt, block_rlp: felt*, block_rlp_len: felt) -> (res: felt*):
     alloc_locals
 
     let (start_word, start_pos) = unsigned_div_rem(bit_pos, 64)
@@ -37,7 +34,7 @@ func extract_from_block_rlp{
 
     let (words_shifted : felt*) = alloc()
 
-    shift_words{ range_check_ptr = range_check_ptr, bitwise_ptr = bitwise_ptr }(
+    shift_words{ range_check_ptr = range_check_ptr }(
         current_index=words_affected - 1,
         start_word=start_word,
         left_shift=left_shift,
@@ -51,10 +48,7 @@ func extract_from_block_rlp{
     return (words_shifted)
 end
 
-func shift_words{
-        range_check_ptr,
-        bitwise_ptr: BitwiseBuiltin*
-    }(
+func shift_words{ range_check_ptr }(
     current_index: felt,
     start_word: felt,
     left_shift: felt,
@@ -66,11 +60,9 @@ func shift_words{
     alloc_locals
 
     if current_index == -1:
-        tempvar bitwise_ptr = bitwise_ptr
         tempvar range_check_ptr = range_check_ptr
         ret
     else:
-        tempvar bitwise_ptr = bitwise_ptr
         tempvar range_check_ptr = range_check_ptr
 
         let (left_part) = bitshift_left(block_rlp[start_word + current_index], left_shift)
@@ -79,7 +71,7 @@ func shift_words{
         local new_word = left_part + right_part
         assert accumulator[current_index] = new_word
 
-        shift_words{ range_check_ptr = range_check_ptr, bitwise_ptr = bitwise_ptr }(
+        shift_words{ range_check_ptr = range_check_ptr }(
             current_index=current_index - 1,
             start_word=start_word,
             left_shift=left_shift,
@@ -93,7 +85,7 @@ func shift_words{
 end
     
 
-func decode_parent_hash{ range_check_ptr, bitwise_ptr: BitwiseBuiltin* }(block_rlp: felt*, block_rlp_len: felt) -> (res: Keccak256Hash):
+func decode_parent_hash{ range_check_ptr }(block_rlp: felt*, block_rlp_len: felt) -> (res: Keccak256Hash):
     alloc_locals
     let (parent_hash) = extract_from_block_rlp(32, 32 * 8, block_rlp, block_rlp_len)
     local hash: Keccak256Hash = Keccak256Hash(

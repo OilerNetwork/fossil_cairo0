@@ -24,11 +24,5 @@ def extract_from_block_rlp(rlp: List[int], bit_pos: int, size_bits: int) -> List
     return new_words
 
 # parent_hash_words = extract_from_block_rlp(input, 32, 32 * 8)
-parent_hash_words = extract_from_block_rlp(input, 32, 32 * 8)
-ommers_hash_words = extract_from_block_rlp(input, 32 + 256, 32 * 8)
-
-print('0x' + ''.join(v.to_bytes(8, 'big').hex() for v in parent_hash_words))
-
-print('0x' + ''.join(v.to_bytes(8, 'big').hex() for v in ommers_hash_words))
 
 

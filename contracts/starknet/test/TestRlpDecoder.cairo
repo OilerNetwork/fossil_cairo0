@@ -11,7 +11,7 @@ func extract_from_rlp(block_header_rlp_len: felt, block_header_rlp: felt*) -> (b
 end
 
 @view
-func test_decode_parent_hash{ range_check_ptr, bitwise_ptr: BitwiseBuiltin* }(block_rlp_len: felt, block_rlp: felt*) -> (res: Keccak256Hash):
+func test_decode_parent_hash{ range_check_ptr }(block_rlp_len: felt, block_rlp: felt*) -> (res: Keccak256Hash):
     alloc_locals
     let (local parent_hash: Keccak256Hash) = decode_parent_hash(block_rlp=block_rlp, block_rlp_len=block_rlp_len)
     return (parent_hash)
