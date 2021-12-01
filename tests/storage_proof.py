@@ -1,6 +1,5 @@
 import pytest
 from typing import NamedTuple
-from web3 import Web3
 
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
@@ -8,7 +7,7 @@ from starkware.starknet.testing.starknet import Starknet
 from utils.Signer import Signer
 from utils.block_header import build_block_header
 from utils.create_account import create_account
-from utils.helpers import chunk_bytes_input, bytes_to_int, chunk_input, string_to_byte
+from utils.helpers import chunk_bytes_input, bytes_to_int_big, bytes_to_int_little
 
 
 from mocks.blocks import mocked_blocks
@@ -58,7 +57,7 @@ async def test_submit_hash():
 
     message = bytearray.fromhex(block["hash"].hex()[2:])
     chunked_message = chunk_bytes_input(message)
-    formatted_words = list(map(bytes_to_int, chunked_message))
+    formatted_words = list(map(bytes_to_int_little, chunked_message))
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
@@ -84,11 +83,11 @@ async def test_process_block():
     block_rlp = block_header.raw_rlp()
     assert block_header.hash() == block["hash"]
     block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int, block_rlp_chunked))
+    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
 
     message = bytearray.fromhex(block["hash"].hex()[2:])
     chunked_message = chunk_bytes_input(message)
-    formatted_words = list(map(bytes_to_int, chunked_message))
+    formatted_words = list(map(bytes_to_int_little, chunked_message))
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,

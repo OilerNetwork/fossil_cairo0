@@ -1,5 +1,7 @@
 from starknet.lib.packed_keccak import BLOCK_SIZE, packed_keccak_func
 from starknet.lib.xor_state import state_xor, mask_garbage
+from starknet.lib.swap_endianness import swap_endianness_64
+
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.cairo.common.math import assert_nn_le, unsigned_div_rem
@@ -20,27 +22,61 @@ end
 #
 # The input here is considered to be 136 bytes, so we can just copy it directly
 # The rest is filled with zero's to form a 200byte state
-func load_full_block{range_check_ptr, keccak_ptr_start: felt*, keccak_ptr : felt*}(
+func load_full_block{ bitwise_ptr : BitwiseBuiltin*, range_check_ptr, keccak_ptr_start: felt*, keccak_ptr : felt*}(
         input : felt*) -> (formatted_input : felt*):
     alloc_locals
 
-    assert keccak_ptr[0] = input[0]
-    assert keccak_ptr[1] = input[1]
-    assert keccak_ptr[2] = input[2]
-    assert keccak_ptr[3] = input[3]
-    assert keccak_ptr[4] = input[4]
-    assert keccak_ptr[5] = input[5]
-    assert keccak_ptr[6] = input[6]
-    assert keccak_ptr[7] = input[7]
-    assert keccak_ptr[8] = input[8]
-    assert keccak_ptr[9] = input[9]
-    assert keccak_ptr[10] = input[10]
-    assert keccak_ptr[11] = input[11]
-    assert keccak_ptr[12] = input[12]
-    assert keccak_ptr[13] = input[13]
-    assert keccak_ptr[14] = input[14]
-    assert keccak_ptr[15] = input[15]
-    assert keccak_ptr[16] = input[16]
+    let (local swapped_input_0) = swap_endianness_64(input[0])
+    assert keccak_ptr[0] = swapped_input_0
+
+    let (local swapped_input_1) = swap_endianness_64(input[1])
+    assert keccak_ptr[1] = swapped_input_1
+
+    let (local swapped_input_2) = swap_endianness_64(input[2])
+    assert keccak_ptr[2] = swapped_input_2
+
+    let (local swapped_input_3) = swap_endianness_64(input[3])
+    assert keccak_ptr[3] = swapped_input_3
+    
+    let (local swapped_input_4) = swap_endianness_64(input[4])
+    assert keccak_ptr[4] = swapped_input_4
+
+    let (local swapped_input_5) = swap_endianness_64(input[5])
+    assert keccak_ptr[5] = swapped_input_5
+
+    let (local swapped_input_6) = swap_endianness_64(input[6])
+    assert keccak_ptr[6] = swapped_input_6
+
+    let (local swapped_input_7) = swap_endianness_64(input[7])
+    assert keccak_ptr[7] = swapped_input_7
+
+    let (local swapped_input_8) = swap_endianness_64(input[8])
+    assert keccak_ptr[8] = swapped_input_8
+
+    let (local swapped_input_9) = swap_endianness_64(input[9])
+    assert keccak_ptr[9] = swapped_input_9
+
+    let (local swapped_input_10) = swap_endianness_64(input[10])
+    assert keccak_ptr[10] = swapped_input_10
+
+    let (local swapped_input_11) = swap_endianness_64(input[11])
+    assert keccak_ptr[11] = swapped_input_11
+
+    let (local swapped_input_12) = swap_endianness_64(input[12])
+    assert keccak_ptr[12] = swapped_input_12
+
+    let (local swapped_input_13) = swap_endianness_64(input[13])
+    assert keccak_ptr[13] = swapped_input_13
+
+    let (local swapped_input_14) = swap_endianness_64(input[14])
+    assert keccak_ptr[14] = swapped_input_14
+
+    let (local swapped_input_15) = swap_endianness_64(input[15])
+    assert keccak_ptr[15] = swapped_input_15
+
+    let (local swapped_input_16) = swap_endianness_64(input[16])
+    assert keccak_ptr[16] = swapped_input_16
+
     assert keccak_ptr[17] = 0
     assert keccak_ptr[18] = 0
     assert keccak_ptr[19] = 0
@@ -70,15 +106,21 @@ end
 #   - If n_word = 1 it means the current word is the last
 #   - If n_word = 0 it means we already processed the data in the block and need to add capacity padding zeroes (8 words of them)
 
-func load_block_with_padding{range_check_ptr, keccak_ptr_start: felt*, keccak_ptr : felt*}(
+func load_block_with_padding{ bitwise_ptr : BitwiseBuiltin*, range_check_ptr, keccak_ptr_start: felt*, keccak_ptr : felt*}(
         input : felt*, n_bytes : felt, n_word : felt) -> (formatted_input : felt*):
     alloc_locals
 
+    # Actually we are checking if n_bytes is less than 8
+    # n_bytes < 8: is_full_word = 0
+    # n_bytes >= 8: is_full_word != 0
+    # TODO: Can't we just use is_le() here?
     let (is_full_word, _) = unsigned_div_rem(n_bytes, 8)
 
     # If the current word is full (8 bytes, 64 bits) - we just copy it to the state
     if is_full_word != 0:
-        assert keccak_ptr[0] = input[0]
+        let (local swapped_input_0) = swap_endianness_64(input[0])
+        assert keccak_ptr[0] = swapped_input_0
+
         let keccak_ptr = keccak_ptr + 1
 
         load_block_with_padding(input=input + 1, n_bytes=n_bytes - 8, n_word=n_word - 1)
@@ -103,14 +145,23 @@ func load_block_with_padding{range_check_ptr, keccak_ptr_start: felt*, keccak_pt
             if n_word != 0:
                 assert keccak_ptr[0] = 1 + final_padding
             end
+            tempvar bitwise_ptr = bitwise_ptr
+            tempvar range_check_ptr = range_check_ptr
         # If there is some input data left in current word, we add 0x01 and 0x80 paddings to the left of the data
         else:
-            assert keccak_ptr[0] = input[0] + padding + final_padding
+            let (local swapped_input_0) = swap_endianness_64(input[0])
+            assert keccak_ptr[0] = swapped_input_0 + padding + final_padding
+            tempvar bitwise_ptr = bitwise_ptr
+            tempvar range_check_ptr = range_check_ptr
         end
+
+        local bitwise_ptr : BitwiseBuiltin* = bitwise_ptr
+        local range_check_ptr = range_check_ptr
 
         # If the input data finished at the last word - we add 8 words of capacity zeroes after it (64 bits)
         if n_word == 1:
             memset(dst=keccak_ptr + 1, value=0, n=n_word - 1 + 8)
+
             let keccak_ptr = keccak_ptr + n_word + 8
             return (keccak_ptr_start)
         # If the input data finished earlier than the 17th word:
@@ -118,6 +169,7 @@ func load_block_with_padding{range_check_ptr, keccak_ptr_start: felt*, keccak_pt
             # Fill with zeroes until the last 17th word
             memset(dst=keccak_ptr + 1, value=0, n=n_word - 2)
             let keccak_ptr = keccak_ptr + n_word - 1
+
             # Insert a 0x80 00 00 00 00 00 00 00 padding at the 17th word
             assert keccak_ptr[0] = 2 * 2 ** 62
             # Fill the rest 8 words of capacity section with zeroes
