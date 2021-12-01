@@ -26,55 +26,55 @@ func load_full_block{ bitwise_ptr : BitwiseBuiltin*, range_check_ptr, keccak_ptr
         input : felt*) -> (formatted_input : felt*):
     alloc_locals
 
-    let (local swapped_input_0) = swap_endianness_64(input[0])
+    let (local swapped_input_0) = swap_endianness_64(input[0], 8)
     assert keccak_ptr[0] = swapped_input_0
 
-    let (local swapped_input_1) = swap_endianness_64(input[1])
+    let (local swapped_input_1) = swap_endianness_64(input[1], 8)
     assert keccak_ptr[1] = swapped_input_1
 
-    let (local swapped_input_2) = swap_endianness_64(input[2])
+    let (local swapped_input_2) = swap_endianness_64(input[2], 8)
     assert keccak_ptr[2] = swapped_input_2
 
-    let (local swapped_input_3) = swap_endianness_64(input[3])
+    let (local swapped_input_3) = swap_endianness_64(input[3], 8)
     assert keccak_ptr[3] = swapped_input_3
     
-    let (local swapped_input_4) = swap_endianness_64(input[4])
+    let (local swapped_input_4) = swap_endianness_64(input[4], 8)
     assert keccak_ptr[4] = swapped_input_4
 
-    let (local swapped_input_5) = swap_endianness_64(input[5])
+    let (local swapped_input_5) = swap_endianness_64(input[5], 8)
     assert keccak_ptr[5] = swapped_input_5
 
-    let (local swapped_input_6) = swap_endianness_64(input[6])
+    let (local swapped_input_6) = swap_endianness_64(input[6], 8)
     assert keccak_ptr[6] = swapped_input_6
 
-    let (local swapped_input_7) = swap_endianness_64(input[7])
+    let (local swapped_input_7) = swap_endianness_64(input[7], 8)
     assert keccak_ptr[7] = swapped_input_7
 
-    let (local swapped_input_8) = swap_endianness_64(input[8])
+    let (local swapped_input_8) = swap_endianness_64(input[8], 8)
     assert keccak_ptr[8] = swapped_input_8
 
-    let (local swapped_input_9) = swap_endianness_64(input[9])
+    let (local swapped_input_9) = swap_endianness_64(input[9], 8)
     assert keccak_ptr[9] = swapped_input_9
 
-    let (local swapped_input_10) = swap_endianness_64(input[10])
+    let (local swapped_input_10) = swap_endianness_64(input[10], 8)
     assert keccak_ptr[10] = swapped_input_10
 
-    let (local swapped_input_11) = swap_endianness_64(input[11])
+    let (local swapped_input_11) = swap_endianness_64(input[11], 8)
     assert keccak_ptr[11] = swapped_input_11
 
-    let (local swapped_input_12) = swap_endianness_64(input[12])
+    let (local swapped_input_12) = swap_endianness_64(input[12], 8)
     assert keccak_ptr[12] = swapped_input_12
 
-    let (local swapped_input_13) = swap_endianness_64(input[13])
+    let (local swapped_input_13) = swap_endianness_64(input[13], 8)
     assert keccak_ptr[13] = swapped_input_13
 
-    let (local swapped_input_14) = swap_endianness_64(input[14])
+    let (local swapped_input_14) = swap_endianness_64(input[14], 8)
     assert keccak_ptr[14] = swapped_input_14
 
-    let (local swapped_input_15) = swap_endianness_64(input[15])
+    let (local swapped_input_15) = swap_endianness_64(input[15], 8)
     assert keccak_ptr[15] = swapped_input_15
 
-    let (local swapped_input_16) = swap_endianness_64(input[16])
+    let (local swapped_input_16) = swap_endianness_64(input[16], 8)
     assert keccak_ptr[16] = swapped_input_16
 
     assert keccak_ptr[17] = 0
@@ -118,7 +118,7 @@ func load_block_with_padding{ bitwise_ptr : BitwiseBuiltin*, range_check_ptr, ke
 
     # If the current word is full (8 bytes, 64 bits) - we just copy it to the state
     if is_full_word != 0:
-        let (local swapped_input_0) = swap_endianness_64(input[0])
+        let (local swapped_input_0) = swap_endianness_64(input[0], 8)
         assert keccak_ptr[0] = swapped_input_0
 
         let keccak_ptr = keccak_ptr + 1
@@ -149,7 +149,7 @@ func load_block_with_padding{ bitwise_ptr : BitwiseBuiltin*, range_check_ptr, ke
             tempvar range_check_ptr = range_check_ptr
         # If there is some input data left in current word, we add 0x01 and 0x80 paddings to the left of the data
         else:
-            let (local swapped_input_0) = swap_endianness_64(input[0])
+            let (local swapped_input_0) = swap_endianness_64(input[0], n_bytes)
             assert keccak_ptr[0] = swapped_input_0 + padding + final_padding
             tempvar bitwise_ptr = bitwise_ptr
             tempvar range_check_ptr = range_check_ptr

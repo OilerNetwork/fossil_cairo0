@@ -21,6 +21,17 @@ print_bytes_array: Callable[[List[str]], str] = lambda arr: concat_arr(list(map(
 
 print_ints_array: Callable[[List[str]], str] = lambda arr: concat_arr(list(map(lambda a: hex(a)+'\n', arr)))
 
-ints_array_to_bytes: Callable[[List[str]], str] = lambda arr: concat_arr(map(lambda a: bytes.fromhex(hex(a)[2:] if len(hex(a)[2:]) % 2 == 0 else "0"+hex(a)[2:]), arr))
+def ints_array_to_bytes(ints_array: List[str], size: int) -> str:
+    full_words, remainder = divmod(size, 8);
+
+    bytes_array = b''
+
+    for i in range(full_words):
+        bytes_array += ints_array[i].to_bytes(8, "big")
+
+    if remainder > 0:
+        bytes_array += ints_array[full_words].to_bytes(remainder, "big")
+    
+    return bytes_array
 
 random_bytes: Callable[[int], bytes] = lambda size: token_bytes(size) 

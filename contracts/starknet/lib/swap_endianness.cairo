@@ -3,8 +3,9 @@ from starkware.cairo.common.math import assert_le
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.math import assert_nn_le, unsigned_div_rem
 from starkware.cairo.common.math_cmp import is_in_range
+from starknet.lib.pow import pow
 
-func swap_endianness_64{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(input: felt) -> (output: felt):
+func swap_endianness_64{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(input: felt, size: felt) -> (output: felt):
     alloc_locals
     let (local output : felt*) = alloc()
 
@@ -44,60 +45,12 @@ func swap_endianness_64{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(input:
     let bitwise_ptr = bitwise_ptr + 5 * BitwiseBuiltin.SIZE
 
     # Some Shiva-inspired code here
-    local shift
+    let (local shift) = pow(2, ((8 - size) * 8))
 
-    let (local is_above_56bits: felt) = is_in_range(input, 2**56, 2**64)
-    if is_above_56bits == 1:
-        assert shift = 1
-    else:
-        let (local is_above_48bits: felt) = is_in_range(input, 2**48, 2**56)
-        if is_above_48bits == 1:
-            assert shift = 2**8
-        else:
-            let (local is_above_40bits: felt) = is_in_range(input, 2**40, 2**48)
-            if is_above_40bits == 1:
-                assert shift = 2**16
-            else:
-                let (local is_above_32bits: felt) = is_in_range(input, 2**32, 2**40)
-                if is_above_32bits == 1:
-                    assert shift = 2**24
-                else:
-                    let (local is_above_24bits: felt) = is_in_range(input, 2**24, 2**32)
-                    if is_above_24bits == 1:
-                        assert shift = 2**32
-                    else:
-                        let (local is_above_16bits: felt) = is_in_range(input, 2**16, 2**24)
-                        if is_above_16bits == 1:
-                            assert shift = 2**40
-                        else:
-                            let (local is_above_8bits: felt) = is_in_range(input, 2**8, 2**16)
-                            if is_above_8bits == 1:
-                                assert shift = 2**48
-                            else:
-                                let (local is_above_1: felt) = is_in_range(input, 1, 2**8)
-                                if is_above_1 == 1:
-                                    assert shift = 2**56
-                                else:
-                                    if input == 0:
-                                        assert shift = 0
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    if shift == 1:
+    if size == 8:
         return (swapped_4bytes)
     else:
-        if shift == 0:
-            return (swapped_4bytes)
-        else:
-            let (shifted_4bytes, _) = unsigned_div_rem(swapped_4bytes, shift)
-            return (shifted_4bytes)
-        end
+        let (shifted_4bytes, _) = unsigned_div_rem(swapped_4bytes, shift)
+        return (shifted_4bytes)
     end
 end

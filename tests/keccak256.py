@@ -39,6 +39,7 @@ async def test_small_input():
         b'\x93\x87\xcb\x3c\xef\x86\xd9\xd4',
         b'\xaf\xb5\x2c\x37\x89\x52\x8c\x53',
         b'\x0c\x00\x20\x87\x95\xac\x93\x7c',
+        b'\x00\x00\x00\x00\x00\x00\x00\x77',
     ]
     
     web3_computed_hash = Web3.keccak(concat_arr(keccak_input)).hex()
@@ -52,6 +53,32 @@ async def test_small_input():
     output = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed)
 
     assert output == web3_computed_hash
+
+
+@pytest.mark.asyncio
+async def test_small_tricky_input():
+    starknet, keccak_contract = await setup()
+
+    keccak_input = [
+        b'\xf9\x02\x18\xa0\x03\xb0\x16\xcc',
+        b'\x93\x87\xcb\x3c\xef\x86\xd9\xd4',
+        b'\xaf\xb5\x2c\x37\x89\x52\x8c\x53',
+        b'\x0c\x00\x20\x87\x95\xac\x93\x7c',
+        b'\x00\x77',
+    ]
+    
+    web3_computed_hash = Web3.keccak(concat_arr(keccak_input)).hex()
+
+    test_keccak_call = await keccak_contract.test_keccak256(
+        len(concat_arr(keccak_input)), list(map(bytes_to_int_big, keccak_input))
+    ).call()
+
+
+    starknet_hashed = test_keccak_call.result.res
+    output = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed)
+
+    assert output == web3_computed_hash
+
 
 @pytest.mark.asyncio
 async def test_huge_input():
