@@ -3,97 +3,8 @@ import pytest
 
 from utils.helpers import chunk_bytes_input, bytes_to_int_big, ints_array_to_bytes, random_bytes, print_ints_array
 from utils.block_header import build_block_header
-from utils.benchmarks.extract_from_block_rlp import extract_from_block_rlp, getBlockNumberPosition, extract_element
+from utils.benchmarks.extract_from_block_rlp import extractData
 from mocks.blocks import mocked_blocks
-
-@pytest.mark.asyncio
-async def test_decode_parent_hash():
-    # Retrieve rlp block header
-    block = mocked_blocks[0]
-    block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-
-    assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
-
-    # "rlp length" length = 1 byte ("f9" means "f7"+2)
-    #          rlp length = usually 2 bytes if the above is "f9"
-    #   parentHash length = 1 byte (should be)
-    parentHash_position = 1+2+1 
-
-    extracted_words = extract_from_block_rlp(block_rlp_formatted, parentHash_position, 32)
-    extracted_hash = ints_array_to_bytes(extracted_words, 32)
-
-    assert block["parentHash"] == extracted_hash
-
-@pytest.mark.asyncio
-async def test_decode_uncles_hash():
-    # Retrieve rlp block header
-    block = mocked_blocks[0]
-    block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-
-    assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
-
-    # "rlp length" length = 1 byte ("f9" means "f7"+2)
-    #          rlp length = usually 2 bytes if the above is "f9"
-    #   parentHash length = 1 byte (should be)
-    #          parentHash = 32 bytes (should be)
-    #   unclesHash length = 1 byte (should be)
-    unclesHash_position = 1+2+1+32+1
-
-    extracted_words = extract_from_block_rlp(block_rlp_formatted, unclesHash_position, 32)
-    extracted_hash = ints_array_to_bytes(extracted_words, 32)
-
-    assert block["sha3Uncles"] == extracted_hash
-
-@pytest.mark.asyncio
-async def test_decode_state_root():
-    # Retrieve rlp block header
-    block = mocked_blocks[0]
-    block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-
-    assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
-
-    # "rlp length" length = 1 byte ("f9" means "f7"+2)
-    #          rlp length = usually 2 bytes if the above is "f9"
-    #   parentHash length = 1 byte (should be)
-    #          parentHash = 32 bytes (should be)
-    #   unclesHash length = 1 byte (should be)
-    #          unclesHash = 32 bytes (should be)
-    #  beneficiary length = 1 byte (should be)
-    #         beneficiary = 20 bytes (should be)
-    #    stateRoot length = 1 byte (should be)
-
-    unclesHash_position = 1+2+1+32+1+32+1+20+1
-
-    extracted_words = extract_from_block_rlp(block_rlp_formatted, unclesHash_position, 32)
-    extracted_hash = ints_array_to_bytes(extracted_words, 32)
-
-    assert block["stateRoot"] == extracted_hash
-
-@pytest.mark.asyncio
-async def test_decode_block_number():
-    # Retrieve rlp block header
-    block = mocked_blocks[0]
-    block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-
-    assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
-
-    block_number_position = getBlockNumberPosition(block_rlp_formatted)
-    block_number_bytes = extract_element(block_rlp_formatted, block_number_position)
-    block_number = int.from_bytes(block_number_bytes, "big")
-
-    assert block["number"] == block_number
 
 @pytest.mark.asyncio
 async def test_random():
@@ -106,7 +17,7 @@ async def test_random():
     for start_byte in range(0, 1200):
         for size in range(1, 66):
             # print("start_byte:", start_byte, "size:", size)
-            extracted_words = extract_from_block_rlp(block_rlp_formatted, start_byte, size)
+            extracted_words = extractData(block_rlp_formatted, start_byte, size)
             # print(print_ints_array(extracted_words))
             extracted_bytes = ints_array_to_bytes(extracted_words, size)
             expected_bytes = block_rlp[start_byte:start_byte+size]

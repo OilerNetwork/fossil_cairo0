@@ -27,13 +27,12 @@ def extractElement(rlp: List[int], position: int) -> RLPElement:
     length, dataPosition = getElementLength(rlp, position)
 
     if length == -1:
-        return RLPElement(extractData(rlp, dataPosition, 1)[0], dataPosition+1)
+        return RLPElement(extractData(rlp, dataPosition, 1), dataPosition+1)
 
     if length == 0:
         return RLPElement([], length)
 
-    element = extractData(rlp, dataPosition, length)
-    return RLPElement(element, position + length)
+    return RLPElement(extractData(rlp, dataPosition, length), position + length)
 
 # returns next element position
 def jumpOverElement(rlp: List[int], position: int) -> int:

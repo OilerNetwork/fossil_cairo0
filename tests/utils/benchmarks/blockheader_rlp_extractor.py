@@ -1,6 +1,5 @@
-from typing import Callable, List, NamedTuple
-from utils.helpers import ints_array_to_bytes
-from extract_from_block_rlp import extractData, extractElement, jumpOverElement
+from typing import List
+from utils.benchmarks.extract_from_block_rlp import extractData, extractElement, jumpOverElement
 
 # idx  Element                 element length with 1 byte storing its length
 # ==========================================================================
@@ -54,6 +53,7 @@ def getBlockNumber(rlp: List[int]) -> int:
     #jump over difficulty
     blockNumberPosition = jumpOverElement(rlp, 448)
     blockNumberIntsArray, _ = extractElement(rlp, blockNumberPosition)
+    print("blockNumberIntsArray", blockNumberIntsArray)
     return blockNumberIntsArray[0]
 
 def getGasLimit(rlp: List[int]) -> int:
