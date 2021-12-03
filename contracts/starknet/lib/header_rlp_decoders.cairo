@@ -16,7 +16,7 @@ end
 const parent_hash_start_bit = 16
 const parent_hash_end_bit = 16 + 256
 
-func extract_from_rlp{ range_check_ptr }(start_pos: felt, size: felt, block_rlp: felt*, block_rlp_len: felt) -> (res: felt*):
+func extract_from_rlp{ range_check_ptr }(start_pos: felt, size: felt, block_rlp: felt*, block_rlp_len: felt) -> (res_size: felt, res: felt*):
     alloc_locals
 
     let (start_word, left_shift) = unsigned_div_rem(start_pos, 8)
@@ -36,29 +36,33 @@ func extract_from_rlp{ range_check_ptr }(start_pos: felt, size: felt, block_rlp:
 
     local right_shift = 8 - left_shift
 
-    let (full_words_affected, remainder) = unsigned_div_rem(size, 8)
-    local leading_words_affected = full_words_affected
+    let (full_words, remainder) = unsigned_div_rem(size, 8)
 
-    let (words_shifted : felt*) = alloc()
+    let (local words_shifted : felt*) = alloc()
 
-    shift_words{ range_check_ptr = range_check_ptr }(
-        current_index=leading_words_affected - 1,
-        start_word=start_word,
-        left_shift=left_shift,
-        right_shift=right_shift,
-        block_rlp=block_rlp,
-        block_rlp_len=block_rlp_len,
-        accumulator=words_shifted,
-        accumulator_len=leading_words_affected
-    )
+    if full_words != 0:
+        shift_words{ range_check_ptr = range_check_ptr }(
+            current_index=full_words - 1,
+            start_word=start_word,
+            left_shift=left_shift,
+            right_shift=right_shift,
+            block_rlp=block_rlp,
+            block_rlp_len=block_rlp_len,
+            accumulator=words_shifted,
+            accumulator_len=full_words
+        )
+        tempvar range_check_ptr = range_check_ptr
+    else:
+        tempvar range_check_ptr = range_check_ptr
+    end
 
     local range_check_ptr = range_check_ptr
 
     if remainder != 0:
-        let (above_8) = is_le(8, remainder + left_shift - 1)
+        let (above_8) = is_le(9, remainder + left_shift)
         if above_8 == 1:
-            let (left_part) = bitshift_left(block_rlp[leading_words_affected], left_shift * 8)
-            let (right_part) = bitshift_right(block_rlp[leading_words_affected + 1], right_shift * 8)
+            let (left_part) = bitshift_left(block_rlp[end_word - 1], left_shift * 8)
+            let (right_part) = bitshift_right(block_rlp[end_word], right_shift * 8)
             let final_word = left_part + right_part
 
             let (final_word_shifted) = bitshift_right(final_word, (8 - remainder) * 8)
@@ -66,28 +70,25 @@ func extract_from_rlp{ range_check_ptr }(start_pos: felt, size: felt, block_rlp:
             let (local divider: felt) = pow(2, remainder*8)
             let (_, new_word) = unsigned_div_rem(final_word_shifted, divider)
 
-            assert words_shifted[leading_words_affected] = new_word
+            assert words_shifted[full_words] = new_word
 
             tempvar range_check_ptr = range_check_ptr
         else:
-            let (left_part) = bitshift_left(block_rlp[leading_words_affected], left_shift * 8)
-            let (right_part) = bitshift_right(block_rlp[leading_words_affected + 1], right_shift * 8)
-            let final_word = left_part + right_part
+            let (final_word_shifted) = bitshift_right(block_rlp[end_word], (8 - end_pos) * 8)
 
-            let (final_word_shifted) = bitshift_right(final_word, (8 - remainder) * 8)
-
-            let (local divider: felt) = pow(2, (remainder*8 - 1))
+            let (local divider: felt) = pow(2, (end_pos-left_shift)*8)
             let (_, new_word) = unsigned_div_rem(final_word_shifted, divider)
 
-            assert words_shifted[leading_words_affected] = new_word
+            assert words_shifted[full_words] = new_word
 
             tempvar range_check_ptr = range_check_ptr
         end
         tempvar range_check_ptr = range_check_ptr
+        return (res_size=full_words+1, res=words_shifted)
     else:
         tempvar range_check_ptr = range_check_ptr
+        return (res_size=full_words, res=words_shifted)
     end
-    return (words_shifted)
 end
 
 func shift_words{ range_check_ptr }(
@@ -105,13 +106,20 @@ func shift_words{ range_check_ptr }(
         tempvar range_check_ptr = range_check_ptr
         ret
     else:
-        tempvar range_check_ptr = range_check_ptr
+        if left_shift != 0:
+            let (left_part) = bitshift_left(block_rlp[start_word + current_index], left_shift * 8)
+            let (right_part) = bitshift_right(block_rlp[start_word + current_index + 1], right_shift * 8)
+        
+            local new_word = left_part + right_part
+            let (local divider: felt) = pow(2, 64)
+            let (_, new_word_masked) = unsigned_div_rem(new_word, divider)
 
-        let (left_part) = bitshift_left(block_rlp[start_word + current_index], left_shift * 8)
-        let (right_part) = bitshift_right(block_rlp[start_word + current_index + 1], right_shift * 8)
-    
-        local new_word = left_part + right_part
-        assert accumulator[current_index] = new_word
+            assert accumulator[current_index] = new_word_masked
+            tempvar range_check_ptr = range_check_ptr
+        else:
+            assert accumulator[current_index] = block_rlp[start_word + current_index]
+            tempvar range_check_ptr = range_check_ptr
+        end
 
         shift_words{ range_check_ptr = range_check_ptr }(
             current_index=current_index - 1,
@@ -122,6 +130,8 @@ func shift_words{ range_check_ptr }(
             block_rlp_len=block_rlp_len,
             accumulator=accumulator,
             accumulator_len=accumulator_len)
+
+        tempvar range_check_ptr = range_check_ptr
     end
     ret
 end
