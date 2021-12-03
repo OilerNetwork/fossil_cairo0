@@ -1,6 +1,9 @@
 from typing import List
 from utils.benchmarks.extract_from_block_rlp import extractData, extractElement, jumpOverElement
 
+from utils.helpers import chunk_bytes_input, bytes_to_int_big, ints_array_to_bytes
+
+
 # idx  Element                 element length with 1 byte storing its length
 # ==========================================================================
 
@@ -43,17 +46,20 @@ def getBeneficiary(rlp: List[int]) -> List[int]:
 def getStateRoot(rlp: List[int]) -> List[int]:
     return extractData(rlp, 4+32+1+32+1+20+1, 32)
 
-def getTransactionRoot(rlp: List[int]) -> List[int]:
+def getTransactionsRoot(rlp: List[int]) -> List[int]:
     return extractData(rlp, 4+32+1+32+1+20+1+32+1, 32)
 
 def getReceiptsRoot(rlp: List[int]) -> List[int]:
     return extractData(rlp, 4+32+1+32+1+20+1+32+1+32+1, 32)
 
-def getBlockNumber(rlp: List[int]) -> int:
+def getDifficulty(rlp: List[int]) -> int:
+    difficultyIntsArray, _ = extractElement(rlp, 448)
+    return difficultyIntsArray[0]
+
+def getBlocknumber(rlp: List[int]) -> int:
     #jump over difficulty
     blockNumberPosition = jumpOverElement(rlp, 448)
     blockNumberIntsArray, _ = extractElement(rlp, blockNumberPosition)
-    print("blockNumberIntsArray", blockNumberIntsArray)
     return blockNumberIntsArray[0]
 
 def getGasLimit(rlp: List[int]) -> int:

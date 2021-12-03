@@ -41,7 +41,7 @@ def jumpOverElement(rlp: List[int], position: int) -> int:
     if length == -1:
         return position+1
     else:
-        return position + length
+        return dataPosition + length
     
 def extractData(rlp: List[int], start_pos: int, size: int) -> List[int]:
     # print("\n")
