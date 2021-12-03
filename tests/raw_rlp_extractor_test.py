@@ -33,7 +33,7 @@ async def test_random():
         for size in range(1, 35):
             print("\n", block_rlp[:60].hex())
             print("start_byte:", start_byte, "size:", size)
-            extracted_words_call = await extract_rlp_contract.test_extract_from_rlp(start_byte, size, block_rlp_formatted).call()
+            extracted_words_call = await extract_rlp_contract.test_extractData(start_byte, size, block_rlp_formatted).call()
             extracted_words = extracted_words_call.result.res
             print("extracted_words:", extracted_words)
             print(ints_array_to_bytes(extracted_words, size).hex())

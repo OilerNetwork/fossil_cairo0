@@ -14,9 +14,9 @@ def getElementLength(rlp: List[int], position: int) -> RLPLength:
     firstByte = extractData(rlp, position, 1)[0]
 
     if firstByte <= 127:
-        return RLPLength(-1, position);
+        return RLPLength(-1, position)
     if firstByte <= 183:
-        return RLPLength(firstByte - 128, position+1);
+        return RLPLength(firstByte - 128, position+1)
     if firstByte <= 191:
         lengthOfLength = firstByte - 183
         length = extractData(rlp, position+1, lengthOfLength)[0]
@@ -30,9 +30,9 @@ def extractElement(rlp: List[int], position: int) -> RLPElement:
         return RLPElement(extractData(rlp, dataPosition, 1), dataPosition+1)
 
     if length == 0:
-        return RLPElement([], length)
+        return RLPElement([], dataPosition)
 
-    return RLPElement(extractData(rlp, dataPosition, length), position + length)
+    return RLPElement(extractData(rlp, dataPosition, length), dataPosition + length)
 
 # returns next element position
 def jumpOverElement(rlp: List[int], position: int) -> int:

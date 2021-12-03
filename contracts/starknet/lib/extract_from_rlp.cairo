@@ -6,17 +6,70 @@ from starkware.cairo.common.alloc import alloc
 from starknet.lib.bitshift import bitshift_right, bitshift_left
 from starknet.lib.pow import pow
 
-struct Keccak256Hash:
-    member word_1 : felt
-    member word_2 : felt
-    member word_3 : felt
-    member word_4 : felt
+struct RLPElement:
+    member element : felt*
+    member element_size: felt
+    member nextElementPosition : felt
 end
 
-const parent_hash_start_bit = 16
-const parent_hash_end_bit = 16 + 256
+struct RLPLength:
+    member value : felt
+    member dataPosition : felt
+end
 
-func extract_from_rlp{ range_check_ptr }(start_pos: felt, size: felt, block_rlp: felt*, block_rlp_len: felt) -> (res_size: felt, res: felt*):
+func getElementLength{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: RLPLength):
+    alloc_locals
+
+    let (firstByteArr: felt*) = extractData{ range_check_ptr = range_check_ptr }(position, 1, rlp, rlp_len)
+    let (firstByte: felt) = firstByteArr[0]
+
+    let (le_127) = is_le(firstByte, 127)
+
+    if le_127 == 1:
+        return RLPLength(-1, position)
+    end
+
+    let (le_183) = is_le(firstByte, 183)
+    if le_183 == 1:
+        return RLPLength(firstByte-128, position+1)
+    end
+
+    let (le_191) = is_le(firstByte, 191)
+    if le_191 == 1:
+        let (lengthOfLength) = firstByte - 183
+        let (lengthArr: felt*) = extractData{ range_check_ptr = range_check_ptr }(position+1, lengthOfLength, rlp, rlp_len)
+        let (length: felt) = lengthArr[0]
+        return RLPLength(length, position+lengthOfLength)
+    end
+end
+
+func extractElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: RLPElement):
+    let (rlpLength: RLPLength) = getElementLength{ range_check_ptr = range_check_ptr }(rlp, rlp_len, position)
+
+    if rlpLength.value == -1:
+        let (local element_size: felt, local element: felt*) = extractData{ range_check_ptr = range_check_ptr }(rlpLength.dataPosition, 1, rlp, rlp_len)
+        return RLPElement(element, element_size, rlpLength.dataPosition + 1)
+    end
+
+    if rlpLength.value == 0:
+        return RLPElement(element, 0, rlpLength.dataPosition)
+    end
+
+    let (local element_size: felt, local element: felt*) = extractData{ range_check_ptr = range_check_ptr }(rlpLength.dataPosition, rlpLength.value, rlp, rlp_len)
+    return RLPElement(element, element_size, rlpLength.dataPosition + rlpLength.value)
+end
+
+func jumpOverElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: felt):
+    let (rlpLength: RLPLength) = getElementLength{ range_check_ptr = range_check_ptr }(rlp, rlp_len, position)
+
+    if rlpLength == -1:
+        return (position + 1)
+    else:
+        return (rlpLength.dataPosition + rlpLength.value)
+    end
+end
+
+func extractData{ range_check_ptr }(start_pos: felt, size: felt, block_rlp: felt*, block_rlp_len: felt) -> (res_size: felt, res: felt*):
     alloc_locals
 
     let (start_word, left_shift) = unsigned_div_rem(start_pos, 8)
@@ -134,19 +187,4 @@ func shift_words{ range_check_ptr }(
         tempvar range_check_ptr = range_check_ptr
     end
     ret
-end
-
-
-### Elements decoder 
-
-func decode_parent_hash{ range_check_ptr }(block_rlp: felt*, block_rlp_len: felt) -> (res: Keccak256Hash):
-    alloc_locals
-    let (parent_hash) = extract_from_rlp(32, 32 * 8, block_rlp, block_rlp_len)
-    local hash: Keccak256Hash = Keccak256Hash(
-        word_1=parent_hash[0],
-        word_2=parent_hash[1],
-        word_3=parent_hash[2],
-        word_4=parent_hash[3]
-    )
-    return (hash)
 end

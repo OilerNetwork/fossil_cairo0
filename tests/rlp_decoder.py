@@ -5,7 +5,7 @@ from starkware.starknet.testing.starknet import Starknet
 
 from utils.helpers import chunk_bytes_input, bytes_to_int_big
 from utils.block_header import build_block_header
-from utils.benchmarks.extract_from_block_rlp import extract_from_block_rlp
+from utils.benchmarks.blockheader_rlp_extractor import getParentHash
 from mocks.blocks import mocked_blocks
 
 
@@ -36,7 +36,7 @@ async def test_decode_parent_hash():
     decoded = await decoder.test_decode_parent_hash(block_rlp_formatted).call()
     output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
 
-    expected_words = extract_from_block_rlp(block_rlp_formatted, 32, 32 * 8)
+    expected_words = getParentHash(block_rlp_formatted)
     expected_hash = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in expected_words)
 
     print("Python: " ,expected_hash)
