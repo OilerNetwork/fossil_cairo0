@@ -1,31 +1,50 @@
-from typing import Callable, List
-from utils.helpers import ints_array_to_bytes
+from typing import List, NamedTuple
 
+class RLPElement(NamedTuple):
+    element: List[int]
+    nextElementPosition: int
 
-def getBlockNumberPosition(rlp: List[int]) -> int:
-    pos = 448
-    pos += nextElementJump(extract_from_block_rlp(rlp, pos, 1)[0])
-    return pos
+class RLPLength(NamedTuple):
+    value: int
+    dataPosition: int
 
-def nextElementJump(prefix: int) -> int:
-    if prefix <= 128:
-        return 1
-    elif prefix <= 183:
-        return prefix - 128 + 1
+# Returns length of data and position of data
+# if length is -1 then data is at the returned position
+def getElementLength(rlp: List[int], position: int) -> RLPLength:
+    firstByte = extractData(rlp, position, 1)[0]
+
+    if firstByte <= 127:
+        return RLPLength(-1, position);
+    if firstByte <= 183:
+        return RLPLength(firstByte - 128, position+1);
+    if firstByte <= 191:
+        lengthOfLength = firstByte - 183
+        length = extractData(rlp, position+1, lengthOfLength)[0]
+        return RLPLength(length, position + lengthOfLength)
+
+# returns RLPElement - list of ints, and a position of next element
+def extractElement(rlp: List[int], position: int) -> RLPElement:
+    length, dataPosition = getElementLength(rlp, position)
+
+    if length == -1:
+        return RLPElement(extractData(rlp, dataPosition, 1)[0], dataPosition+1)
+
+    if length == 0:
+        return RLPElement([], length)
+
+    element = extractData(rlp, dataPosition, length)
+    return RLPElement(element, position + length)
+
+# returns next element position
+def jumpOverElement(rlp: List[int], position: int) -> int:
+    length, dataPosition = getElementLength(rlp, position)
+
+    if length == -1:
+        return position+1
     else:
-        raise Exception("not implemented")
-
-def extract_element(rlp: List[int], position: int) -> int:
-    value = extract_from_block_rlp(rlp, position, 1)[0]
+        return position + length
     
-    if value < 128:
-        return value.to_bytes(1, "big")
-    else:
-        element_size = value - 128
-        extracted_element = extract_from_block_rlp(rlp, position+1, element_size)
-        return ints_array_to_bytes(extracted_element, element_size)
-
-def extract_from_block_rlp(rlp: List[int], start_pos: int, size: int) -> List[int]:
+def extractData(rlp: List[int], start_pos: int, size: int) -> List[int]:
     # print("\n")
     start_word, left_shift = divmod(start_pos, 8)
 
@@ -64,5 +83,3 @@ def extract_from_block_rlp(rlp: List[int], start_pos: int, size: int) -> List[in
             new_words.append(final_word_shifted & final_word_mask)
 
     return new_words
-
-# parent_hash_words = extract_from_block_rlp(input, 32, 32 * 8)
