@@ -1,4 +1,4 @@
-from typing import List, NamedTuple
+from typing import NamedTuple
 import pytest
 
 from utils.helpers import chunk_bytes_input, bytes_to_int_big, ints_array_to_bytes, random_bytes

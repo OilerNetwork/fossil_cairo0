@@ -1,7 +1,7 @@
 %lang starknet
 %builtins pedersen range_check ecdsa
 
-from starknet.lib.header_rlp_decoders import extractData
+from starknet.lib.extract_from_rlp import extractData
 from starkware.cairo.common.alloc import alloc
 
 @view

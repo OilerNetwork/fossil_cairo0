@@ -20,49 +20,65 @@ end
 func getElementLength{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: RLPLength):
     alloc_locals
 
-    let (firstByteArr: felt*) = extractData{ range_check_ptr = range_check_ptr }(position, 1, rlp, rlp_len)
-    let (firstByte: felt) = firstByteArr[0]
+    let (_, firstByteArr: felt*) = extractData{ range_check_ptr = range_check_ptr }(position, 1, rlp, rlp_len)
+    let firstByte = firstByteArr[0]
 
     let (le_127) = is_le(firstByte, 127)
 
     if le_127 == 1:
-        return RLPLength(-1, position)
+        local result: RLPLength = RLPLength(-1, position)
+        return (result)
     end
 
     let (le_183) = is_le(firstByte, 183)
     if le_183 == 1:
-        return RLPLength(firstByte-128, position+1)
+        local result: RLPLength = RLPLength(firstByte-128, position+1)
+        return (result)
     end
 
     let (le_191) = is_le(firstByte, 191)
     if le_191 == 1:
-        let (lengthOfLength) = firstByte - 183
-        let (lengthArr: felt*) = extractData{ range_check_ptr = range_check_ptr }(position+1, lengthOfLength, rlp, rlp_len)
-        let (length: felt) = lengthArr[0]
-        return RLPLength(length, position+lengthOfLength)
+        let lengthOfLength = firstByte - 183
+        let (_, lengthArr: felt*) = extractData{ range_check_ptr = range_check_ptr }(position+1, lengthOfLength, rlp, rlp_len)
+        let length = lengthArr[0]
+
+        local result: RLPLength = RLPLength(length, position+lengthOfLength)
+        return (result)
     end
+    ret
 end
 
 func extractElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: RLPElement):
+    alloc_locals
     let (rlpLength: RLPLength) = getElementLength{ range_check_ptr = range_check_ptr }(rlp, rlp_len, position)
 
     if rlpLength.value == -1:
         let (local element_size: felt, local element: felt*) = extractData{ range_check_ptr = range_check_ptr }(rlpLength.dataPosition, 1, rlp, rlp_len)
-        return RLPElement(element, element_size, rlpLength.dataPosition + 1)
+        local result: RLPElement = RLPElement(element, element_size, rlpLength.dataPosition + 1)
+        tempvar range_check_ptr = range_check_ptr
+        return (result)
+    else: 
+        tempvar range_check_ptr = range_check_ptr
     end
 
     if rlpLength.value == 0:
-        return RLPElement(element, 0, rlpLength.dataPosition)
+        let (local element: felt*) = alloc()
+        local result: RLPElement = RLPElement(element, 0, rlpLength.dataPosition)
+        tempvar range_check_ptr = range_check_ptr
+        return (result)
+    else: 
+        tempvar range_check_ptr = range_check_ptr
     end
 
     let (local element_size: felt, local element: felt*) = extractData{ range_check_ptr = range_check_ptr }(rlpLength.dataPosition, rlpLength.value, rlp, rlp_len)
-    return RLPElement(element, element_size, rlpLength.dataPosition + rlpLength.value)
+    local result: RLPElement = RLPElement(element, element_size, rlpLength.dataPosition + rlpLength.value)
+    return (result)
 end
 
 func jumpOverElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: felt):
     let (rlpLength: RLPLength) = getElementLength{ range_check_ptr = range_check_ptr }(rlp, rlp_len, position)
 
-    if rlpLength == -1:
+    if rlpLength.value == -1:
         return (position + 1)
     else:
         return (rlpLength.dataPosition + rlpLength.value)
