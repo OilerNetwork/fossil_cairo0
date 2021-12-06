@@ -35,3 +35,11 @@ def ints_array_to_bytes(ints_array: List[str], size: int) -> str:
     return bytes_array
 
 random_bytes: Callable[[int], bytes] = lambda size: token_bytes(size) 
+
+# TODO does not work
+def word64_to_bytes(word: int) -> List[int]:
+    word_bytes: List[int] = []
+    for i in range(7, -1, -1):
+        left_shift = 7 - i
+        word_bytes.append((word << left_shift) >> 64)
+    return word_bytes

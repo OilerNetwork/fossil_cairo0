@@ -6,51 +6,51 @@ from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.alloc import alloc
 
+from starknet.types import (Keccak256Hash, Address)
 from starknet.lib.keccak import keccak256
 from starknet.lib.blockheader_rlp_extractor import (
     decode_parent_hash,
     decode_state_root,
     decode_transactions_root,
     decode_receipts_root,
-    decode_block_number,
-    Keccak256Hash
+    decode_difficulty,
+    decode_beneficiary
 )
-
-@storage_var
-func _l1_blockhash() -> (res: Keccak256Hash):
-end
 
 @storage_var
 func _l1_messages_origin() -> (res: felt):
 end
 
-### Processed blocks info ###
+### Processed blocks headers info ###
 
 @storage_var
-func _processed_block_hash(block_number: felt) -> (res: Keccak256Hash):
+func _block_parent_hash(block_number: felt) -> (res: Keccak256Hash):
 end
 
 @storage_var
-func _processed_block_parent_hash(block_number: felt) -> (res: Keccak256Hash):
+func _block_state_root(block_number: felt) -> (res: Keccak256Hash):
 end
 
 @storage_var
-func _processed_block_state_root(block_number: felt) -> (res: Keccak256Hash):
+func _block_transactions_root(block_number: felt) -> (res: Keccak256Hash):
 end
 
 @storage_var
-func _processed_block_receipts_root(block_number: felt) -> (res: Keccak256Hash):
+func _block_receipts_root(block_number: felt) -> (res: Keccak256Hash):
 end
 
-# Helper var - mutated every time a block is processed
 @storage_var
-func _oldest_processed_block() -> (res: felt):
+func _block_uncles_hash(block_number: felt) -> (res: Keccak256Hash):
 end
 
-# Helper var - set only once when the l1 originated blockhash is processed
 @storage_var
-func _youngest_processed_block() -> (res: felt):
+func _block_beneficiary(block_number: felt) -> (res: Address):
 end
+
+@storage_var
+func _block_difficulty(block_number: felt) -> (res: felt):
+end
+
 
 #############################
 
@@ -71,37 +71,35 @@ func initialize{
     return ()
 end
 
-@view
-func get_l1_blockhash{
-        pedersen_ptr: HashBuiltin*,
-        syscall_ptr: felt*,
-        range_check_ptr
-    } () -> (res: Keccak256Hash):
-    alloc_locals
-    let (local res: Keccak256Hash) = _l1_blockhash.read()
-    return (res)
-end
-
 # TODO convert to L1 handler once the rest is tested
 @external
-func submit_l1_blockhash{
+func receive_from_l1{
         pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
         range_check_ptr
-    } (blockhash_len: felt, blockhash: felt*):
+    } (parent_hash_len: felt, parent_hash: felt*, block_number: felt):
     alloc_locals
+
+    # Auth
     let (caller) = get_caller_address()
     let (l1_messages_origin) = _l1_messages_origin.read()
     assert caller = l1_messages_origin
 
-    local hash: Keccak256Hash = Keccak256Hash(
-        word_1=blockhash[0],
-        word_2=blockhash[1],
-        word_3=blockhash[2],
-        word_4=blockhash[3]
-    )
+    # Ensure not overwriting. TODO consider if needed due to reorgs on L1
+    let (local block_parent_hash: Keccak256Hash) = _block_parent_hash.read(block_number=block_number)
+    assert block_parent_hash.word_1 = 0
+    assert block_parent_hash.word_2 = 0
+    assert block_parent_hash.word_3 = 0
+    assert block_parent_hash.word_4 = 0
 
-    _l1_blockhash.write(hash)
+    # Save block's parenthash
+    local hash: Keccak256Hash = Keccak256Hash(
+        word_1=parent_hash[0],
+        word_2=parent_hash[1],
+        word_3=parent_hash[2],
+        word_4=parent_hash[3]
+    )
+    _block_parent_hash.write(block_number, hash)
     return ()
 end
 
@@ -110,85 +108,189 @@ func process_block{
         pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
         bitwise_ptr : BitwiseBuiltin*,
-        range_check_ptr,
-    } (block_header_rlp_words_len: felt,
+        range_check_ptr
+    } (block_number: felt,
+       block_header_rlp_words_len: felt,
        block_header_rlp_len: felt,
        block_header_rlp: felt*
+    ):
+    alloc_locals
+    validate_provided_header_rlp{
+        pedersen_ptr=pedersen_ptr,
+        syscall_ptr=syscall_ptr,
+        bitwise_ptr=bitwise_ptr,
+        range_check_ptr=range_check_ptr
+        }(
+        block_header_rlp_words_len,
+        block_header_rlp_len,
+        block_header_rlp,
+        block_number)
+
+    # Decode parent hash from rlp
+    let (local parent_hash: Keccak256Hash) = decode_parent_hash(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
+    _block_parent_hash.write(block_number, parent_hash)
+    ret
+end
+
+@external
+func set_block_state_root{
+        pedersen_ptr: HashBuiltin*,
+        syscall_ptr: felt*,
+        bitwise_ptr : BitwiseBuiltin*,
+        range_check_ptr
+    } (block_header_rlp_words_len: felt,
+       block_header_rlp_len: felt,
+       block_header_rlp: felt*,
+       block_number: felt
+    ):
+    alloc_locals
+    validate_provided_header_rlp{
+        pedersen_ptr=pedersen_ptr,
+        syscall_ptr=syscall_ptr,
+        bitwise_ptr=bitwise_ptr,
+        range_check_ptr=range_check_ptr
+        }(
+        block_header_rlp_words_len,
+        block_header_rlp_len,
+        block_header_rlp,
+        block_number)
+    let (local state_root: Keccak256Hash) = decode_state_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
+    _block_state_root.write(block_number, state_root)
+    ret
+end
+
+@external
+func set_block_transactions_root{
+        pedersen_ptr: HashBuiltin*,
+        syscall_ptr: felt*,
+        bitwise_ptr : BitwiseBuiltin*,
+        range_check_ptr
+    } (block_header_rlp_words_len: felt,
+       block_header_rlp_len: felt,
+       block_header_rlp: felt*,
+       block_number: felt
+    ):
+    alloc_locals
+    validate_provided_header_rlp{
+        pedersen_ptr=pedersen_ptr,
+        syscall_ptr=syscall_ptr,
+        bitwise_ptr=bitwise_ptr,
+        range_check_ptr=range_check_ptr
+        }(
+        block_header_rlp_words_len,
+        block_header_rlp_len,
+        block_header_rlp,
+        block_number)
+    let (local transactions_root: Keccak256Hash) = decode_transactions_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
+    _block_transactions_root.write(block_number, transactions_root)
+    ret
+end
+
+@external
+func set_block_receipts_root{
+        pedersen_ptr: HashBuiltin*,
+        syscall_ptr: felt*,
+        bitwise_ptr : BitwiseBuiltin*,
+        range_check_ptr
+    } (block_header_rlp_words_len: felt,
+       block_header_rlp_len: felt,
+       block_header_rlp: felt*,
+       block_number: felt
+    ):
+    alloc_locals
+    validate_provided_header_rlp{
+        pedersen_ptr=pedersen_ptr,
+        syscall_ptr=syscall_ptr,
+        bitwise_ptr=bitwise_ptr,
+        range_check_ptr=range_check_ptr
+        }(
+        block_header_rlp_words_len,
+        block_header_rlp_len,
+        block_header_rlp,
+        block_number)
+    let (local receipts_root: Keccak256Hash) = decode_receipts_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
+    _block_receipts_root.write(block_number, receipts_root)
+    ret
+end
+
+@external
+func set_block_difficulty{
+        pedersen_ptr: HashBuiltin*,
+        syscall_ptr: felt*,
+        bitwise_ptr : BitwiseBuiltin*,
+        range_check_ptr
+    } (block_header_rlp_words_len: felt,
+       block_header_rlp_len: felt,
+       block_header_rlp: felt*,
+       block_number: felt
+    ):
+    alloc_locals
+    validate_provided_header_rlp{
+        pedersen_ptr=pedersen_ptr,
+        syscall_ptr=syscall_ptr,
+        bitwise_ptr=bitwise_ptr,
+        range_check_ptr=range_check_ptr
+        }(
+        block_header_rlp_words_len,
+        block_header_rlp_len,
+        block_header_rlp,
+        block_number)
+    let (local difficulty: felt) = decode_difficulty(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
+    _block_difficulty.write(block_number, difficulty)
+    ret
+end
+
+@external
+func set_block_beneficiary{
+        pedersen_ptr: HashBuiltin*,
+        syscall_ptr: felt*,
+        bitwise_ptr : BitwiseBuiltin*,
+        range_check_ptr
+    } (block_header_rlp_words_len: felt,
+       block_header_rlp_len: felt,
+       block_header_rlp: felt*,
+       block_number: felt
+    ):
+    alloc_locals
+    validate_provided_header_rlp{
+        pedersen_ptr=pedersen_ptr,
+        syscall_ptr=syscall_ptr,
+        bitwise_ptr=bitwise_ptr,
+        range_check_ptr=range_check_ptr
+        }(
+        block_header_rlp_words_len,
+        block_header_rlp_len,
+        block_header_rlp,
+        block_number)
+    let (local beneficiary: Address) = decode_beneficiary(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
+    _block_beneficiary.write(block_number, beneficiary)
+    ret
+end
+
+func validate_provided_header_rlp{
+        pedersen_ptr: HashBuiltin*,
+        syscall_ptr: felt*,
+        bitwise_ptr : BitwiseBuiltin*,
+        range_check_ptr
+    } (block_header_rlp_words_len: felt,
+       block_header_rlp_len: felt,
+       block_header_rlp: felt*,
+       block_number: felt
     ):
     alloc_locals
     local bitwise_ptr_start : BitwiseBuiltin* = bitwise_ptr
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
 
-    let (submitted_block_hash) = keccak256{keccak_ptr=keccak_ptr}(block_header_rlp, block_header_rlp_words_len)
-    let (oldest_processed_block) = _oldest_processed_block.read()
+    let child_block_number = block_number + 1
+    let (local child_block_parent: Keccak256Hash) = _block_parent_hash.read(block_number=child_block_number)
 
-    # Storage slot not initialized
-    if oldest_processed_block == 0:
-        let (l1_originated_block_hash: Keccak256Hash) = _l1_blockhash.read()
+    let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(block_header_rlp, block_header_rlp_words_len)
 
-        local pedersen_ptr : HashBuiltin* = pedersen_ptr
-        local range_check_ptr = range_check_ptr
-        local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
-        local keccak_ptr: felt* = keccak_ptr
-        local syscall_ptr: felt* = syscall_ptr
-
-        local l1_originated_block_hash_cp: Keccak256Hash = l1_originated_block_hash
-
-        assert submitted_block_hash[0] = l1_originated_block_hash.word_1
-        assert submitted_block_hash[1] = l1_originated_block_hash.word_2
-        assert submitted_block_hash[2] = l1_originated_block_hash.word_3
-        assert submitted_block_hash[3] = l1_originated_block_hash.word_4
-        
-        let (block_number, parent_hash, state_root, receipts_root) = extract_from_rlp(block_header_rlp)
-        
-        _processed_block_hash.write(block_number, l1_originated_block_hash_cp)
-        _processed_block_parent_hash.write(block_number, parent_hash)
-        _processed_block_state_root.write(block_number, state_root)
-        _processed_block_receipts_root.write(block_number, receipts_root)
-
-        _oldest_processed_block.write(block_number)
-        _youngest_processed_block.write(block_number)
-        return ()
-    end
-
-    let (oldest_block) = _oldest_processed_block.read()
-    let (oldest_block_parent_hash) = _processed_block_parent_hash.read(oldest_block)
-
-    local pedersen_ptr : HashBuiltin* = pedersen_ptr
-    local range_check_ptr = range_check_ptr
-    local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
-    local keccak_ptr: felt* = keccak_ptr
-    local syscall_ptr: felt* = syscall_ptr
-
-    local oldest_block_parent_hash_cp: Keccak256Hash = oldest_block_parent_hash
-
-    assert submitted_block_hash[0] = oldest_block_parent_hash.word_1
-    assert submitted_block_hash[1] = oldest_block_parent_hash.word_2
-    assert submitted_block_hash[2] = oldest_block_parent_hash.word_3
-    assert submitted_block_hash[3] = oldest_block_parent_hash.word_4
-
-    let (block_number, parent_hash, state_root, receipts_root) = extract_from_rlp(block_header_rlp)
-
-    _processed_block_hash.write(block_number, oldest_block_parent_hash_cp)
-    _processed_block_parent_hash.write(block_number, parent_hash)
-    _processed_block_state_root.write(block_number, state_root)
-    _processed_block_receipts_root.write(block_number, receipts_root)
-
-    _oldest_processed_block.write(block_number)
-    return ()
+    # Ensure child block parenthash matches provided rlp hash
+    assert child_block_parent.word_1 = provided_rlp_hash[0]
+    assert child_block_parent.word_2 = provided_rlp_hash[1]
+    assert child_block_parent.word_3 = provided_rlp_hash[2]
+    assert child_block_parent.word_4 = provided_rlp_hash[3]
+    ret
 end
-
-func extract_from_rlp(block_header_rlp: felt*, block_header_rlp_len: felt) -> (block_number: felt, parent_hash: Keccak256Hash, state_root: Keccak256Hash, receipts_root: Keccak256Hash):
-    let (local parent_hash: Keccak256Hash) = decode_parent_hash(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
-    let (local state_root: Keccak256Hash) = decode_state_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
-    let (local receipts_root: Keccak256Hash) = decode_receipts_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
-    let (block_number) = decode_block_number(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
-    
-    return (
-        block_number=block_number,
-        parent_hash=parent_hash,
-        state_root=state_root,
-        receipts_root=receipts_root)
-end
-

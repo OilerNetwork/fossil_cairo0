@@ -1,17 +1,5 @@
 from starknet.lib.extract_from_rlp import extractData, extractElement, jumpOverElement, RLPElement
-
-struct Keccak256Hash:
-    member word_1 : felt
-    member word_2 : felt
-    member word_3 : felt
-    member word_4 : felt
-end
-
-struct Address:
-    member word_1 : felt
-    member word_2 : felt
-    member word_3 : felt
-end
+from starknet.types import (Keccak256Hash, Address)
 
 ### Elements decoder 
 
