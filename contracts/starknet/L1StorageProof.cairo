@@ -7,14 +7,14 @@ from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.alloc import alloc
 
 from starknet.lib.keccak import keccak256
-
-struct Keccak256Hash:
-    member word_1 : felt
-    member word_2 : felt
-    member word_3 : felt
-    member word_4 : felt
-end
-
+from starknet.lib.blockheader_rlp_extractor import (
+    decode_parent_hash,
+    decode_state_root,
+    decode_transactions_root,
+    decode_receipts_root,
+    decode_block_number,
+    Keccak256Hash
+)
 
 @storage_var
 func _l1_blockhash() -> (res: Keccak256Hash):
@@ -179,26 +179,16 @@ func process_block{
     return ()
 end
 
-func extract_from_rlp(block_header_rlp: felt*) -> (block_number: felt, parent_hash: Keccak256Hash, state_root: Keccak256Hash, receipts_root: Keccak256Hash):
+func extract_from_rlp(block_header_rlp: felt*, block_header_rlp_len: felt) -> (block_number: felt, parent_hash: Keccak256Hash, state_root: Keccak256Hash, receipts_root: Keccak256Hash):
+    let (local parent_hash: Keccak256Hash) = decode_parent_hash(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
+    let (local state_root: Keccak256Hash) = decode_state_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
+    let (local receipts_root: Keccak256Hash) = decode_receipts_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
+    let (block_number) = decode_block_number(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
+    
     return (
-    block_number=block_header_rlp[8],
-    parent_hash=Keccak256Hash(
-        word_1=block_header_rlp[0],
-        word_2=block_header_rlp[1],
-        word_3=block_header_rlp[2],
-        word_4=block_header_rlp[3]
-    ),
-    state_root=Keccak256Hash(
-        word_1=block_header_rlp[3],
-        word_2=block_header_rlp[4],
-        word_3=block_header_rlp[5],
-        word_4=block_header_rlp[6],
-    ),
-    receipts_root=Keccak256Hash(
-        word_1=block_header_rlp[5],
-        word_2=block_header_rlp[6],
-        word_3=block_header_rlp[7],
-        word_4=block_header_rlp[8],
-    ))
+        block_number=block_number,
+        parent_hash=parent_hash,
+        state_root=state_root,
+        receipts_root=receipts_root)
 end
 
