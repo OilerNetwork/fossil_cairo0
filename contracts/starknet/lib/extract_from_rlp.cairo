@@ -173,7 +173,7 @@ func shift_words{ range_check_ptr }(
 
     if current_index == -1:
         tempvar range_check_ptr = range_check_ptr
-        ret
+        return ()
     else:
         if left_shift != 0:
             let (left_part) = bitshift_left(block_rlp[start_word + current_index], left_shift * 8)
@@ -202,5 +202,5 @@ func shift_words{ range_check_ptr }(
 
         tempvar range_check_ptr = range_check_ptr
     end
-    ret
+    return ()
 end

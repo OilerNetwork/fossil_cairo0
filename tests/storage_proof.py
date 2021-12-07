@@ -84,11 +84,18 @@ async def test_process_block():
         [len(formatted_words)] + formatted_words + [mocked_blocks[0]['number']]
     )
 
+    print(f'block_rlp_len: {len(block_rlp)}')
+    print(f'block_rlp_formatted_len: {len(block_rlp_formatted)}')
+
+    calldata = [len(block_rlp)] + [len(block_rlp_formatted)] + block_rlp_formatted + [block['number']]
+
+    print(calldata)
+
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [block['number']] + [len(block_rlp)] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
     )
 
 

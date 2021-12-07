@@ -109,8 +109,8 @@ func process_block{
         syscall_ptr: felt*,
         bitwise_ptr : BitwiseBuiltin*,
         range_check_ptr
-    } (block_number: felt,
-       block_header_rlp_words_len: felt,
+    } (block_header_rlp_words_len: felt,
+       block_number: felt,
        block_header_rlp_len: felt,
        block_header_rlp: felt*
     ):
@@ -124,7 +124,7 @@ func process_block{
     # Decode parent hash from rlp
     let (local parent_hash: Keccak256Hash) = decode_parent_hash(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_parent_hash.write(block_number, parent_hash)
-    ret
+    return()
 end
 
 @external
@@ -147,7 +147,7 @@ func set_block_state_root{
     
     let (local state_root: Keccak256Hash) = decode_state_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_state_root.write(block_number, state_root)
-    ret
+    return ()
 end
 
 @external
@@ -170,7 +170,7 @@ func set_block_transactions_root{
     
     let (local transactions_root: Keccak256Hash) = decode_transactions_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_transactions_root.write(block_number, transactions_root)
-    ret
+    return ()
 end
 
 @external
@@ -193,7 +193,7 @@ func set_block_receipts_root{
     
     let (local receipts_root: Keccak256Hash) = decode_receipts_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_receipts_root.write(block_number, receipts_root)
-    ret
+    return ()
 end
 
 @external
@@ -216,7 +216,7 @@ func set_block_difficulty{
     
     let (local difficulty: felt) = decode_difficulty(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_difficulty.write(block_number, difficulty)
-    ret
+    return ()
 end
 
 @external
@@ -239,7 +239,7 @@ func set_block_beneficiary{
     
     let (local beneficiary: Address) = decode_beneficiary(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_beneficiary.write(block_number, beneficiary)
-    ret
+    return ()
 end
 
 func validate_provided_header_rlp{
@@ -253,11 +253,11 @@ func validate_provided_header_rlp{
        block_number: felt
     ):
     alloc_locals
-    local bitwise_ptr_start : BitwiseBuiltin* = bitwise_ptr
+    local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
 
-    let child_block_number = block_number + 1
+    let child_block_number = (block_number + 1)
     let (local child_block_parent: Keccak256Hash) = _block_parent_hash.read(block_number=child_block_number)
 
     let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(block_header_rlp, block_header_rlp_words_len)
@@ -267,5 +267,5 @@ func validate_provided_header_rlp{
     assert child_block_parent.word_2 = provided_rlp_hash[1]
     assert child_block_parent.word_3 = provided_rlp_hash[2]
     assert child_block_parent.word_4 = provided_rlp_hash[3]
-    ret
+    return ()
 end
