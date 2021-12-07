@@ -1,6 +1,6 @@
 from secrets import token_bytes
 from eth_typing.encoding import HexStr
-from typing import Callable, List
+from typing import Callable, List, Tuple
 from functools import reduce
 
 
@@ -22,7 +22,7 @@ print_bytes_array: Callable[[List[str]], str] = lambda arr: concat_arr(list(map(
 print_ints_array: Callable[[List[str]], str] = lambda arr: concat_arr(list(map(lambda a: hex(a)+'\n', arr)))
 
 def ints_array_to_bytes(ints_array: List[str], size: int) -> str:
-    full_words, remainder = divmod(size, 8);
+    full_words, remainder = divmod(size, 8)
 
     bytes_array = b''
 
@@ -35,3 +35,31 @@ def ints_array_to_bytes(ints_array: List[str], size: int) -> str:
     return bytes_array
 
 random_bytes: Callable[[int], bytes] = lambda size: token_bytes(size) 
+
+def word64_to_bytes(word: int, word_len: int) -> List[int]:
+    res: List[int] = []
+    for i in range(word_len - 1, -1, -1):
+        print(i)
+        (_, r) = divmod(word >> i * 8, 256)
+        res.append(r)
+    return res
+
+def word64_to_bytes_recursive_rev(word: int, word_len: int, accumulator = []):
+    current_len = word_len - len(accumulator)
+    print(current_len)
+    if len(accumulator) == word_len:
+        return accumulator
+    current_len = word_len - len(accumulator)
+    (_, r) = divmod(word >> (word_len - current_len) * 8, 256)
+    accumulator.append(r)
+    return word64_to_bytes_recursive_rev(word, word_len, accumulator) 
+
+def word64_to_nibbles(word: int, nibbles_len: int, accumulator: List[int] = []) -> List[int]:
+    if nibbles_len == 1:
+        return accumulator + [word & 0xF]
+    return word64_to_nibbles(word >> 4, nibbles_len-1, accumulator) + [(word & 0xF)]
+
+def byte_to_nibbles(input_byte: int) -> Tuple[int, int]:
+    nibble_1 = input_byte & 0x0F
+    nibble_2 = ((input_byte & 0xF0) >> 4)
+    return (nibble_1, nibble_2)

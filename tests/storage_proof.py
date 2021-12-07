@@ -39,46 +39,34 @@ async def setup():
     )
 
 
-# The path to the contract source code.
-
-
-# The testing library uses python's asyncio. So the following
-# decorator and the ``async`` keyword are needed.
-@pytest.mark.asyncio
-async def test_submit_hash():
-    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
-    # Submit message using l1_relayer_account
+# @pytest.mark.asyncio
+# async def test_submit_hash():
+#     starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
+#     # Submit message using l1_relayer_account
     
-    block = mocked_blocks[0]
-    block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-    assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
+#     block = mocked_blocks[0]
+#     block_header = build_block_header(block)
+#     block_rlp = block_header.raw_rlp()
+#     assert block_header.hash() == block["hash"]
+#     block_rlp_chunked = chunk_bytes_input(block_rlp)
 
-    message = bytearray.fromhex(block["hash"].hex()[2:])
-    chunked_message = chunk_bytes_input(message)
-    formatted_words = list(map(bytes_to_int_little, chunked_message))
+#     message = bytearray.fromhex(block["hash"].hex()[2:])
+#     chunked_message = chunk_bytes_input(message)
+#     formatted_words = list(map(bytes_to_int_little, chunked_message))
 
-    await l1_relayer_signer.send_transaction(
-        l1_relayer_account,
-        storage_proof.contract_address,
-        'submit_l1_blockhash',
-        [len(formatted_words)] + formatted_words
-    )
-
-    get_submitted_hash_call = await storage_proof.get_l1_blockhash().call()
-    (word_1, word_2, word_3, word_4) = get_submitted_hash_call.result.res
-    assert formatted_words[0] == word_1
-    assert formatted_words[1] == word_2
-    assert formatted_words[2] == word_3
-    assert formatted_words[3] == word_4
+#     await l1_relayer_signer.send_transaction(
+#         l1_relayer_account,
+#         storage_proof.contract_address,
+#         'receive_from_l1',
+#         [len(formatted_words)] + formatted_words + [block['number']]
+#     )
 
 
 @pytest.mark.asyncio
 async def test_process_block():
     starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
 
-    block = mocked_blocks[0]
+    block = mocked_blocks[1]
     block_header = build_block_header(block)
     block_rlp = block_header.raw_rlp()
     assert block_header.hash() == block["hash"]
@@ -92,28 +80,22 @@ async def test_process_block():
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
-        'submit_l1_blockhash',
-        [len(formatted_words)] + formatted_words
+        'receive_from_l1',
+        [len(formatted_words)] + formatted_words + [mocked_blocks[0]['number']]
     )
 
-    get_submitted_hash_call = await storage_proof.get_l1_blockhash().call()
-    set_hash_words = get_submitted_hash_call.result.res
+    print(f'block_rlp_len: {len(block_rlp)}')
+    print(f'block_rlp_formatted_len: {len(block_rlp_formatted)}')
 
-    keccak_contract = await starknet.deploy(source="contracts/starknet/test/TestKeccak256.cairo", cairo_path=["contracts"])
-    test_keccak_call = await keccak_contract.test_keccak256(
-        len(block_rlp),
-        block_rlp_formatted
-    ).call()
-    starknet_hashed_words = test_keccak_call.result.res
+    calldata = [len(block_rlp)] + [len(block_rlp_formatted)] + block_rlp_formatted + [block['number']]
 
-    for i in range(0, 3):
-        assert list(set_hash_words)[i] == list(starknet_hashed_words)[i]
+    print(calldata)
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [len(block_rlp)] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
     )
 
 
