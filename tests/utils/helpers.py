@@ -36,10 +36,20 @@ def ints_array_to_bytes(ints_array: List[str], size: int) -> str:
 
 random_bytes: Callable[[int], bytes] = lambda size: token_bytes(size) 
 
-# TODO does not work
-def word64_to_bytes(word: int) -> List[int]:
-    word_bytes: List[int] = []
-    for i in range(7, -1, -1):
-        left_shift = 7 - i
-        word_bytes.append((word << left_shift) >> 64)
-    return word_bytes
+def word64_to_bytes(word: int, word_len: int) -> List[int]:
+    res: List[int] = []
+    for i in range(word_len - 1, -1, -1):
+        print(i)
+        (_, r) = divmod(word >> i * 8, 256)
+        res.append(r)
+    return res
+
+def word64_to_bytes_recursive(word: int, word_len: int, accumulator = []):
+    current_len = word_len - len(accumulator)
+    print(current_len)
+    if len(accumulator) == word_len:
+        return accumulator
+    current_len = word_len - len(accumulator)
+    (_, r) = divmod(word >> (word_len - current_len) * 8, 256)
+    accumulator.append(r)
+    return word64_to_bytes_recursive(word, word_len, accumulator) 
