@@ -115,12 +115,7 @@ func process_block{
        block_header_rlp: felt*
     ):
     alloc_locals
-    validate_provided_header_rlp{
-        pedersen_ptr=pedersen_ptr,
-        syscall_ptr=syscall_ptr,
-        bitwise_ptr=bitwise_ptr,
-        range_check_ptr=range_check_ptr
-        }(
+    validate_provided_header_rlp(
         block_header_rlp_words_len,
         block_header_rlp_len,
         block_header_rlp,
@@ -144,16 +139,12 @@ func set_block_state_root{
        block_number: felt
     ):
     alloc_locals
-    validate_provided_header_rlp{
-        pedersen_ptr=pedersen_ptr,
-        syscall_ptr=syscall_ptr,
-        bitwise_ptr=bitwise_ptr,
-        range_check_ptr=range_check_ptr
-        }(
+    validate_provided_header_rlp(
         block_header_rlp_words_len,
         block_header_rlp_len,
         block_header_rlp,
         block_number)
+    
     let (local state_root: Keccak256Hash) = decode_state_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_state_root.write(block_number, state_root)
     ret
@@ -171,16 +162,12 @@ func set_block_transactions_root{
        block_number: felt
     ):
     alloc_locals
-    validate_provided_header_rlp{
-        pedersen_ptr=pedersen_ptr,
-        syscall_ptr=syscall_ptr,
-        bitwise_ptr=bitwise_ptr,
-        range_check_ptr=range_check_ptr
-        }(
+    validate_provided_header_rlp(
         block_header_rlp_words_len,
         block_header_rlp_len,
         block_header_rlp,
         block_number)
+    
     let (local transactions_root: Keccak256Hash) = decode_transactions_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_transactions_root.write(block_number, transactions_root)
     ret
@@ -198,16 +185,12 @@ func set_block_receipts_root{
        block_number: felt
     ):
     alloc_locals
-    validate_provided_header_rlp{
-        pedersen_ptr=pedersen_ptr,
-        syscall_ptr=syscall_ptr,
-        bitwise_ptr=bitwise_ptr,
-        range_check_ptr=range_check_ptr
-        }(
+    validate_provided_header_rlp(
         block_header_rlp_words_len,
         block_header_rlp_len,
         block_header_rlp,
         block_number)
+    
     let (local receipts_root: Keccak256Hash) = decode_receipts_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_receipts_root.write(block_number, receipts_root)
     ret
@@ -225,16 +208,12 @@ func set_block_difficulty{
        block_number: felt
     ):
     alloc_locals
-    validate_provided_header_rlp{
-        pedersen_ptr=pedersen_ptr,
-        syscall_ptr=syscall_ptr,
-        bitwise_ptr=bitwise_ptr,
-        range_check_ptr=range_check_ptr
-        }(
+    validate_provided_header_rlp(
         block_header_rlp_words_len,
         block_header_rlp_len,
         block_header_rlp,
         block_number)
+    
     let (local difficulty: felt) = decode_difficulty(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_difficulty.write(block_number, difficulty)
     ret
@@ -252,16 +231,12 @@ func set_block_beneficiary{
        block_number: felt
     ):
     alloc_locals
-    validate_provided_header_rlp{
-        pedersen_ptr=pedersen_ptr,
-        syscall_ptr=syscall_ptr,
-        bitwise_ptr=bitwise_ptr,
-        range_check_ptr=range_check_ptr
-        }(
+    validate_provided_header_rlp(
         block_header_rlp_words_len,
         block_header_rlp_len,
         block_header_rlp,
         block_number)
+    
     let (local beneficiary: Address) = decode_beneficiary(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_beneficiary.write(block_number, beneficiary)
     ret

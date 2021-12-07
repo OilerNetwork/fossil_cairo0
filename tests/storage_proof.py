@@ -39,27 +39,27 @@ async def setup():
     )
 
 
-@pytest.mark.asyncio
-async def test_submit_hash():
-    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
-    # Submit message using l1_relayer_account
+# @pytest.mark.asyncio
+# async def test_submit_hash():
+#     starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
+#     # Submit message using l1_relayer_account
     
-    block = mocked_blocks[0]
-    block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-    assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
+#     block = mocked_blocks[0]
+#     block_header = build_block_header(block)
+#     block_rlp = block_header.raw_rlp()
+#     assert block_header.hash() == block["hash"]
+#     block_rlp_chunked = chunk_bytes_input(block_rlp)
 
-    message = bytearray.fromhex(block["hash"].hex()[2:])
-    chunked_message = chunk_bytes_input(message)
-    formatted_words = list(map(bytes_to_int_little, chunked_message))
+#     message = bytearray.fromhex(block["hash"].hex()[2:])
+#     chunked_message = chunk_bytes_input(message)
+#     formatted_words = list(map(bytes_to_int_little, chunked_message))
 
-    await l1_relayer_signer.send_transaction(
-        l1_relayer_account,
-        storage_proof.contract_address,
-        'receive_from_l1',
-        [len(formatted_words)] + formatted_words + [block['number']]
-    )
+#     await l1_relayer_signer.send_transaction(
+#         l1_relayer_account,
+#         storage_proof.contract_address,
+#         'receive_from_l1',
+#         [len(formatted_words)] + formatted_words + [block['number']]
+#     )
 
 
 @pytest.mark.asyncio
