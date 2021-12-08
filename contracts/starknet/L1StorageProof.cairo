@@ -14,14 +14,24 @@ from starknet.lib.blockheader_rlp_extractor import (
     decode_transactions_root,
     decode_receipts_root,
     decode_difficulty,
-    decode_beneficiary
+    decode_beneficiary,
+    decode_uncles_hash
 )
 
+
+# Temporary auth var for authenticating mocked L1 handlers
 @storage_var
 func _l1_messages_origin() -> (res: felt):
 end
 
-### Processed blocks headers info ###
+# Indicates that the contract has been initialized
+@storage_var
+func _initialized() -> (res: felt):
+end
+
+####################################################
+#                 PER BLOCK STORAGE
+####################################################
 
 @storage_var
 func _block_parent_hash(block_number: felt) -> (res: Keccak256Hash):
@@ -51,11 +61,71 @@ end
 func _block_difficulty(block_number: felt) -> (res: felt):
 end
 
+####################################################
+#                   VIEW FUNCTIONS
+####################################################
 
-#############################
+@view
+func get_parent_hash{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (block_number: felt) -> (res: Keccak256Hash):
+    return _block_parent_hash.read(block_number)
+end
 
-@storage_var
-func _initialized() -> (res: felt):
+@view
+func get_state_root{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (block_number: felt) -> (res: Keccak256Hash):
+    return _block_state_root.read(block_number)
+end
+
+@view
+func get_transactions_root{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (block_number: felt) -> (res: Keccak256Hash):
+    return _block_transactions_root.read(block_number)
+end
+
+@view
+func get_receipts_root{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (block_number: felt) -> (res: Keccak256Hash):
+    return _block_receipts_root.read(block_number)
+end
+
+@view
+func get_uncles_hash{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (block_number: felt) -> (res: Keccak256Hash):
+    return _block_uncles_hash.read(block_number)
+end
+
+@view
+func get_beneficiary{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (block_number: felt) -> (res: Address):
+    return _block_beneficiary.read(block_number)
+end
+
+@view
+func get_difficulty{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (block_number: felt) -> (res: felt):
+    return _block_difficulty.read(block_number)
 end
 
 @external
@@ -116,10 +186,10 @@ func process_block{
     ):
     alloc_locals
     validate_provided_header_rlp(
+        block_number,
         block_header_rlp_words_len,
         block_header_rlp_len,
-        block_header_rlp,
-        block_number)
+        block_header_rlp)
 
     # Decode parent hash from rlp
     let (local parent_hash: Keccak256Hash) = decode_parent_hash(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
@@ -134,16 +204,16 @@ func set_block_state_root{
         bitwise_ptr : BitwiseBuiltin*,
         range_check_ptr
     } (block_header_rlp_words_len: felt,
+       block_number: felt,
        block_header_rlp_len: felt,
-       block_header_rlp: felt*,
-       block_number: felt
+       block_header_rlp: felt*
     ):
     alloc_locals
     validate_provided_header_rlp(
+        block_number,
         block_header_rlp_words_len,
         block_header_rlp_len,
-        block_header_rlp,
-        block_number)
+        block_header_rlp)
     
     let (local state_root: Keccak256Hash) = decode_state_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_state_root.write(block_number, state_root)
@@ -157,16 +227,16 @@ func set_block_transactions_root{
         bitwise_ptr : BitwiseBuiltin*,
         range_check_ptr
     } (block_header_rlp_words_len: felt,
+       block_number: felt,
        block_header_rlp_len: felt,
-       block_header_rlp: felt*,
-       block_number: felt
+       block_header_rlp: felt*
     ):
     alloc_locals
     validate_provided_header_rlp(
+        block_number,
         block_header_rlp_words_len,
         block_header_rlp_len,
-        block_header_rlp,
-        block_number)
+        block_header_rlp)
     
     let (local transactions_root: Keccak256Hash) = decode_transactions_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_transactions_root.write(block_number, transactions_root)
@@ -180,19 +250,42 @@ func set_block_receipts_root{
         bitwise_ptr : BitwiseBuiltin*,
         range_check_ptr
     } (block_header_rlp_words_len: felt,
+       block_number: felt,
        block_header_rlp_len: felt,
-       block_header_rlp: felt*,
-       block_number: felt
+       block_header_rlp: felt*
     ):
     alloc_locals
     validate_provided_header_rlp(
+        block_number,
         block_header_rlp_words_len,
         block_header_rlp_len,
-        block_header_rlp,
-        block_number)
+        block_header_rlp)
     
     let (local receipts_root: Keccak256Hash) = decode_receipts_root(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_receipts_root.write(block_number, receipts_root)
+    return ()
+end
+
+@external
+func set_block_uncles_hash{
+        pedersen_ptr: HashBuiltin*,
+        syscall_ptr: felt*,
+        bitwise_ptr : BitwiseBuiltin*,
+        range_check_ptr
+    } (block_header_rlp_words_len: felt,
+       block_number: felt,
+       block_header_rlp_len: felt,
+       block_header_rlp: felt*
+    ):
+    alloc_locals
+    validate_provided_header_rlp(
+        block_number,
+        block_header_rlp_words_len,
+        block_header_rlp_len,
+        block_header_rlp)
+    
+    let (local uncles_hash: Keccak256Hash) = decode_uncles_hash(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
+    _block_uncles_hash.write(block_number, uncles_hash)
     return ()
 end
 
@@ -203,16 +296,16 @@ func set_block_difficulty{
         bitwise_ptr : BitwiseBuiltin*,
         range_check_ptr
     } (block_header_rlp_words_len: felt,
+       block_number: felt,
        block_header_rlp_len: felt,
-       block_header_rlp: felt*,
-       block_number: felt
+       block_header_rlp: felt*
     ):
     alloc_locals
     validate_provided_header_rlp(
+        block_number,
         block_header_rlp_words_len,
         block_header_rlp_len,
-        block_header_rlp,
-        block_number)
+        block_header_rlp)
     
     let (local difficulty: felt) = decode_difficulty(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_difficulty.write(block_number, difficulty)
@@ -226,16 +319,16 @@ func set_block_beneficiary{
         bitwise_ptr : BitwiseBuiltin*,
         range_check_ptr
     } (block_header_rlp_words_len: felt,
+       block_number: felt,
        block_header_rlp_len: felt,
-       block_header_rlp: felt*,
-       block_number: felt
+       block_header_rlp: felt*
     ):
     alloc_locals
     validate_provided_header_rlp(
+        block_number,
         block_header_rlp_words_len,
         block_header_rlp_len,
-        block_header_rlp,
-        block_number)
+        block_header_rlp)
     
     let (local beneficiary: Address) = decode_beneficiary(block_rlp=block_header_rlp, block_rlp_len=block_header_rlp_len)
     _block_beneficiary.write(block_number, beneficiary)
@@ -247,10 +340,10 @@ func validate_provided_header_rlp{
         syscall_ptr: felt*,
         bitwise_ptr : BitwiseBuiltin*,
         range_check_ptr
-    } (block_header_rlp_words_len: felt,
+    } (block_number: felt,
+       block_header_rlp_words_len: felt,
        block_header_rlp_len: felt,
-       block_header_rlp: felt*,
-       block_number: felt
+       block_header_rlp: felt*
     ):
     alloc_locals
     local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
