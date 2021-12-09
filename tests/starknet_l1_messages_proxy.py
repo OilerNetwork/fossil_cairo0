@@ -5,7 +5,7 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.compiler.compile import get_selector_from_name
 
 from utils.create_account import create_account
-from utils.helpers import chunk_bytes_input, bytes_to_int_little, bytes_to_int_big
+from utils.helpers import chunk_bytes_input, bytes_to_int_little
 
 from mocks.blocks import mocked_blocks
 
