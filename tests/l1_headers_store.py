@@ -1,7 +1,5 @@
 import pytest
-import asyncio
-from typing import NamedTuple, Union
-from copy import deepcopy
+from typing import NamedTuple
 
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
