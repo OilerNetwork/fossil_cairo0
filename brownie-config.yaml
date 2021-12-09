@@ -5,9 +5,6 @@ project_structure:
   reports: reports
   scripts: scripts
   tests: tests/ethereum
-
-dotenv: .env
-
 compiler:
   solc:
     version: 0.8.9

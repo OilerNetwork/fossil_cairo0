@@ -4,5 +4,6 @@ venv
 **/**.egg-info
 .python-version
 artifacts
+build
 
 .env
