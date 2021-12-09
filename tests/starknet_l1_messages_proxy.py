@@ -31,6 +31,8 @@ async def test_receive_from_l1():
     # Initialize l1 headers store contract
     await signer.send_transaction(
         account, l1_headers_store.contract_address, 'initialize', [messages_proxy.contract_address])
+    
+    print(get_selector_from_name('receive_from_l1'))
 
     # send message to l2
     await starknet.send_message_to_l2(
