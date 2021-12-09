@@ -22,9 +22,10 @@ class TestsDeps(NamedTuple):
     l1_relayer_account: StarknetContract
     l1_relayer_signer: Signer
 
+
 async def setup():
     starknet = await Starknet.empty()
-    storage_proof = await starknet.deploy(source="contracts/starknet/L1StorageProof.cairo", cairo_path=["contracts"])
+    storage_proof = await starknet.deploy(source="contracts/starknet/L1HeadersStore.cairo", cairo_path=["contracts"])
     account, signer = await create_account(starknet)
     l1_relayer_account, l1_relayer_signer = await create_account(starknet)
     await signer.send_transaction(
