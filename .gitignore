@@ -6,4 +6,5 @@ venv
 artifacts
 build
 
+secrets.json
 .env
