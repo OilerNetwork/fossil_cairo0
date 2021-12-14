@@ -92,7 +92,7 @@ async def main():
     await gateway_client.add_transaction(l2_msg_contract_init_tx)
 
     print('\n')
-    print(f"L1: contract deployment tx hash: {l1_contract_addr}")
+    print(f"L1: contract address: {l1_contract_addr}")
     print(f"Starknet: L1 headers contract address: {hex(l2_headers_contract_address)}")
     print(f"Starknet: L1 messages recipient: {hex(l2_msg_contract_address)}")
 

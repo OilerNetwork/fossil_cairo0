@@ -141,7 +141,6 @@ func initialize{
     return ()
 end
 
-# TODO convert to L1 handler once the rest is tested
 @external
 func receive_from_l1{
         pedersen_ptr: HashBuiltin*,
@@ -154,13 +153,6 @@ func receive_from_l1{
     let (caller) = get_caller_address()
     let (l1_messages_origin) = _l1_messages_origin.read()
     assert caller = l1_messages_origin
-
-    # Ensure not overwriting. TODO consider if needed due to reorgs on L1
-    let (local block_parent_hash: Keccak256Hash) = _block_parent_hash.read(block_number=block_number)
-    assert block_parent_hash.word_1 = 0
-    assert block_parent_hash.word_2 = 0
-    assert block_parent_hash.word_3 = 0
-    assert block_parent_hash.word_4 = 0
 
     # Save block's parenthash
     local hash: Keccak256Hash = Keccak256Hash(

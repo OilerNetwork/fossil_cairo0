@@ -16,20 +16,20 @@ contract L1MessagesSender {
         l2RecipientAddr = l2RecipientAddr_;
     }
 
-    function sendExactBlockHashToL2(uint256 blockNumber_) external {
-        bytes32 blockHash = blockhash(blockNumber_);
-        require(blockHash != bytes32(0), "ERR_INVALID_BLOCK_NUMBER");
-        _sendBlockHashToL2(blockHash, blockNumber_);
+    function sendExactParentHashToL2(uint256 blockNumber_) external {
+        bytes32 parentHash = blockhash(blockNumber_ - 1);
+        require(parentHash != bytes32(0), "ERR_INVALID_BLOCK_NUMBER");
+        _sendBlockHashToL2(parentHash, blockNumber_);
     }
 
-    function sendLatestBlockHashToL2() external {
-        bytes32 blockHash = blockhash(block.number - 1);
-        _sendBlockHashToL2(blockHash, block.number - 1);
+    function sendLatestParentHashToL2() external {
+        bytes32 parentHash = blockhash(block.number - 1);
+        _sendBlockHashToL2(parentHash, block.number);
     }
 
-    function _sendBlockHashToL2(bytes32 blockHash_, uint256 blockNumber_) internal {
+    function _sendBlockHashToL2(bytes32 parentHash_, uint256 blockNumber_) internal {
         uint256[] memory message = new uint256[](5);
-        (bytes8 hashWord1, bytes8 hashWord2, bytes8 hashWord3, bytes8 hashWord4) = FormatWords64.fromBytes32(blockHash_);
+        (bytes8 hashWord1, bytes8 hashWord2, bytes8 hashWord3, bytes8 hashWord4) = FormatWords64.fromBytes32(parentHash_);
 
         message[0] = uint256(uint64(hashWord1));
         message[1] = uint256(uint64(hashWord2));

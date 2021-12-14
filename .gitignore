@@ -6,5 +6,7 @@ venv
 artifacts
 build
 
+**/.DS_Store
+
 secrets.json
 .env
