@@ -5,7 +5,7 @@ from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.compiler.compile import get_selector_from_name
 
 from utils.create_account import create_account
-from utils.helpers import chunk_bytes_input, bytes_to_int_little, bytes_to_int_big
+from utils.helpers import chunk_bytes_input, bytes_to_int_little
 
 from mocks.blocks import mocked_blocks
 
@@ -32,8 +32,6 @@ async def test_receive_from_l1():
     await signer.send_transaction(
         account, l1_headers_store.contract_address, 'initialize', [messages_proxy.contract_address])
     
-    print(get_selector_from_name('receive_from_l1'))
-
     # send message to l2
     await starknet.send_message_to_l2(
         l1_messages_sender,

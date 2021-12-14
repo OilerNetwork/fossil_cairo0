@@ -16,3 +16,12 @@ dependencies:
 
 console:
   show_colors: false
+
+live:
+  - name: Ethereum
+    networks:
+      - name: Goerli (Alchemy)
+        chainid: 5
+        id: goerli
+        host: https://mainnet.infura.io/v3/$WEB3_INFURA_PROJECT_ID
+        explorer: https://api-ropsten.etherscan.io/api
