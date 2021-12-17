@@ -4,7 +4,10 @@ from random import randint
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 
-from .utils.helpers import random_bytes, bytes_to_int_big
+from utils.helpers import random_bytes, bytes_to_int
+
+
+bytes_to_int_big = lambda word: bytes_to_int(word)
 
 class TestsDeps(NamedTuple):
     starknet: Starknet

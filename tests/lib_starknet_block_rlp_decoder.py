@@ -3,7 +3,7 @@ import pytest
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 
-from utils.helpers import chunk_bytes_input, bytes_to_int_big
+from utils.helpers import chunk_bytes_input, bytes_to_int
 from utils.block_header import build_block_header
 from utils.benchmarks.blockheader_rlp_extractor import (
     getParentHash,
@@ -16,6 +16,9 @@ from utils.benchmarks.blockheader_rlp_extractor import (
     getBlocknumber
 )
 from mocks.blocks import mocked_blocks
+
+
+bytes_to_int_big = lambda word: bytes_to_int(word)
 
 
 class TestsDeps(NamedTuple):

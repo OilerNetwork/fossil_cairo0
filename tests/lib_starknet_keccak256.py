@@ -6,7 +6,7 @@ from web3 import Web3
 
 from utils.helpers import (
     concat_arr,
-    bytes_to_int_big,
+    bytes_to_int,
     chunk_bytes_input
 )
 from utils.block_header import build_block_header
@@ -16,6 +16,9 @@ from mocks.blocks import mocked_blocks
 class TestsDeps(NamedTuple):
     starknet: Starknet
     keccak_contract: StarknetContract
+
+
+bytes_to_int_big = lambda word: bytes_to_int(word)
 
 
 async def setup():
@@ -183,7 +186,6 @@ async def test_blockheader_input():
         list(map(bytes_to_int_big, block_rlp_chunked))
     ).call()
     starknet_hashed_big = test_keccak_call_big.result.res
-
 
     output = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed_big)
     assert output == block["hash"].hex()

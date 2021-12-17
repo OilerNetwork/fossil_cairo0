@@ -57,8 +57,6 @@ async def test_swap_endianness_full_word():
 @pytest.mark.asyncio
 async def test_swap_endianness_small_words():
     starknet, converter = await setup()
-    print("\n")
-
     for i in range(8):
         input_str = 'f90218a089abcdef'[0:16-(i*2)]
         input_as_big_endian = int.from_bytes(bytearray.fromhex(input_str), 'big')

@@ -1,7 +1,5 @@
 from typing import List
-from utils.benchmarks.extract_from_block_rlp import extractData, extractElement, jumpOverElement
-
-from utils.helpers import chunk_bytes_input, bytes_to_int_big, ints_array_to_bytes
+from utils.rlp import extractData, extractElement, jumpOverElement
 
 
 # idx  Element                 element length with 1 byte storing its length

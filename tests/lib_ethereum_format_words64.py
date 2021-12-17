@@ -1,7 +1,10 @@
 from brownie import accounts
 
 from mocks.blocks import mocked_blocks
-from utils.helpers import chunk_bytes_input, bytes_to_int_big
+from utils.helpers import chunk_bytes_input, bytes_to_int
+
+bytes_to_int_big = lambda word: bytes_to_int(word)
+
 
 def test_format_words64_deploys(TestFormatWords64):
     format_words64 = accounts[0].deploy(TestFormatWords64)

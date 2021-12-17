@@ -1,8 +1,10 @@
 import pytest
-from utils.helpers import chunk_bytes_input, bytes_to_int_big, ints_array_to_bytes
+from utils.helpers import chunk_bytes_input, bytes_to_int, ints_array_to_bytes
 from utils.block_header import build_block_header
 from utils.benchmarks.blockheader_rlp_extractor import getBeneficiary, getParentHash, getOmmersHash, getStateRoot, getBlocknumber, getDifficulty, getTransactionsRoot, getReceiptsRoot, getGasLimit, getGasUsed, getTimestamp
 from mocks.blocks import mocked_blocks
+
+bytes_to_int_big = lambda word: bytes_to_int(word)
 
 @pytest.mark.asyncio
 async def test_decode_parent_hash():
