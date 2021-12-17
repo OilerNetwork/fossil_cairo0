@@ -5,29 +5,29 @@ class RLPElement(NamedTuple):
     element: List[int]
     nextElementPosition: int
 
-class RLPLength(NamedTuple):
-    value: int
+class RLPItem(NamedTuple):
+    length: int
     dataPosition: int
 
 # Returns length of data and position of data
 # if length is -1 then data is at the returned position
-def getElementLength(rlp: List[int], position: int) -> RLPLength:
+def getElementLength(rlp: List[int], position: int) -> RLPItem:
     #print(extractData(rlp, position, 16))
     firstByte = extractData(rlp, position, 1)[0]
 
     if firstByte <= 127:
-        return RLPLength(-1, position)
+        return RLPItem(-1, position)
     if firstByte <= 183:
-        return RLPLength(firstByte - 128, position+1)
+        return RLPItem(firstByte - 128, position+1)
     if firstByte <= 191:
         lengthOfLength = firstByte - 183
         length = extractData(rlp, position+1, lengthOfLength)[0]
-        return RLPLength(length, position + lengthOfLength)
+        return RLPItem(length, position + lengthOfLength)
     if firstByte <= 247:
-        return  RLPLength(firstByte - 192, position+1)
+        return  RLPItem(firstByte - 192, position+1)
     lengthOfLength = firstByte - 247
     length = extractData(rlp, position+1, lengthOfLength)[0]
-    return RLPLength(length, position + lengthOfLength)
+    return RLPItem(length, position + lengthOfLength)
 
 def isRlpList(rlp: List[int], position: int) -> bool:
     firstByte = extractData(rlp, position, 1)[0]
@@ -104,5 +104,26 @@ def count_items(rlp: List[int], pos: int = 0) -> int:
         count += 1
     return count
 
-def to_list(rlp: List[int]) -> List[List[int]]:
-    return []
+def to_list(rlp: List[int]) -> List[RLPItem]:
+    assert isRlpList(rlp, 0)
+
+    res: List[RLPItem] = []
+
+    (payload_len, payload_pos) = getElementLength(rlp, 0)
+    payload_end = payload_pos + payload_len
+    curr_element_pos = payload_pos
+
+    while curr_element_pos < payload_end:
+        (element_len, element_pos) = getElementLength(rlp, curr_element_pos)
+        curr_element_pos = element_pos + element_len
+        print(f"element_len: {element_len}")
+        print(f"element_pos: {element_pos}")
+        res.append((element_len, element_pos))
+    return res
+
+def extract_list_values(rlp: List[int], rlp_items: List[RLPItem]) -> List[List[int]]:
+    res: List[List[int]] = []
+    for rlp_item in rlp_items:
+        value = extractData(rlp, rlp_item.dataPosition, rlp_item.length)
+        res.append(value)
+    return res

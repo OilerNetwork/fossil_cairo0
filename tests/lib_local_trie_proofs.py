@@ -34,10 +34,8 @@ async def test_verify_invalid_account_proof():
     account = rlp_string_to_words64('0x78e05971af7857d6114f7f896f9fd58d5c5d18e5')
     root_hash = rlp_string_to_words64('0x96c4bdfb8f2ad089200bad93f6216fe96652f9e2761b55bfd8a715ad3d6ecaf6')
     node = trie_proofs[0]['storageProof'][0]['proof'][0]
-    print(node)
     proof = [rlp_string_to_words64(node)]
     proof_lens = [int((len(node) - 2) / 2)]
-    print(proof_lens)
     res = verify_account_proof(account, root_hash, proof, proof_lens)
 
 

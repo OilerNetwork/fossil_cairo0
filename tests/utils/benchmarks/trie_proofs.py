@@ -58,10 +58,9 @@ def verify_account_proof(
 
         if i == 0:
             assert root_hash == keccak_words64(element, element_len)
-        else 
+        else:
             assert next_hash == keccak_words64(element, element_len)
         
-        node = 
 
     
     
