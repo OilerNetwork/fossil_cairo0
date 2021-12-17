@@ -2,7 +2,7 @@ from typing import List, Callable, NamedTuple
 from web3 import Web3
 
 from utils.helpers import rlp_string_to_words64, ints_array_to_bytes, keccak_words64
-from utils.rlp import extractData, getElementLength, isRlpList
+from utils.rlp import extractData, getElement, isRlpList
 
 
 
