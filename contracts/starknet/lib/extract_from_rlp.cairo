@@ -13,11 +13,11 @@ struct RLPElement:
 end
 
 struct RLPItem:
-    member length : felt
     member dataPosition : felt
+    member length : felt
 end
 
-func getElementLength{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: RLPItem):
+func getElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: RLPItem):
     alloc_locals
 
     let (_, firstByteArr: felt*) = extractData{ range_check_ptr = range_check_ptr }(position, 1, rlp, rlp_len)
@@ -26,13 +26,13 @@ func getElementLength{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: fe
     let (le_127) = is_le(firstByte, 127)
 
     if le_127 == 1:
-        local result: RLPItem = RLPItem(-1, position)
+        local result: RLPItem = RLPItem(position, 1)
         return (result)
     end
 
     let (le_183) = is_le(firstByte, 183)
     if le_183 == 1:
-        local result: RLPItem = RLPItem(firstByte-128, position+1)
+        local result: RLPItem = RLPItem(position+1, firstByte-128)
         return (result)
     end
 
@@ -42,7 +42,7 @@ func getElementLength{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: fe
         let (_, lengthArr: felt*) = extractData{ range_check_ptr = range_check_ptr }(position+1, lengthOfLength, rlp, rlp_len)
         let length = lengthArr[0]
 
-        local result: RLPItem = RLPItem(length, position+lengthOfLength)
+        local result: RLPItem = RLPItem(position + 1 + lengthOfLength, length)
         return (result)
     end
     ret
@@ -50,39 +50,25 @@ end
 
 func extractElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: RLPElement):
     alloc_locals
-    let (RLPItem: RLPItem) = getElementLength{ range_check_ptr = range_check_ptr }(rlp, rlp_len, position)
+    let (rlpItem: RLPItem) = getElement{ range_check_ptr = range_check_ptr }(rlp, rlp_len, position)
 
-    if RLPItem.length == -1:
-        let (local element_size: felt, local element: felt*) = extractData{ range_check_ptr = range_check_ptr }(RLPItem.dataPosition, 1, rlp, rlp_len)
-        local result: RLPElement = RLPElement(element, element_size, RLPItem.dataPosition + 1)
-        tempvar range_check_ptr = range_check_ptr
-        return (result)
-    else: 
-        tempvar range_check_ptr = range_check_ptr
-    end
-
-    if RLPItem.length == 0:
+    if rlpItem.length == 0:
         let (local element: felt*) = alloc()
-        local result: RLPElement = RLPElement(element, 0, RLPItem.dataPosition)
+        local result: RLPElement = RLPElement(element, 0, rlpItem.dataPosition)
         tempvar range_check_ptr = range_check_ptr
         return (result)
     else: 
         tempvar range_check_ptr = range_check_ptr
     end
 
-    let (local element_size: felt, local element: felt*) = extractData{ range_check_ptr = range_check_ptr }(RLPItem.dataPosition, RLPItem.length, rlp, rlp_len)
-    local result: RLPElement = RLPElement(element, element_size, RLPItem.dataPosition + RLPItem.length)
+    let (local element_size: felt, local element: felt*) = extractData{ range_check_ptr = range_check_ptr }(rlpItem.dataPosition, rlpItem.length, rlp, rlp_len)
+    local result: RLPElement = RLPElement(element, element_size, rlpItem.dataPosition + rlpItem.length)
     return (result)
 end
 
 func jumpOverElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: felt):
-    let (RLPItem: RLPItem) = getElementLength{ range_check_ptr = range_check_ptr }(rlp, rlp_len, position)
-
-    if RLPItem.length == -1:
-        return (position + 1)
-    else:
-        return (RLPItem.dataPosition + RLPItem.length)
-    end
+    let (rlpItem: RLPItem) = getElement{ range_check_ptr = range_check_ptr }(rlp, rlp_len, position)
+    return (rlpItem.dataPosition + rlpItem.length)
 end
 
 func extractData{ range_check_ptr }(start_pos: felt, size: felt, block_rlp: felt*, block_rlp_len: felt) -> (res_size: felt, res: felt*):
@@ -203,4 +189,10 @@ func shift_words{ range_check_ptr }(
         tempvar range_check_ptr = range_check_ptr
     end
     return ()
+end
+
+func is_rlp_list{ range_check_ptr }(pos: felt, rlp: felt*, rlp_len: felt) -> (res: felt) :
+    let (size, element) = extractData(pos, 1, rlp, rlp_len)
+    let (is_list) = is_le(size, 192)
+    return (is_list)
 end

@@ -32,11 +32,11 @@ async def test_to_list():
 
 @pytest.mark.asyncio
 async def test_to_list_values():
-    input = rlp_string_to_words64(trie_proofs[0]['accountProof'][0])
+    input = rlp_string_to_words64(trie_proofs[0]['accountProof'][7])
     items = to_list(input)
-    values = extract_list_values(input, items)
-    print(values)
-
+    for item in items:
+        value = extractData(input, item.dataPosition, item.length)
+        print(ints_array_to_bytes(value, item.length).hex())
 
 # @pytest.mark.asyncio
 # async def test_random():
@@ -51,5 +51,3 @@ async def test_to_list_values():
 #             extracted_bytes = ints_array_to_bytes(extracted_words, size)
 #             expected_bytes = block_rlp[start_byte:start_byte+size]
 #             assert extracted_bytes == expected_bytes
-
-
