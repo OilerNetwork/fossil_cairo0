@@ -191,8 +191,14 @@ func shift_words{ range_check_ptr }(
     return ()
 end
 
-func is_rlp_list{ range_check_ptr }(pos: felt, rlp: felt*, rlp_len: felt) -> (res: felt) :
+func is_rlp_list{ range_check_ptr }(pos: felt, rlp: felt*, rlp_len: felt) -> (res: felt):
     let (size, element) = extractData(pos, 1, rlp, rlp_len)
-    let (is_list) = is_le(size, 192)
+    let (is_list) = is_le(191, size)
     return (is_list)
+end
+
+func to_list{ range_check_ptr }(rlp: felt*, rlp_len: felt) -> (items: RLPItem*, items_len: felt):
+    alloc_locals
+    let (local items : RLPItem*) = alloc()
+    return (items, 0)
 end

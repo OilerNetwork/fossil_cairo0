@@ -1,6 +1,21 @@
-from typing import List, Any
+from re import S
+from typing import List, Dict
 
-trie_proofs: List[Any] = [
+class StorageProof(Dict):
+    key: str
+    value: str
+    proof: List[str]
+
+class TrieProofsMock(Dict):
+    address: str
+    accountProof: List[str]
+    balance: str
+    codeHash: str
+    nonce: str
+    storageHash: str
+    storageProof: List[StorageProof]
+
+trie_proofs: List[TrieProofsMock] = [
     {
         "address": "0x6b175474e89094c44da98b954eedeac495271d0f",
         "accountProof": [

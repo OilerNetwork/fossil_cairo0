@@ -1,6 +1,6 @@
 from secrets import token_bytes
 from eth_typing.encoding import HexStr
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Tuple, Any
 from functools import reduce
 from enum import Enum
 
@@ -33,14 +33,22 @@ chunk_bytes_input: Callable[[bytes], List[bytes]] = lambda input: [input[i+0:i+8
 print_bytes_array: Callable[[List[str]], str] = lambda arr: concat_arr(list(map(lambda a: a.hex()+'\n', arr)))
 print_ints_array: Callable[[List[str]], str] = lambda arr: concat_arr(list(map(lambda a: hex(a)+'\n', arr)))
 
-def rlp_string_to_words64(rlp: str, encoding: Encoding = Encoding.BIG) -> List[int]:
-    if len(rlp) < 2:
+def hex_string_to_words64(hex_input: str, encoding: Encoding = Encoding.BIG) -> List[int]:
+    if len(hex_input) < 2:
         raise Exception('Rlp string to short')
-    prefix = rlp[0:2]
-    if prefix == '0x': rlp = rlp[2:]
+    prefix = hex_input[0:2]
+    if prefix == '0x': hex_input = hex_input[2:]
 
-    chunked = [rlp[i+0:i+16] for i in range(0, len(rlp), 16)]
+    chunked = [hex_input[i+0:i+16] for i in range(0, len(hex_input), 16)]
+    return list(map(hex_string_big_to_int if encoding == Encoding.BIG else hex_string_little_to_int, chunked))
 
+def hex_string_to_nibbles(hex_input: str, encoding: Encoding = Encoding.BIG) -> List[int]:
+    if len(hex_input) < 2:
+        raise Exception('Hex string to short')
+    prefix = hex_input[0:2]
+    if prefix == '0x': hex_input = hex_input[2:]
+
+    chunked = [hex_input[i+0:i+2] for i in range(0, len(hex_input), 2)]
     return list(map(hex_string_big_to_int if encoding == Encoding.BIG else hex_string_little_to_int, chunked))
 
 def ints_array_to_bytes(ints_array: List[str], size: int) -> str:
@@ -79,10 +87,24 @@ def word64_to_nibbles(word: int, nibbles_len: int, accumulator: List[int] = []) 
         return accumulator + [word & 0xF]
     return word64_to_nibbles(word >> 4, nibbles_len-1, accumulator) + [(word & 0xF)]
 
+def words64_to_nibbles(input_words: List[int], input_size: int) -> List[int]:
+    (_, remainder) = divmod(input_size, 16)
+    acc = []
+    for i in range(0, len(input_words)):
+        word = input_words[i]
+        nibbles_len = 16
+        if i == len(input_words) - 1:
+            nibbles_len = remainder 
+        acc = word64_to_nibbles(word, nibbles_len, acc)
+    return acc
+
 def byte_to_nibbles(input_byte: int) -> Tuple[int, int]:
     nibble_1 = input_byte & 0x0F
     nibble_2 = ((input_byte & 0xF0) >> 4)
     return (nibble_1, nibble_2)
 
 def keccak_words64(input_words64: List[int], input_len: int) -> List[int]:
-    return rlp_string_to_words64(Web3.keccak(ints_array_to_bytes(input_words64, input_len)).hex())
+    return hex_string_to_words64(Web3.keccak(ints_array_to_bytes(input_words64, input_len)).hex())
+
+def compare_lists(a: List[Any], b: List[Any]):
+    return reduce(lambda i, j : i and j, map(lambda m, k: m == k, a, b), True)

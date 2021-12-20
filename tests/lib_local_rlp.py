@@ -1,6 +1,6 @@
 import pytest
 
-from utils.helpers import chunk_bytes_input, bytes_to_int, ints_array_to_bytes, random_bytes, rlp_string_to_words64
+from utils.helpers import chunk_bytes_input, bytes_to_int, ints_array_to_bytes, random_bytes, hex_string_to_words64
 from utils.rlp import extractData, count_items, to_list, extract_list_values
 
 from mocks.trie_proofs import trie_proofs
@@ -13,7 +13,7 @@ bytes_to_int_big = lambda word: bytes_to_int(word)
 @pytest.mark.asyncio
 async def test_count_items():
     input = trie_proofs[0]['accountProof'][0]
-    input_words64 = rlp_string_to_words64(input)
+    input_words64 = hex_string_to_words64(input)
 
     expected_items_count = 17
     items_count = count_items(input_words64, 0)
@@ -23,7 +23,7 @@ async def test_count_items():
 
 @pytest.mark.asyncio
 async def test_to_list():
-    input = rlp_string_to_words64(trie_proofs[0]['accountProof'][0])
+    input = hex_string_to_words64(trie_proofs[0]['accountProof'][0])
     items = to_list(input)
 
     print(items)
@@ -32,7 +32,7 @@ async def test_to_list():
 
 @pytest.mark.asyncio
 async def test_to_list_values():
-    input = rlp_string_to_words64(trie_proofs[0]['accountProof'][7])
+    input = hex_string_to_words64(trie_proofs[0]['accountProof'][7])
     items = to_list(input)
     for item in items:
         value = extractData(input, item.dataPosition, item.length)

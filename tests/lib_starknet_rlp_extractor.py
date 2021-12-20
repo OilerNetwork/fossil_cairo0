@@ -42,7 +42,7 @@ async def test_is_rlp_list_valid_input():
 async def test_is_rlp_list_invalid_input():
     starknet, extract_rlp_contract = await setup()
     
-    is_list_call = await extract_rlp_contract.test_is_rlp_list(0, [0xc382beef]).call()
+    is_list_call = await extract_rlp_contract.test_is_rlp_list(0, [0x82beef]).call()
     is_list = is_list_call.result.res
 
     assert is_list == 0

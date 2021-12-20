@@ -1,9 +1,8 @@
 from typing import List, Callable, NamedTuple
 from web3 import Web3
 
-from utils.helpers import rlp_string_to_words64, ints_array_to_bytes, keccak_words64
-from utils.rlp import extractData, getElement, isRlpList
-
+from utils.helpers import hex_string_to_words64, ints_array_to_bytes, keccak_words64
+from utils.rlp import extractData, getElement, to_list
 
 
 class LeafeNode(NamedTuple):
@@ -17,27 +16,6 @@ class BranchNode(NamedTuple):
 
 EMPTY_TRIE_ROOT_HASH = "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
 
-def decode_nibbles(input: List[int], skip_nibbles: int = 0) -> List[int]:
-    if len(input) == 0: raise Exception("Empty input")
-
-    input_byte_chunked: List[int] = []
-    for i in range(0, len(input)):
-        word_bytes: List[int] = []
-        for j in range(7, 0, -1):
-            word_bytes.append(input_byte_chunked[i] >> 8*j)
-        input_byte_chunked.extend(word_bytes)
-
-    length = len(input) * 8 * 2
-    if skip_nibbles > length: raise Exception("Skip nibbles to large")
-    length -= skip_nibbles
-
-    nibbles: List[int] = []
-
-    for i in range(skip_nibbles, skip_nibbles + length):
-        (_, r) = divmod(i, 2)
-        if r == 0:
-           nibbles.append()
-
 def verify_account_proof(
     account: List[int],
     root_hash: List[int],
@@ -47,7 +25,7 @@ def verify_account_proof(
     assert len(proof) == len(proof_lens)
 
     if len(proof) == 0:
-        assert root_hash == rlp_string_to_words64(EMPTY_TRIE_ROOT_HASH)
+        assert root_hash == hex_string_to_words64(EMPTY_TRIE_ROOT_HASH)
         return []
 
     next_hash = []
@@ -60,6 +38,12 @@ def verify_account_proof(
             assert root_hash == keccak_words64(element, element_len)
         else:
             assert next_hash == keccak_words64(element, element_len)
+
+        node = to_list(element)
+
+        # Handle leaf node
+        if len(node) == 2:
+            # TODO wtf is div
         
 
     
