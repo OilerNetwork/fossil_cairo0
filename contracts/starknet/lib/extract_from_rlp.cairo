@@ -12,12 +12,12 @@ struct RLPElement:
     member nextElementPosition : felt
 end
 
-struct RLPLength:
-    member value : felt
+struct RLPItem:
+    member length : felt
     member dataPosition : felt
 end
 
-func getElementLength{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: RLPLength):
+func getElementLength{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: RLPItem):
     alloc_locals
 
     let (_, firstByteArr: felt*) = extractData{ range_check_ptr = range_check_ptr }(position, 1, rlp, rlp_len)
@@ -26,13 +26,13 @@ func getElementLength{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: fe
     let (le_127) = is_le(firstByte, 127)
 
     if le_127 == 1:
-        local result: RLPLength = RLPLength(-1, position)
+        local result: RLPItem = RLPItem(-1, position)
         return (result)
     end
 
     let (le_183) = is_le(firstByte, 183)
     if le_183 == 1:
-        local result: RLPLength = RLPLength(firstByte-128, position+1)
+        local result: RLPItem = RLPItem(firstByte-128, position+1)
         return (result)
     end
 
@@ -42,7 +42,7 @@ func getElementLength{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: fe
         let (_, lengthArr: felt*) = extractData{ range_check_ptr = range_check_ptr }(position+1, lengthOfLength, rlp, rlp_len)
         let length = lengthArr[0]
 
-        local result: RLPLength = RLPLength(length, position+lengthOfLength)
+        local result: RLPItem = RLPItem(length, position+lengthOfLength)
         return (result)
     end
     ret
@@ -50,38 +50,38 @@ end
 
 func extractElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: RLPElement):
     alloc_locals
-    let (rlpLength: RLPLength) = getElementLength{ range_check_ptr = range_check_ptr }(rlp, rlp_len, position)
+    let (RLPItem: RLPItem) = getElementLength{ range_check_ptr = range_check_ptr }(rlp, rlp_len, position)
 
-    if rlpLength.value == -1:
-        let (local element_size: felt, local element: felt*) = extractData{ range_check_ptr = range_check_ptr }(rlpLength.dataPosition, 1, rlp, rlp_len)
-        local result: RLPElement = RLPElement(element, element_size, rlpLength.dataPosition + 1)
+    if RLPItem.length == -1:
+        let (local element_size: felt, local element: felt*) = extractData{ range_check_ptr = range_check_ptr }(RLPItem.dataPosition, 1, rlp, rlp_len)
+        local result: RLPElement = RLPElement(element, element_size, RLPItem.dataPosition + 1)
         tempvar range_check_ptr = range_check_ptr
         return (result)
     else: 
         tempvar range_check_ptr = range_check_ptr
     end
 
-    if rlpLength.value == 0:
+    if RLPItem.length == 0:
         let (local element: felt*) = alloc()
-        local result: RLPElement = RLPElement(element, 0, rlpLength.dataPosition)
+        local result: RLPElement = RLPElement(element, 0, RLPItem.dataPosition)
         tempvar range_check_ptr = range_check_ptr
         return (result)
     else: 
         tempvar range_check_ptr = range_check_ptr
     end
 
-    let (local element_size: felt, local element: felt*) = extractData{ range_check_ptr = range_check_ptr }(rlpLength.dataPosition, rlpLength.value, rlp, rlp_len)
-    local result: RLPElement = RLPElement(element, element_size, rlpLength.dataPosition + rlpLength.value)
+    let (local element_size: felt, local element: felt*) = extractData{ range_check_ptr = range_check_ptr }(RLPItem.dataPosition, RLPItem.length, rlp, rlp_len)
+    local result: RLPElement = RLPElement(element, element_size, RLPItem.dataPosition + RLPItem.length)
     return (result)
 end
 
 func jumpOverElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: felt):
-    let (rlpLength: RLPLength) = getElementLength{ range_check_ptr = range_check_ptr }(rlp, rlp_len, position)
+    let (RLPItem: RLPItem) = getElementLength{ range_check_ptr = range_check_ptr }(rlp, rlp_len, position)
 
-    if rlpLength.value == -1:
+    if RLPItem.length == -1:
         return (position + 1)
     else:
-        return (rlpLength.dataPosition + rlpLength.value)
+        return (RLPItem.dataPosition + RLPItem.length)
     end
 end
 
