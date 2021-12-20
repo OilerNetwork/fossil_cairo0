@@ -26,8 +26,6 @@ async def test_to_list():
     input = hex_string_to_words64(trie_proofs[0]['accountProof'][0])
     items = to_list(input)
 
-    print(items)
-
     assert len(items) == 17
 
 @pytest.mark.asyncio
@@ -36,7 +34,7 @@ async def test_to_list_values():
     items = to_list(input)
     for item in items:
         value = extractData(input, item.dataPosition, item.length)
-        print(ints_array_to_bytes(value, item.length).hex())
+        # print(ints_array_to_bytes(value, item.length).hex())
 
 # @pytest.mark.asyncio
 # async def test_random():

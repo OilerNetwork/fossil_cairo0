@@ -85,17 +85,20 @@ def word64_to_bytes_recursive_rev(word: int, word_len: int, accumulator = []):
 def word64_to_nibbles(word: int, nibbles_len: int, accumulator: List[int] = []) -> List[int]:
     if nibbles_len == 1:
         return accumulator + [word & 0xF]
-    return word64_to_nibbles(word >> 4, nibbles_len-1, accumulator) + [(word & 0xF)]
+    return word64_to_nibbles(word=(word >> 4), nibbles_len=nibbles_len-1, accumulator=accumulator) + [(word & 0xF)]
 
-def words64_to_nibbles(input_words: List[int], input_size: int) -> List[int]:
+def words64_to_nibbles(input_words: List[int], input_size: int, skip_nibbles: int = 0) -> List[int]:
     (_, remainder) = divmod(input_size, 16)
     acc = []
     for i in range(0, len(input_words)):
         word = input_words[i]
         nibbles_len = 16
-        if i == len(input_words) - 1:
-            nibbles_len = remainder 
-        acc = word64_to_nibbles(word, nibbles_len, acc)
+        if i == len(input_words) - 1: # For the last word skip empty bits
+            nibbles_len = remainder
+        if i == 0 and skip_nibbles > 0: # If first word and some nibbles skipped
+            acc.extend(word64_to_nibbles(word=word, nibbles_len=nibbles_len-skip_nibbles))
+        else:
+            acc.extend(word64_to_nibbles(word=word, nibbles_len=nibbles_len))
     return acc
 
 def byte_to_nibbles(input_byte: int) -> Tuple[int, int]:
