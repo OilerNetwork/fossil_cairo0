@@ -44,11 +44,10 @@ def count_shared_prefix_len(
             return count_shared_prefix_len(path_offset, path, path_len, node_path, node_path_len, current_index + 1)
 
 
-# TODO consider if the path-words can end with zeros if yes add a length
 def extract_nibble(words: List[int], input_len_bytes: int, position: int) -> int:
     assert position < input_len_bytes * 2
     (target_word, index) = divmod(position, 16)
-    return (words[target_word] >> (15 - index)) & 0xF
+    return (words[target_word] >> (4*(15 - index))) & 0xF
 
 
 def get_next_hash(rlp: List[int], node: RLPItem) -> List[int]:
@@ -58,12 +57,23 @@ def get_next_hash(rlp: List[int], node: RLPItem) -> List[int]:
     return res
 
 
-def verify_account_proof(
-    account: List[int],
+def verify_proof(
+    path: List[int],
     root_hash: List[int],
     proof: List[List[int]],
     proof_lens: List[int]
 ) -> List[int]:
+    """Verifies the correctness of a merkle-patricia proof
+    
+    Parameters:
+    path (List[int]): path(account for account proof, slot for storage proof) provided as nibbles. 32bytes
+    root_hash (List[int]): keccak256 root of the tree. 32 bytes provided as 4 64bit big endian words.
+    proof (List[List[int]]): Result of eth_getProof for either account or storage where each element of the proof is encoded to 64bit words encoded to big endian.
+    proof_lens (List[int]): Number of proof elements
+
+    Returns:
+    List[int]: Big endian encoded value of the merkle patricia tree node matching the provided arguments.
+    """
     assert len(proof) == len(proof_lens)
 
     if len(proof) == 0:
@@ -87,7 +97,7 @@ def verify_account_proof(
         # Handle leaf node
         if len(node) == 2:
             node_path = merkle_patricia_input_decode(extractData(element, node[0].dataPosition, node[0].length))
-            path_offset = count_shared_prefix_len(path_offset, root_hash, 32, node_path, node[0].length)
+            path_offset = count_shared_prefix_len(path_offset, words64_to_nibbles(path, 32), 32, node_path, node[0].length)
 
             if i == element_len - 1:
                 assert path_offset == 32 # Unexpected end of proof (leaf)
@@ -105,13 +115,13 @@ def verify_account_proof(
                 if path_offset + 1 == 32:
                     return extractData(element, node[16].dataPosition, node[16].length)
                 else:
-                    node_children = extract_nibble(root_hash, 32, path_offset)
+                    node_children = extract_nibble(path, 32, path_offset)
                     children = node[node_children]
                     assert len(extractData(element, children.dataPosition, children.length)) == 0
                     return []
             else:
                 assert path_offset < 32
-                node_children = extract_nibble(root_hash, 32, path_offset)
+                node_children = extract_nibble(path, 32, path_offset)
                 children = node[node_children]
 
                 path_offset += 1

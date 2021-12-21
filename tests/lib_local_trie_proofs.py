@@ -2,14 +2,17 @@ import pytest
 from brownie import accounts
 from itertools import chain
 from collections import Counter
+from utils.encode_proof import encode_proof
+from web3 import Web3
 
 from utils.helpers import (
     hex_string_to_words64,
     word64_to_nibbles,
     hex_string_to_nibbles,
-    words64_to_nibbles
+    words64_to_nibbles,
+    keccak_words64
 )
-from utils.benchmarks.trie_proofs import merkle_patricia_input_decode, verify_account_proof, count_shared_prefix_len
+from utils.benchmarks.trie_proofs import merkle_patricia_input_decode, verify_proof, count_shared_prefix_len, extract_nibble
 from mocks.trie_proofs import trie_proofs
 from utils.rlp import extract_list_values, to_list
 
@@ -105,20 +108,24 @@ def test_merkle_patricia_decode_leaf(TestTrieProofs):
     assert Counter(output) == Counter(hex_string_to_nibbles(expected_output))
 
 
-def test_verify_invalid_account_proof():
-    account = hex_string_to_words64('0x78e05971af7857d6114f7f896f9fd58d5c5d18e5')
-    root_hash = hex_string_to_words64('0x96c4bdfb8f2ad089200bad93f6216fe96652f9e2761b55bfd8a715ad3d6ecaf6')
-    with pytest.raises(Exception):
-        verify_account_proof(account, root_hash, [])
-
-
-def test_verify_invalid_account_proof():
+def test_verify_invalid_proof_account_not_hashed():
     account = hex_string_to_words64('0x78e05971af7857d6114f7f896f9fd58d5c5d18e5')
     root_hash = hex_string_to_words64('0x96c4bdfb8f2ad089200bad93f6216fe96652f9e2761b55bfd8a715ad3d6ecaf6')
     node = trie_proofs[0]['storageProof'][0]['proof'][0]
     proof = [hex_string_to_words64(node)]
     proof_lens = [int((len(node) - 2) / 2)]
-    res = verify_account_proof(account, root_hash, proof, proof_lens)
+    with pytest.raises(Exception):
+        verify_proof(account, root_hash, proof, proof_lens)
+
+
+def test_verify_invalid_proof_invalid_path():
+    account = keccak_words64(hex_string_to_words64('0x78e05971af7857d6114f7f896f9fd58d5c5d18e5'), 20)
+    root_hash = hex_string_to_words64('0x96c4bdfb8f2ad089200bad93f6216fe96652f9e2761b55bfd8a715ad3d6ecaf6')
+    node = trie_proofs[0]['storageProof'][0]['proof'][0]
+    proof = [hex_string_to_words64(node)]
+    proof_lens = [int((len(node) - 2) / 2)]
+    with pytest.raises(Exception):
+        verify_proof(account, root_hash, proof, proof_lens)
 
 
 def test_count_shared_prefix_len(TestTrieProofs):
@@ -141,3 +148,25 @@ def test_count_shared_prefix_len(TestTrieProofs):
     shared_prefix = count_shared_prefix_len(0, hex_string_to_words64(block_state_root), len(block_state_root) - 2, node_path_words64, len(leaf_node_value) - 2)
 
     assert (shared_prefix_expected) == (shared_prefix)
+
+
+def test_extract_nibbles(TestTrieProofs):
+    test_trie_proofs = accounts[0].deploy(TestTrieProofs)
+
+    input = '0x199c2e6b850bcc9beaea25bf1bacc5741a7aad954d28af9b23f4b53f5404937b'
+
+    for i in range(0, 64):
+        output_expected = test_trie_proofs.extractNibble(bytes.fromhex(input[2:]), i)
+        output = extract_nibble(hex_string_to_words64(input), 32, i)
+        assert output == output_expected
+
+
+def test_verify_valid_account_proof(TestTrieProofs):
+    test_trie_proofs = accounts[0].deploy(TestTrieProofs)
+
+    block_state_root = '0x2045bf4ea5561e88a4d0d9afbc316354e49fe892ac7e961a5e68f1f4b9561152'
+    proof = encode_proof(trie_proofs[1]['accountProof'])
+    proof_path = Web3.keccak(hexstr=trie_proofs[1]['address']).hex()
+
+    tx = test_trie_proofs.verify(proof, block_state_root, proof_path, {"from": accounts[0]})
+

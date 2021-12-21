@@ -1,8 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.9;
 
+import {RLP} from "../lib/RLP.sol";
+
 
 contract TestTrieProofs {
+    using RLP for RLP.RLPItem;
+    using RLP for bytes;
+
+    bytes32 internal constant EMPTY_TRIE_ROOT_HASH = 0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421;
+
     function extractNibble(bytes32 path, uint256 position) public pure returns (uint8 nibble) {
         require(position < 64, "Invalid nibble position");
         bytes1 shifted = position == 0 ? bytes1(path >> 4) : bytes1(path << ((position - 1) * 4));
@@ -58,5 +65,122 @@ contract TestTrieProofs {
             }
         }
         return i;
+    }
+
+    function getNextHash(RLP.RLPItem memory node) public pure returns (bytes32 nextHash) {
+        bytes memory nextHashBytes = node.toBytes();
+        require(nextHashBytes.length == 32, "Invalid node");
+
+        assembly { nextHash := mload(add(nextHashBytes, 0x20)) }
+    }
+
+    function verify(
+        bytes memory proofRLP,
+        bytes32 rootHash,
+        bytes32 path32
+    ) public pure returns (bytes memory value)
+    {
+        // TODO: Optimize by using word-size paths instead of byte arrays
+        bytes memory path = new bytes(32);
+        assembly { mstore(add(path, 0x20), path32) } // careful as path may need to be 64
+        path = decodeNibbles(path, 0); // lol, so efficient
+
+        RLP.RLPItem[] memory proof = proofRLP.toRLPItem().toList();
+
+        uint8 nodeChildren;
+        RLP.RLPItem memory children;
+
+        uint256 pathOffset = 0; // Offset of the proof
+        bytes32 nextHash; // Required hash for the next node
+
+        if (proof.length == 0) {
+            // Root hash of empty tx trie
+            require(rootHash == EMPTY_TRIE_ROOT_HASH, "Bad empty proof");
+            return new bytes(0);
+        }
+
+        for (uint256 i = 0; i < proof.length; i++) {
+            // We use the fact that an rlp encoded list consists of some
+            // encoding of its length plus the concatenation of its
+            // *rlp-encoded* items.
+            bytes memory rlpNode = proof[i].toRLPBytes(); // TODO: optimize by not encoding and decoding?
+
+            if (i == 0) {
+                require(rootHash == keccak256(rlpNode), "Bad first proof part");
+            } else {
+                require(nextHash == keccak256(rlpNode), "Bad hash");
+            }
+
+            RLP.RLPItem[] memory node = proof[i].toList();
+
+            // Extension or Leaf node
+            if (node.length == 2) {
+                /*
+                // TODO: wtf is a divergent node
+                // proof claims divergent extension or leaf
+                if (proofIndexes[i] == 0xff) {
+                    require(i >= proof.length - 1); // divergent node must come last in proof
+                    require(prefixLength != nodePath.length); // node isn't divergent
+                    require(pathOffset == path.length); // didn't consume entire path
+
+                    return new bytes(0);
+                }
+
+                require(proofIndexes[i] == 1); // an extension/leaf node only has two fields.
+                require(prefixLength == nodePath.length); // node is divergent
+                */
+
+                bytes memory nodePath = merklePatriciaCompactDecode(node[0].toBytes());
+                pathOffset += sharedPrefixLength(pathOffset, path, nodePath);
+
+                // last proof item
+                if (i == proof.length - 1) {
+                    require(pathOffset == path.length, " ");
+                    return node[1].toBytes(); // Data is the second item in a leaf node
+                } else {
+                    // not last proof item
+                    children = node[1];
+                    if (!children.isList()) {
+                        nextHash = getNextHash(children);
+                    } else {
+                        nextHash = keccak256(children.toRLPBytes());
+                    }
+                }
+            } else {
+                // Must be a branch node at this point
+                require(node.length == 17, "Invalid node length");
+
+                if (i == proof.length - 1) {
+                    // Proof ends in a branch node, exclusion proof in most cases
+                    if (pathOffset + 1 == path.length) {
+                        return node[16].toBytes();
+                    } else {
+                        nodeChildren = extractNibble(path32, pathOffset);
+                        children = node[nodeChildren];
+
+                        // Ensure that the next path item is empty, end of exclusion proof
+                        require(children.toBytes().length == 0, "Invalid exclusion proof");
+                        return new bytes(0);
+                    }
+                } else {
+                    require(pathOffset < path.length, "Continuing branch has depleted path");
+
+                    nodeChildren = extractNibble(path32, pathOffset);
+                    children = node[nodeChildren];
+
+                    pathOffset += 1; // advance by one
+
+                    // not last level
+                    if (!children.isList()) {
+                        nextHash = getNextHash(children);
+                    } else {
+                        nextHash = keccak256(children.toRLPBytes());
+                    }
+                }
+            }
+        }
+
+        // no invalid proof should ever reach this point
+        assert(false);
     }
 }
