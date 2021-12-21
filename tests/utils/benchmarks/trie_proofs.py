@@ -1,8 +1,8 @@
-from typing import List, Callable, NamedTuple
-from web3 import Web3
+from typing import List
+from utils.rlp import isRlpList
 
 from utils.helpers import hex_string_to_words64, keccak_words64, words64_to_nibbles, word64_to_nibbles
-from utils.rlp import extractData, getElement, to_list
+from utils.rlp import extractData, to_list, RLPItem
 
 
 EMPTY_TRIE_ROOT_HASH = "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
@@ -44,6 +44,20 @@ def count_shared_prefix_len(
             return count_shared_prefix_len(path_offset, path, path_len, node_path, node_path_len, current_index + 1)
 
 
+# TODO consider if the path-words can end with zeros if yes add a length
+def extract_nibble(words: List[int], input_len_bytes: int, position: int) -> int:
+    assert position < input_len_bytes * 2
+    (target_word, index) = divmod(position, 16)
+    return (words[target_word] >> (15 - index)) & 0xF
+
+
+def get_next_hash(rlp: List[int], node: RLPItem) -> List[int]:
+    assert node.length == 32
+    res = extractData(rlp, node.dataPosition, 32)
+    assert len(res) == 4
+    return res
+
+
 def verify_account_proof(
     account: List[int],
     root_hash: List[int],
@@ -57,6 +71,7 @@ def verify_account_proof(
         return []
 
     next_hash = []
+    path_offset = 0
 
     for i in range(0, len(proof)):
         element = proof[i]
@@ -71,6 +86,43 @@ def verify_account_proof(
 
         # Handle leaf node
         if len(node) == 2:
-            pass
-            # TODO wtf is div
+            node_path = merkle_patricia_input_decode(extractData(element, node[0].dataPosition, node[0].length))
+            path_offset = count_shared_prefix_len(path_offset, root_hash, 32, node_path, node[0].length)
+
+            if i == element_len - 1:
+                assert path_offset == 32 # Unexpected end of proof (leaf)
+                return extractData(element, node[1].dataPosition, node[1].length)
+            else:
+                children = node[1]
+                if not isRlpList(element, children.dataPosition):
+                    next_hash = get_next_hash(element, children)
+                else:
+                    next_hash = keccak_words64(element, children.length)
+        else:
+            assert len(node) == 17
+
+            if i == element_len - 1:
+                if path_offset + 1 == 32:
+                    return extractData(element, node[16].dataPosition, node[16].length)
+                else:
+                    node_children = extract_nibble(root_hash, 32, path_offset)
+                    children = node[node_children]
+                    assert len(extractData(element, children.dataPosition, children.length)) == 0
+                    return []
+            else:
+                assert path_offset < 32
+                node_children = extract_nibble(root_hash, 32, path_offset)
+                children = node[node_children]
+
+                path_offset += 1
+
+                if not isRlpList(element, children.dataPosition):
+                    next_hash = get_next_hash(element, children)
+                else:
+                    next_hash = keccak_words64(element, children.length)
+    assert False
+
+
+                
+            
         
