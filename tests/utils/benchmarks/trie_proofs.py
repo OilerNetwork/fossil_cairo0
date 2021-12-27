@@ -2,6 +2,7 @@ from typing import List
 from utils.rlp import isRlpList
 
 from utils.helpers import hex_string_to_words64, keccak_words64, words64_to_nibbles, word64_to_nibbles
+from utils.helpers import print_ints_array, concat_arr
 from utils.rlp import extractData, to_list, RLPItem
 
 
@@ -57,6 +58,7 @@ def get_next_hash(rlp: List[int], node: RLPItem) -> List[int]:
     return res
 
 
+# TODO check if 64 should be replaced with len(path)
 def verify_proof(
     path: List[int],
     root_hash: List[int],
@@ -69,7 +71,7 @@ def verify_proof(
     path (List[int]): path(account for account proof, slot for storage proof) provided as nibbles. 32bytes
     root_hash (List[int]): keccak256 root of the tree. 32 bytes provided as 4 64bit big endian words.
     proof (List[List[int]]): Result of eth_getProof for either account or storage where each element of the proof is encoded to 64bit words encoded to big endian.
-    proof_lens (List[int]): Number of proof elements
+    proof_lens (List[int]): Proof elements lengths
 
     Returns:
     List[int]: Big endian encoded value of the merkle patricia tree node matching the provided arguments.
@@ -84,6 +86,7 @@ def verify_proof(
     path_offset = 0
 
     for i in range(0, len(proof)):
+        print(i)
         element = proof[i]
         element_len = proof_lens[i]
 
@@ -96,23 +99,25 @@ def verify_proof(
 
         # Handle leaf node
         if len(node) == 2:
-            node_path = merkle_patricia_input_decode(extractData(element, node[0].dataPosition, node[0].length))
-            path_offset = count_shared_prefix_len(path_offset, words64_to_nibbles(path, 32), 32, node_path, node[0].length)
+            node_path = merkle_patricia_input_decode(extractData(element, node[0].dataPosition, node[0].length), node[0].length)
+                        
+            path_offset += count_shared_prefix_len(path_offset, words64_to_nibbles(path, 32), 32, node_path, node[0].length)
 
-            if i == element_len - 1:
-                assert path_offset == 32 # Unexpected end of proof (leaf)
+            if i == len(proof) - 1:
+                print(path_offset)
+                assert path_offset == 64 # Unexpected end of proof (leaf)
                 return extractData(element, node[1].dataPosition, node[1].length)
             else:
                 children = node[1]
                 if not isRlpList(element, children.dataPosition):
                     next_hash = get_next_hash(element, children)
                 else:
-                    next_hash = keccak_words64(element, children.length)
+                    next_hash = keccak_words64(extractData(element, children.dataPosition, children.length), children.length)
         else:
             assert len(node) == 17
 
             if i == element_len - 1:
-                if path_offset + 1 == 32:
+                if path_offset + 1 == 64:
                     return extractData(element, node[16].dataPosition, node[16].length)
                 else:
                     node_children = extract_nibble(path, 32, path_offset)
@@ -120,7 +125,7 @@ def verify_proof(
                     assert len(extractData(element, children.dataPosition, children.length)) == 0
                     return []
             else:
-                assert path_offset < 32
+                assert path_offset < 64
                 node_children = extract_nibble(path, 32, path_offset)
                 children = node[node_children]
 

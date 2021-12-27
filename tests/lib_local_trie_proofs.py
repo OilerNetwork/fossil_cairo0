@@ -168,5 +168,14 @@ def test_verify_valid_account_proof(TestTrieProofs):
     proof = encode_proof(trie_proofs[1]['accountProof'])
     proof_path = Web3.keccak(hexstr=trie_proofs[1]['address']).hex()
 
-    tx = test_trie_proofs.verify(proof, block_state_root, proof_path, {"from": accounts[0]})
+    test_trie_proofs.verify(proof, block_state_root, proof_path, {"from": accounts[0]})
+
+    proof_words64 = list(map(lambda element: hex_string_to_words64(element), trie_proofs[1]['accountProof']))
+    key = verify_proof(
+        hex_string_to_words64(proof_path),
+        hex_string_to_words64(block_state_root),
+        proof_words64,
+        list(map(lambda element: int((len(element) / 2) - 1), trie_proofs[1]['accountProof']))
+    )
+
 

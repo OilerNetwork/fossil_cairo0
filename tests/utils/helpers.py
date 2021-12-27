@@ -83,6 +83,7 @@ def word64_to_bytes_recursive_rev(word: int, word_len: int, accumulator = []):
     return word64_to_bytes_recursive_rev(word, word_len, accumulator) 
 
 def word64_to_nibbles(word: int, nibbles_len: int, accumulator: List[int] = []) -> List[int]:
+    assert nibbles_len > 0
     if nibbles_len == 1:
         return accumulator + [word & 0xF]
     return word64_to_nibbles(word=(word >> 4), nibbles_len=nibbles_len-1, accumulator=accumulator) + [(word & 0xF)]
@@ -94,7 +95,7 @@ def words64_to_nibbles(input_words: List[int], input_size: int, skip_nibbles: in
         word = input_words[i]
         nibbles_len = 16
         if i == len(input_words) - 1: # For the last word skip empty bits
-            nibbles_len = remainder
+            nibbles_len = 16 if remainder == 0 else remainder
         if i == 0 and skip_nibbles > 0: # If first word and some nibbles skipped
             acc.extend(word64_to_nibbles(word=word, nibbles_len=nibbles_len-skip_nibbles))
         else:
