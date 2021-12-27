@@ -1,8 +1,7 @@
-from typing import List
+from typing import List, Tuple
 from utils.rlp import isRlpList
 
 from utils.helpers import hex_string_to_words64, keccak_words64, words64_to_nibbles, word64_to_nibbles
-from utils.helpers import print_ints_array, concat_arr
 from utils.rlp import extractData, to_list, RLPItem
 
 
@@ -77,7 +76,7 @@ def verify_proof(
     root_hash: List[int],
     proof: List[List[int]],
     proof_lens: List[int]
-) -> List[int]:
+) -> Tuple[List[int], int]:
     """Verifies the correctness of a merkle-patricia proof
     
     Parameters:
@@ -88,12 +87,13 @@ def verify_proof(
 
     Returns:
     List[int]: Big endian encoded value of the merkle patricia tree node matching the provided arguments.
+    int: size of the key
     """
     assert len(proof) == len(proof_lens)
 
     if len(proof) == 0:
         assert root_hash == hex_string_to_words64(EMPTY_TRIE_ROOT_HASH)
-        return []
+        return ([], 0)
 
     next_hash = []
     path_offset = 0
@@ -115,7 +115,7 @@ def verify_proof(
             path_offset += count_shared_prefix_len(path_offset, words64_to_nibbles(path, 32), 64, node_path, len(node_path))
             if i == len(proof) - 1:
                 assert path_offset == 64 # Unexpected end of proof (leaf)
-                return extractData(element, node[1].dataPosition, node[1].length)
+                return (extractData(element, node[1].dataPosition, node[1].length), node[1].length)
             else:
                 children = node[1]
                 if not isRlpList(element, children.dataPosition):
@@ -127,12 +127,12 @@ def verify_proof(
 
             if i == element_len - 1:
                 if path_offset + 1 == 64:
-                    return extractData(element, node[16].dataPosition, node[16].length)
+                    return (extractData(element, node[16].dataPosition, node[16].length), node[16].length)
                 else:
                     node_children = extract_nibble(path, 32, path_offset)
                     children = node[node_children]
                     assert len(extractData(element, children.dataPosition, children.length)) == 0
-                    return []
+                    return ([], 0)
             else:
                 assert path_offset < 64
                 node_children = extract_nibble(path, 32, path_offset)
