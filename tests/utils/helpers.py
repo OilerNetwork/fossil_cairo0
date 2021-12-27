@@ -88,8 +88,8 @@ def word64_to_nibbles(word: int, nibbles_len: int, accumulator: List[int] = []) 
         return accumulator + [word & 0xF]
     return word64_to_nibbles(word=(word >> 4), nibbles_len=nibbles_len-1, accumulator=accumulator) + [(word & 0xF)]
 
-def words64_to_nibbles(input_words: List[int], input_size: int, skip_nibbles: int = 0) -> List[int]:
-    (_, remainder) = divmod(input_size, 16)
+def words64_to_nibbles(input_words: List[int], input_size_bytes: int, skip_nibbles: int = 0) -> List[int]:
+    (_, remainder) = divmod(input_size_bytes * 2, 16)
     acc = []
     for i in range(0, len(input_words)):
         word = input_words[i]

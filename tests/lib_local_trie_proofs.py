@@ -35,7 +35,7 @@ def test_word64_to_nibbles_skip_1(TestTrieProofs):
     input = '0x338cfc997a82252167ac25a16580d9730353eb1b9f0c6bbf0e4c82c4d0'
     words64 = hex_string_to_words64(input)
     
-    output = words64_to_nibbles(words64, (len(input) - 2), 1)
+    output = words64_to_nibbles(words64, int(len(input)/2) - 1, 1)
     expected_output_hex = str(test_trie_proofs.decodeNibbles(input, 1))
     expected_output = hex_string_to_nibbles(expected_output_hex)
 
@@ -48,7 +48,7 @@ def test_word64_to_nibbles_skip_2(TestTrieProofs):
     input = '0x338cfc997a82252167ac25a16580d9730353eb1b9f0c6bbf0e4c82c4d0'
     words64 = hex_string_to_words64(input)
     
-    output = words64_to_nibbles(words64, (len(input) - 2), 2)
+    output = words64_to_nibbles(words64, int(len(input)/2) - 1, 2)
     expected_output_hex = str(test_trie_proofs.decodeNibbles(input, 2))
     expected_output = hex_string_to_nibbles(expected_output_hex)
 
@@ -74,7 +74,7 @@ def test_decode_nibbles_extension_node(TestTrieProofs):
     test_trie_proofs = accounts[0].deploy(TestTrieProofs)
 
     expected_output = str(test_trie_proofs.decodeNibbles(extension_node, 0))
-    output = words64_to_nibbles(hex_string_to_words64(extension_node), len(extension_node) - 2)
+    output = words64_to_nibbles(hex_string_to_words64(extension_node), int(len(extension_node) / 2) - 1)
 
     assert Counter(output) == Counter(hex_string_to_nibbles(expected_output))
 
@@ -86,7 +86,7 @@ def test_decode_nibbles_branch_node(TestTrieProofs):
     test_trie_proofs = accounts[0].deploy(TestTrieProofs)
 
     expected_output = str(test_trie_proofs.decodeNibbles(branch_node, 0))
-    output = words64_to_nibbles(hex_string_to_words64(branch_node), len(branch_node) - 2)
+    output = words64_to_nibbles(hex_string_to_words64(branch_node), int(len(branch_node)/2) - 1)
 
     assert Counter(output) == Counter(hex_string_to_nibbles(expected_output))
 
@@ -102,7 +102,7 @@ def test_merkle_patricia_decode_leaf(TestTrieProofs):
 
     leaf_node_value = '0x338cfc997a82252167ac25a16580d9730353eb1b9f0c6bbf0e4c82c4d0'
 
-    output = merkle_patricia_input_decode(leaf_node_values[0], len(leaf_node_value) - 2)
+    output = merkle_patricia_input_decode(leaf_node_values[0], int(len(leaf_node_value)/2) - 1)
     expected_output = str(test_trie_proofs.merklePatriciaCompactDecode(leaf_node_value))
 
     assert Counter(output) == Counter(hex_string_to_nibbles(expected_output))
@@ -139,7 +139,7 @@ def test_count_shared_prefix_len(TestTrieProofs):
 
     leaf_node_value = '0x338cfc997a82252167ac25a16580d9730353eb1b9f0c6bbf0e4c82c4d0'
 
-    node_path_words64 = merkle_patricia_input_decode(leaf_node_values[0], len(leaf_node_value) - 2)
+    node_path_words64 = merkle_patricia_input_decode(leaf_node_values[0], int(len(leaf_node_value)/2) - 1)
     node_path = str(test_trie_proofs.merklePatriciaCompactDecode(leaf_node_value))
 
     block_state_root = '0x2045bf4ea5561e88a4d0d9afbc316354e49fe892ac7e961a5e68f1f4b9561152'

@@ -36,6 +36,19 @@ def count_shared_prefix_len(
     node_path_len: int,
     current_index: int = 0
 ) -> int:
+    """Checks the path nibbles VS node_path nibbles
+    
+    Parameters:
+    path_offset (int): Offset of already verified nibbles (in nibbles)
+    path (List[int]): A path to verify as a list nibbles (64 nibbles)
+    path_len (int): A length of path (in nibbles = 64)
+    node_path (List[int]): A node_path to check against path as a list of nibbles
+    node_path_len (int): A length of node_path (in nibbles)
+    current_index: (int): Used for recursion - a current nibble index
+
+    Returns:
+    (int): An offsett of path until which the nibbles are the same (should be added to existing path_offset)
+    """
     if current_index + path_offset >= path_len and current_index >= node_path_len:
         return current_index
     else:
@@ -68,7 +81,7 @@ def verify_proof(
     """Verifies the correctness of a merkle-patricia proof
     
     Parameters:
-    path (List[int]): path(account for account proof, slot for storage proof) provided as nibbles. 32bytes
+    path (List[int]): path(account for account proof, slot for storage proof) provided as a list of int words. 32bytes (64 nibbles)
     root_hash (List[int]): keccak256 root of the tree. 32 bytes provided as 4 64bit big endian words.
     proof (List[List[int]]): Result of eth_getProof for either account or storage where each element of the proof is encoded to 64bit words encoded to big endian.
     proof_lens (List[int]): Proof elements lengths
@@ -86,7 +99,6 @@ def verify_proof(
     path_offset = 0
 
     for i in range(0, len(proof)):
-        print(i)
         element = proof[i]
         element_len = proof_lens[i]
 
@@ -100,11 +112,8 @@ def verify_proof(
         # Handle leaf node
         if len(node) == 2:
             node_path = merkle_patricia_input_decode(extractData(element, node[0].dataPosition, node[0].length), node[0].length)
-                        
-            path_offset += count_shared_prefix_len(path_offset, words64_to_nibbles(path, 32), 32, node_path, node[0].length)
-
+            path_offset += count_shared_prefix_len(path_offset, words64_to_nibbles(path, 32), 64, node_path, len(node_path))
             if i == len(proof) - 1:
-                print(path_offset)
                 assert path_offset == 64 # Unexpected end of proof (leaf)
                 return extractData(element, node[1].dataPosition, node[1].length)
             else:
