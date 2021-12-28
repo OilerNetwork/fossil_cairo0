@@ -1,10 +1,9 @@
 import pytest
-from utils.helpers import chunk_bytes_input, bytes_to_int, ints_array_to_bytes
 from utils.block_header import build_block_header
 from utils.benchmarks.blockheader_rlp_extractor import getBeneficiary, getParentHash, getOmmersHash, getStateRoot, getBlocknumber, getDifficulty, getTransactionsRoot, getReceiptsRoot, getGasLimit, getGasUsed, getTimestamp
 from mocks.blocks import mocked_blocks
+from utils.types import Data, IntsSequence
 
-bytes_to_int_big = lambda word: bytes_to_int(word)
 
 @pytest.mark.asyncio
 async def test_decode_parent_hash():
@@ -14,10 +13,9 @@ async def test_decode_parent_hash():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp_formatted = Data.from_bytes(block_rlp)
 
-    extracted_hash = ints_array_to_bytes(getParentHash(block_rlp_formatted), 32)
+    extracted_hash = Data.from_ints(IntsSequence(values=getParentHash(block_rlp_formatted), length=32)).to_bytes()
 
     assert block["parentHash"] == extracted_hash
 
@@ -29,10 +27,9 @@ async def test_decode_uncles_hash():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp_formatted = Data.from_bytes(block_rlp)
 
-    extracted_hash = ints_array_to_bytes(getOmmersHash(block_rlp_formatted), 32)
+    extracted_hash = Data.from_ints(IntsSequence(values=getOmmersHash(block_rlp_formatted), length=32)).to_bytes()
 
     assert block["sha3Uncles"] == extracted_hash
 
@@ -44,10 +41,9 @@ async def test_decode_beneficiary():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp_formatted = Data.from_bytes(block_rlp)
 
-    extracted_hash = ints_array_to_bytes(getBeneficiary(block_rlp_formatted), 20)
+    extracted_hash = Data.from_ints(IntsSequence(values=getBeneficiary(block_rlp_formatted), length=32)).to_bytes()
 
     assert bytes.fromhex(block["miner"][2:]) == extracted_hash
 
@@ -59,10 +55,9 @@ async def test_decode_state_root():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp_formatted = Data.from_bytes(block_rlp)
 
-    extracted_hash = ints_array_to_bytes(getStateRoot(block_rlp_formatted), 32)
+    extracted_hash = Data.from_ints(IntsSequence(values=getStateRoot(block_rlp_formatted), length=32)).to_bytes()
 
     assert block["stateRoot"] == extracted_hash
 
@@ -74,10 +69,9 @@ async def test_decode_transactions_root():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp_formatted = Data.from_bytes(block_rlp)
 
-    extracted_hash = ints_array_to_bytes(getTransactionsRoot(block_rlp_formatted), 32)
+    extracted_hash = Data.from_ints(IntsSequence(values=getTransactionsRoot(block_rlp_formatted), length=32)).to_bytes()
 
     assert block["transactionsRoot"] == extracted_hash
 
@@ -89,10 +83,9 @@ async def test_decode_receipts_root():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp_formatted = Data.from_bytes(block_rlp)
 
-    extracted_hash = ints_array_to_bytes(getReceiptsRoot(block_rlp_formatted), 32)
+    extracted_hash = Data.from_ints(IntsSequence(values=getReceiptsRoot(block_rlp_formatted), length=32)).to_bytes()
 
     assert block["receiptsRoot"] == extracted_hash
 
@@ -104,8 +97,7 @@ async def test_decode_difficulty():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp_formatted = Data.from_bytes(block_rlp)
 
     difficulty = getDifficulty(block_rlp_formatted)
 
@@ -119,8 +111,7 @@ async def test_decode_block_number():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp_formatted = Data.from_bytes(block_rlp)
 
     block_number = getBlocknumber(block_rlp_formatted)
 
@@ -135,8 +126,7 @@ async def test_decode_gasLimit():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp_formatted = Data.from_bytes(block_rlp)
 
     gasLimit = getGasLimit(block_rlp_formatted)
 
@@ -151,8 +141,7 @@ async def test_decode_getGasUsed():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp_formatted = Data.from_bytes(block_rlp)
 
     gasUsed = getGasUsed(block_rlp_formatted)
 
@@ -168,8 +157,7 @@ async def test_decode_getTimestamp():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp_formatted = Data.from_bytes(block_rlp)
 
     timestamp = getTimestamp(block_rlp_formatted)
 
