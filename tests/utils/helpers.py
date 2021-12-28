@@ -37,14 +37,14 @@ chunk_bytes_input: Callable[[bytes], List[bytes]] = lambda input: [input[i+0:i+8
 print_bytes_array: Callable[[List[str]], str] = lambda arr: concat_arr(list(map(lambda a: a.hex()+'\n', arr)))
 print_ints_array: Callable[[List[str]], str] = lambda arr: concat_arr(list(map(lambda a: hex(a)+'\n', arr)))
 
-def hex_string_to_words64(hex_input: str, encoding: Encoding = Encoding.BIG) -> List[int]:
+def hex_string_to_words64(hex_input: str, encoding: Encoding = Encoding.BIG) -> IntsSequence:
     if len(hex_input) < 2:
         raise Exception('Rlp string to short')
     prefix = hex_input[0:2]
     if prefix == '0x': hex_input = hex_input[2:]
 
     chunked = [hex_input[i+0:i+16] for i in range(0, len(hex_input), 16)]
-    return list(map(hex_string_big_to_int if encoding == Encoding.BIG else hex_string_little_to_int, chunked))
+    return IntsSequence(list(map(hex_string_big_to_int if encoding == Encoding.BIG else hex_string_little_to_int, chunked)), int(len(hex_input)/2))
 
 def hex_string_to_nibbles(hex_input: str, encoding: Encoding = Encoding.BIG) -> List[int]:
     if len(hex_input) < 2:
@@ -55,16 +55,16 @@ def hex_string_to_nibbles(hex_input: str, encoding: Encoding = Encoding.BIG) -> 
     chunked = [hex_input[i+0:i+2] for i in range(0, len(hex_input), 2)]
     return list(map(hex_string_big_to_int if encoding == Encoding.BIG else hex_string_little_to_int, chunked))
 
-def ints_array_to_bytes(ints_array: List[int], size: int) -> bytes:
-    full_words, remainder = divmod(size, 8)
+def ints_array_to_bytes(input: IntsSequence) -> bytes:
+    full_words, remainder = divmod(input.length, 8)
 
     bytes_array = b''
 
     for i in range(full_words):
-        bytes_array += ints_array[i].to_bytes(8, "big")
+        bytes_array += input.values[i].to_bytes(8, "big")
 
     if remainder > 0:
-        bytes_array += ints_array[full_words].to_bytes(remainder, "big")
+        bytes_array += input.values[full_words].to_bytes(remainder, "big")
     
     return bytes_array
 
@@ -116,8 +116,8 @@ def byte_to_nibbles(input_byte: int) -> Tuple[int, int]:
     nibble_2 = ((input_byte & 0xF0) >> 4)
     return (nibble_1, nibble_2)
 
-def keccak_words64(input_words64: List[int], input_len: int) -> List[int]:
-    return hex_string_to_words64(Web3.keccak(ints_array_to_bytes(input_words64, input_len)).hex())
+def keccak_words64(input: IntsSequence) -> IntsSequence:
+    return hex_string_to_words64(Web3.keccak(ints_array_to_bytes(input)).hex())
 
 def compare_lists(a: List[Any], b: List[Any]):
     return reduce(lambda i, j : i and j, map(lambda m, k: m == k, a, b), True)

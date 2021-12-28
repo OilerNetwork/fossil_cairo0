@@ -3,17 +3,22 @@ from utils.types import Data, IntsSequence
 
 #to_nibbles
 
-def test_from_nibbles_empty_array():
+def test_to_nibbles_empty_array():
     input = []
     res = Data.from_nibbles(input)
     assert res.to_nibbles() == input
 
-def test_from_nibbles_even_len_2():
+def test_to_nibbles_odd_len():
+    input = [3, 5, 2, 5, 6]
+    res = Data.from_nibbles(input)
+    assert res.to_nibbles() == input
+
+def test_to_nibbles_even_len_2():
     input = [3, 5]
     res = Data.from_nibbles(input)
     assert res.to_nibbles() == input
 
-def test_from_nibbles_even_len_6():
+def test_to_nibbles_even_len_6():
     input = [3, 5, 8, 7, 4, 7]
     res = Data.from_nibbles(input)
     assert res.to_nibbles() == input
@@ -135,8 +140,8 @@ def test_from_nibbles_empty_array():
 
 def test_from_nibbles_odd_len():
     input = [3, 5, 2, 5, 6]
-    with pytest.raises(Exception):
-        res = Data.from_nibbles(input)
+    res = Data.from_nibbles(input)
+    assert res.to_bytes() == b'\x03\x52\x56'
 
 def test_from_nibbles_even_len_2():
     input = [3, 5]

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import List, NamedTuple
 from enum import Enum
-from utils.helpers import chunk_bytes_input, words64_to_nibbles, ints_array_to_bytes, concat_arr
+from utils.helpers import chunk_bytes_input, ints_array_to_bytes, concat_arr
 
 
 class IntsSequence(NamedTuple):
@@ -40,11 +40,12 @@ class Data:
         for byte in raw_bytes:
             output.append(byte >> 4)
             output.append(byte % 2**4)
+
         return output[1:] if self.odd_nibbles else output
 
     @staticmethod
     def from_ints(input: IntsSequence) -> Data:
-        raw_bytes = ints_array_to_bytes(input.values, input.length)
+        raw_bytes = ints_array_to_bytes(input)
         return Data(raw_bytes)
 
     @staticmethod
@@ -57,11 +58,11 @@ class Data:
         return Data(input)
 
     @staticmethod
-    def from_nibbles(nibbles: List[int], encoding: Encoding = Encoding.BIG) -> Data:
+    def from_nibbles(raw_nibbles: List[int], encoding: Encoding = Encoding.BIG) -> Data:
         single_bytes = []
 
-        odd_nibbles = len(nibbles) % 2 != 0
-        if odd_nibbles: nibbles.insert(0, 0)
+        odd_nibbles = len(raw_nibbles) % 2 != 0
+        nibbles = [0] + raw_nibbles if odd_nibbles else raw_nibbles
 
         if len(nibbles) == 0: return Data(b'')
         

@@ -5,6 +5,10 @@ from collections import Counter
 from utils.encode_proof import encode_proof
 from web3 import Web3
 
+from rlp import decode
+
+from utils.types import Data
+
 from utils.helpers import (
     hex_string_to_words64,
     hex_string_to_nibbles,
@@ -14,7 +18,6 @@ from utils.helpers import (
 from utils.benchmarks.trie_proofs import merkle_patricia_input_decode, verify_proof, count_shared_prefix_len, extract_nibble
 from mocks.trie_proofs import trie_proofs
 from utils.rlp import extract_list_values, to_list
-from utils.types import Data
 
 
 def test_word64_to_nibbles_skip_0(TestTrieProofs):
@@ -97,18 +100,18 @@ def test_decode_nibbles_branch_node(TestTrieProofs):
 def test_merkle_patricia_decode_leaf(TestTrieProofs):
     test_trie_proofs = accounts[0].deploy(TestTrieProofs)
     account_proof = trie_proofs[0]['accountProof']
-    leaf_node = account_proof[len(account_proof) - 1]
-    leaf_node_64 = hex_string_to_words64(leaf_node)
+    leaf_node = Data.from_hex(account_proof[len(account_proof) - 1])
 
-    leaf_node_items = to_list(leaf_node_64)
-    leaf_node_values = extract_list_values(leaf_node_64, leaf_node_items)
+    leaf_node_items = to_list(leaf_node.to_ints().values)
+    leaf_node_values = extract_list_values(leaf_node.to_ints().values, leaf_node_items)
 
-    leaf_node_value = '0x338cfc997a82252167ac25a16580d9730353eb1b9f0c6bbf0e4c82c4d0'
+    leaf_node_value = decode(leaf_node.to_bytes())[0]
 
-    output = merkle_patricia_input_decode(leaf_node_values[0], int(len(leaf_node_value)/2) - 1)
-    expected_output = str(test_trie_proofs.merklePatriciaCompactDecode(leaf_node_value))
+    output = Data.from_nibbles(merkle_patricia_input_decode(leaf_node_values[0]))
+    expected_output_bytes = Data.from_hex(str(test_trie_proofs.merklePatriciaCompactDecode(leaf_node_value))).to_bytes()
+    expected_output = Data.from_nibbles(list(expected_output_bytes))
 
-    assert Counter(output) == Counter(hex_string_to_nibbles(expected_output))
+    assert output == expected_output
 
 
 def test_verify_invalid_proof_account_not_hashed():
@@ -122,7 +125,7 @@ def test_verify_invalid_proof_account_not_hashed():
 
 
 def test_verify_invalid_proof_invalid_path():
-    account = keccak_words64(hex_string_to_words64('0x78e05971af7857d6114f7f896f9fd58d5c5d18e5'), 20)
+    account = keccak_words64(Data.from_hex('0x78e05971af7857d6114f7f896f9fd58d5c5d18e5').to_ints())
     root_hash = hex_string_to_words64('0x96c4bdfb8f2ad089200bad93f6216fe96652f9e2761b55bfd8a715ad3d6ecaf6')
     node = trie_proofs[0]['storageProof'][0]['proof'][0]
     proof = [hex_string_to_words64(node)]
@@ -134,52 +137,50 @@ def test_verify_invalid_proof_invalid_path():
 def test_count_shared_prefix_len(TestTrieProofs):
     test_trie_proofs = accounts[0].deploy(TestTrieProofs)
     proof = trie_proofs[1]['accountProof']
-    leaf_node = proof[len(proof) - 1]
-    leaf_node_64 = hex_string_to_words64(leaf_node)
+    leaf_node = Data.from_hex(proof[len(proof) - 1])
 
-    leaf_node_items = to_list(leaf_node_64)
-    leaf_node_values = extract_list_values(leaf_node_64, leaf_node_items)
+    leaf_node_items = to_list(leaf_node.to_ints().values)
+    leaf_node_values = extract_list_values(leaf_node.to_ints().values, leaf_node_items)
 
-    leaf_node_value = '0x338cfc997a82252167ac25a16580d9730353eb1b9f0c6bbf0e4c82c4d0'
+    leaf_node_value = decode(leaf_node.to_bytes())[0]
 
-    node_path_words64 = merkle_patricia_input_decode(leaf_node_values[0], int(len(leaf_node_value)/2) - 1)
-    node_path = str(test_trie_proofs.merklePatriciaCompactDecode(leaf_node_value))
+    node_path_nibbles = merkle_patricia_input_decode(leaf_node_values[0])
+    node_path = test_trie_proofs.merklePatriciaCompactDecode(leaf_node_value)
 
-    block_state_root = '0x2045bf4ea5561e88a4d0d9afbc316354e49fe892ac7e961a5e68f1f4b9561152'
+    block_state_root = Data.from_hex('0x2045bf4ea5561e88a4d0d9afbc316354e49fe892ac7e961a5e68f1f4b9561152')
 
-    shared_prefix_expected = test_trie_proofs.sharedPrefixLength(0, block_state_root, node_path)
-    shared_prefix = count_shared_prefix_len(0, hex_string_to_words64(block_state_root), len(block_state_root) - 2, node_path_words64, len(leaf_node_value) - 2)
+    shared_prefix_expected = test_trie_proofs.sharedPrefixLength(0, block_state_root.to_bytes(), node_path)
+    shared_prefix = count_shared_prefix_len(0, block_state_root.to_nibbles(), node_path_nibbles)
 
-    assert (shared_prefix_expected) == (shared_prefix)
+    assert shared_prefix_expected == shared_prefix
 
 
-def test_extract_nibbles(TestTrieProofs):
+def test_extract_nibble(TestTrieProofs):
     test_trie_proofs = accounts[0].deploy(TestTrieProofs)
 
-    input = '0x199c2e6b850bcc9beaea25bf1bacc5741a7aad954d28af9b23f4b53f5404937b'
+    input = Data.from_hex('0x199c2e6b850bcc9beaea25bf1bacc5741a7aad954d28af9b23f4b53f5404937b')
 
-    for i in range(0, 64):
-        output_expected = test_trie_proofs.extractNibble(bytes.fromhex(input[2:]), i)
-        output = extract_nibble(hex_string_to_words64(input), 32, i)
+    for i in range(0, len(input.to_nibbles())):
+        output_expected = test_trie_proofs.extractNibble(input.to_bytes(), i)
+        output = extract_nibble(input.to_ints(), i)
         assert output == output_expected
 
 
 def test_verify_valid_account_proof(TestTrieProofs):
     test_trie_proofs = accounts[0].deploy(TestTrieProofs)
 
-    block_state_root = '0x2045bf4ea5561e88a4d0d9afbc316354e49fe892ac7e961a5e68f1f4b9561152'
-    proof = encode_proof(trie_proofs[1]['accountProof'])
-    proof_path = Web3.keccak(hexstr=trie_proofs[1]['address']).hex()
+    block_state_root = Data.from_hex('0x2045bf4ea5561e88a4d0d9afbc316354e49fe892ac7e961a5e68f1f4b9561152')
+    proof = Data.from_hex(encode_proof(trie_proofs[1]['accountProof']))
+    proof_path = Data.from_hex(Web3.keccak(hexstr=trie_proofs[1]['address']).hex())
 
-    expected_key = test_trie_proofs.verify(proof, block_state_root, proof_path, {"from": accounts[0]})
-    (key_words64, _) = verify_proof(
-        hex_string_to_words64(proof_path),
-        hex_string_to_words64(block_state_root),
-        list(map(lambda element: hex_string_to_words64(element), trie_proofs[1]['accountProof'])),
-        list(map(lambda element: int((len(element) / 2) - 1), trie_proofs[1]['accountProof']))
-    )
+    expected_key = Data.from_hex(str(test_trie_proofs.verify(proof.to_bytes(), block_state_root.to_bytes(), proof_path.to_bytes(), {"from": accounts[0]})))
+    key = Data.from_ints(verify_proof(
+        proof_path.to_ints(),
+        block_state_root.to_ints(),
+        list(map(lambda element: Data.from_hex(element).to_ints(), trie_proofs[1]['accountProof']))
+    ))
 
-    assert key_words64 == hex_string_to_words64(str(expected_key))
+    assert key == expected_key
     
 
 

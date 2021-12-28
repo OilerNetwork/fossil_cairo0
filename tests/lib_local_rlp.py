@@ -25,10 +25,10 @@ async def test_to_list():
 
 @pytest.mark.asyncio
 async def test_to_list_values():
-    input = trie_proofs[0]['accountProof'][7]
-    items = to_list(Data.from_hex(input).to_ints().values)
+    input = Data.from_hex(trie_proofs[0]['accountProof'][7])
+    items = to_list(input.to_ints().values)
     for item in items:
-        value = extractData(input, item.dataPosition, item.length)
+        value = extractData(input.to_ints().values, item.dataPosition, item.length)
         # print(ints_array_to_bytes(value, item.length).hex())
 
 # @pytest.mark.asyncio
