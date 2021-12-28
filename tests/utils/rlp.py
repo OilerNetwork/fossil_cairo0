@@ -1,9 +1,6 @@
 from typing import List, NamedTuple
+from utils.types import IntsSequence
 
-
-class RLPElement(NamedTuple):
-    payload: List[int]
-    payload_length: int
 
 class RLPItem(NamedTuple):
     dataPosition: int
@@ -13,7 +10,7 @@ class RLPItem(NamedTuple):
 # if length is -1 then data is at the returned position
 def getElement(rlp: List[int], position: int) -> RLPItem:
     #print(extractData(rlp, position, 16))
-    firstByte = extractData(rlp, position, 1)[0]
+    firstByte = extractData(rlp, position, 1).values[0]
 
     if firstByte <= 127:
         return RLPItem(position, 1)
@@ -23,36 +20,36 @@ def getElement(rlp: List[int], position: int) -> RLPItem:
 
     if firstByte <= 191:
         lengthOfLength = firstByte - 183
-        length = extractData(rlp, position + 1, lengthOfLength)[0]
+        length = extractData(rlp, position + 1, lengthOfLength).values[0]
         return RLPItem(position + 1 + lengthOfLength, length)
 
     if firstByte <= 247:
         return  RLPItem(position + 1, firstByte - 192)
 
     lengthOfLength = firstByte - 247
-    length = extractData(rlp, position + 1, lengthOfLength)[0]
+    length = extractData(rlp, position + 1, lengthOfLength).values[0]
     return RLPItem(position + 1 + lengthOfLength, length)
 
 
 def isRlpList(rlp: List[int], position: int) -> bool:
-    firstByte = extractData(rlp, position, 1)[0]
+    firstByte = extractData(rlp, position, 1).values[0]
     return firstByte >= 192
 
 # returns RLPElement - list of ints, and a position of next element
-def extractElement(rlp: List[int], position: int) -> RLPElement:
+def extractElement(rlp: List[int], position: int) -> IntsSequence:
     dataPosition, length = getElement(rlp, position)
 
     if length == 0:
-        return RLPElement([], dataPosition)
+        return IntsSequence([], dataPosition)
 
-    return RLPElement(extractData(rlp, dataPosition, length), dataPosition + length)
+    return extractData(rlp, dataPosition, length)
 
 # returns next element position
 def jumpOverElement(rlp: List[int], position: int) -> int:
     dataPosition, length = getElement(rlp, position)
     return dataPosition + length
     
-def extractData(rlp: List[int], start_pos: int, size: int) -> List[int]:
+def extractData(rlp: List[int], start_pos: int, size: int) -> IntsSequence:
     start_word, left_shift = divmod(start_pos, 8)
     end_word, end_pos = divmod(start_pos + size, 8)
 
@@ -87,7 +84,7 @@ def extractData(rlp: List[int], start_pos: int, size: int) -> List[int]:
             final_word_mask = 2 ** ((end_pos-left_shift)*8) - 1
             new_words.append(final_word_shifted & final_word_mask)
 
-    return new_words
+    return IntsSequence(values=new_words, length=size)
 
 
 def count_items(rlp: List[int], pos: int = 0) -> int:
@@ -117,9 +114,8 @@ def to_list(rlp: List[int]) -> List[RLPItem]:
         res.append(RLPItem(element_pos, element_len))
     return res
 
-def extract_list_values(rlp: List[int], rlp_items: List[RLPItem]) -> List[List[int]]:
-    res: List[List[int]] = []
+def extract_list_values(rlp: List[int], rlp_items: List[RLPItem]) -> List[IntsSequence]:
+    res = []
     for rlp_item in rlp_items:
-        value = extractData(rlp, rlp_item.dataPosition, rlp_item.length)
-        res.append(value)
+        res.append(extractData(rlp, rlp_item.dataPosition, rlp_item.length))
     return res
