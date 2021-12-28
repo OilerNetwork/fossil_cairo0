@@ -1,7 +1,59 @@
 import pytest
 from utils.types import Data, IntsSequence
 
+#to_nibbles
 
+def test_from_nibbles_empty_array():
+    input = []
+    res = Data.from_nibbles(input)
+    assert res.to_nibbles() == input
+
+def test_from_nibbles_even_len_2():
+    input = [3, 5]
+    res = Data.from_nibbles(input)
+    assert res.to_nibbles() == input
+
+def test_from_nibbles_even_len_6():
+    input = [3, 5, 8, 7, 4, 7]
+    res = Data.from_nibbles(input)
+    assert res.to_nibbles() == input
+
+#to_ints
+
+def test_to_ints_empty_ints():
+    input = IntsSequence([], 0)
+    res = Data.from_ints(input)
+    assert res.to_ints() == input
+
+def test_to_ints_nonfull():
+    input = IntsSequence([123], 1)
+    res = Data.from_ints(input)
+    assert res.to_ints() == input
+
+def test_to_ints_leading_zeroes():
+    input = IntsSequence([123], 2)
+    res = Data.from_ints(input)
+    assert res.to_ints() == input
+
+def test_to_ints_just_zeroes():
+    input = IntsSequence([0], 2)
+    res = Data.from_ints(input)
+    assert res.to_ints() == input
+
+def test_to_ints_full_byte():
+    input = IntsSequence([12379813738877118345], 8)
+    res = Data.from_ints(input)
+    assert res.to_ints() == input
+
+def test_to_ints_full_byte_and_a_bit():
+    input = IntsSequence([12379813738877118345,123], 9)
+    res = Data.from_ints(input)
+    assert res.to_ints() == input
+
+def test_to_ints_two_full_bytes():
+    input = IntsSequence([12379813738877118345,12379813738877118345], 16)
+    res = Data.from_ints(input)
+    assert res.to_ints() == input
 
 #from_ints
 
