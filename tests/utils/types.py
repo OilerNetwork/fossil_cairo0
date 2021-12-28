@@ -20,6 +20,9 @@ class Data:
     def __init__(self, value: bytes):
         self.raw_bytes = value
 
+    def to_bytes(self) -> bytes:
+        return self.raw_bytes
+
     def to_ints(self, encoding: Encoding = Encoding.BIG) -> IntsSequence:
         chunked = chunk_bytes_input(self.raw_bytes)
         ints_array = list(map(lambda chunk: int.from_bytes(chunk, encoding.value), chunked)) 
