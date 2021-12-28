@@ -1,3 +1,4 @@
+from __future__ import annotations
 from secrets import token_bytes
 from eth_typing.encoding import HexStr
 from typing import Callable, List, Tuple, Any
@@ -51,7 +52,7 @@ def hex_string_to_nibbles(hex_input: str, encoding: Encoding = Encoding.BIG) -> 
     chunked = [hex_input[i+0:i+2] for i in range(0, len(hex_input), 2)]
     return list(map(hex_string_big_to_int if encoding == Encoding.BIG else hex_string_little_to_int, chunked))
 
-def ints_array_to_bytes(ints_array: List[str], size: int) -> str:
+def ints_array_to_bytes(ints_array: List[int], size: int) -> bytes:
     full_words, remainder = divmod(size, 8)
 
     bytes_array = b''
