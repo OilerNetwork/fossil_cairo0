@@ -7,7 +7,6 @@ from web3 import Web3
 
 from utils.helpers import (
     hex_string_to_words64,
-    word64_to_nibbles,
     hex_string_to_nibbles,
     words64_to_nibbles,
     keccak_words64
@@ -15,44 +14,43 @@ from utils.helpers import (
 from utils.benchmarks.trie_proofs import merkle_patricia_input_decode, verify_proof, count_shared_prefix_len, extract_nibble
 from mocks.trie_proofs import trie_proofs
 from utils.rlp import extract_list_values, to_list
+from utils.types import Data
 
 
 def test_word64_to_nibbles_skip_0(TestTrieProofs):
     test_trie_proofs = accounts[0].deploy(TestTrieProofs)
 
-    input = '0x338cfc997a82252167ac25a16580d9730353eb1b9f0c6bbf0e4c82c4d0'
-    word64 = hex_string_to_words64(input)[0]
+    input = Data.from_hex('0x338cfc997a82252167ac25a16580d9730353eb1b9f0c6bbf0e4c82c4d0')
     
-    output = word64_to_nibbles(word64, 16)
-    expected_output_hex = str(test_trie_proofs.decodeNibbles(input, 0))
-    expected_output = hex_string_to_nibbles(expected_output_hex)
-    assert expected_output[0:16] == output[0:16]
+    output = Data.from_nibbles(words64_to_nibbles(input.to_ints()))
+    expected_output_bytes = Data.from_hex(str(test_trie_proofs.decodeNibbles(input.to_hex(), 0))).to_bytes()
+    expected_output = Data.from_nibbles(list(expected_output_bytes))
+
+    assert output == expected_output
 
 
 def test_word64_to_nibbles_skip_1(TestTrieProofs):
     test_trie_proofs = accounts[0].deploy(TestTrieProofs)
 
-    input = '0x338cfc997a82252167ac25a16580d9730353eb1b9f0c6bbf0e4c82c4d0'
-    words64 = hex_string_to_words64(input)
+    input = Data.from_hex('0x338cfc997a82252167ac25a16580d9730353eb1b9f0c6bbf0e4c82c4d0')
     
-    output = words64_to_nibbles(words64, int(len(input)/2) - 1, 1)
-    expected_output_hex = str(test_trie_proofs.decodeNibbles(input, 1))
-    expected_output = hex_string_to_nibbles(expected_output_hex)
+    output = Data.from_nibbles(words64_to_nibbles(input.to_ints(), 1))
+    expected_output_bytes = Data.from_hex(str(test_trie_proofs.decodeNibbles(input.to_hex(), 1))).to_bytes()
+    expected_output = Data.from_nibbles(list(expected_output_bytes))
 
-    assert output[0:16] == expected_output[0:16]
+    assert output == expected_output
 
 
 def test_word64_to_nibbles_skip_2(TestTrieProofs):
     test_trie_proofs = accounts[0].deploy(TestTrieProofs)
 
-    input = '0x338cfc997a82252167ac25a16580d9730353eb1b9f0c6bbf0e4c82c4d0'
-    words64 = hex_string_to_words64(input)
+    input = Data.from_hex('0x338cfc997a82252167ac25a16580d9730353eb1b9f0c6bbf0e4c82c4d0')
     
-    output = words64_to_nibbles(words64, int(len(input)/2) - 1, 2)
-    expected_output_hex = str(test_trie_proofs.decodeNibbles(input, 2))
-    expected_output = hex_string_to_nibbles(expected_output_hex)
+    output = Data.from_nibbles(words64_to_nibbles(input.to_ints(), 2))
+    expected_output_bytes = Data.from_hex(str(test_trie_proofs.decodeNibbles(input.to_hex(), 2))).to_bytes()
+    expected_output = Data.from_nibbles(list(expected_output_bytes))
 
-    assert output[0:16] == expected_output[0:16]
+    assert output == expected_output
 
 
 def test_decode_nibbles_leaf_node(TestTrieProofs):
@@ -61,10 +59,12 @@ def test_decode_nibbles_leaf_node(TestTrieProofs):
 
     test_trie_proofs = accounts[0].deploy(TestTrieProofs)
 
-    expected_output = str(test_trie_proofs.decodeNibbles(leaf_node, 0))
-    output = list(map(lambda word: word64_to_nibbles(word, 16), hex_string_to_words64(leaf_node)))
+    expected_output_bytes = Data.from_hex(str(test_trie_proofs.decodeNibbles(leaf_node, 0))).to_bytes()
+    expected_output = Data.from_nibbles(list(expected_output_bytes))
 
-    assert Counter(chain.from_iterable(output)) == Counter(hex_string_to_nibbles(expected_output))
+    output = Data.from_nibbles(words64_to_nibbles(Data.from_hex(leaf_node).to_ints()))
+
+    assert output == expected_output
 
 
 def test_decode_nibbles_extension_node(TestTrieProofs):
@@ -73,10 +73,12 @@ def test_decode_nibbles_extension_node(TestTrieProofs):
 
     test_trie_proofs = accounts[0].deploy(TestTrieProofs)
 
-    expected_output = str(test_trie_proofs.decodeNibbles(extension_node, 0))
-    output = words64_to_nibbles(hex_string_to_words64(extension_node), int(len(extension_node) / 2) - 1)
+    expected_output_bytes = Data.from_hex(str(test_trie_proofs.decodeNibbles(extension_node, 0))).to_bytes()
+    expected_output = Data.from_nibbles(list(expected_output_bytes))
 
-    assert Counter(output) == Counter(hex_string_to_nibbles(expected_output))
+    output = Data.from_nibbles(words64_to_nibbles(Data.from_hex(extension_node).to_ints()))
+
+    assert output == expected_output
 
 
 def test_decode_nibbles_branch_node(TestTrieProofs):
@@ -85,10 +87,11 @@ def test_decode_nibbles_branch_node(TestTrieProofs):
 
     test_trie_proofs = accounts[0].deploy(TestTrieProofs)
 
-    expected_output = str(test_trie_proofs.decodeNibbles(branch_node, 0))
-    output = words64_to_nibbles(hex_string_to_words64(branch_node), int(len(branch_node)/2) - 1)
+    expected_output_bytes = Data.from_hex(str(test_trie_proofs.decodeNibbles(branch_node, 0))).to_bytes()
+    expected_output = Data.from_nibbles(list(expected_output_bytes))
+    output = Data.from_nibbles(words64_to_nibbles(Data.from_hex(branch_node).to_ints()))
 
-    assert Counter(output) == Counter(hex_string_to_nibbles(expected_output))
+    assert output == expected_output
 
 
 def test_merkle_patricia_decode_leaf(TestTrieProofs):

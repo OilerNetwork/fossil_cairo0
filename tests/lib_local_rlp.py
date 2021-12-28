@@ -1,37 +1,32 @@
 import pytest
 
-from utils.helpers import chunk_bytes_input, bytes_to_int, ints_array_to_bytes, random_bytes, hex_string_to_words64
 from utils.rlp import extractData, count_items, to_list, extract_list_values
+from utils.types import Data
 
 from mocks.trie_proofs import trie_proofs
-
-
-
-bytes_to_int_big = lambda word: bytes_to_int(word)
 
 
 @pytest.mark.asyncio
 async def test_count_items():
     input = trie_proofs[0]['accountProof'][0]
-    input_words64 = hex_string_to_words64(input)
 
     expected_items_count = 17
-    items_count = count_items(input_words64, 0)
+    items_count = count_items(Data.from_hex(input).to_ints().values, 0)
 
     assert expected_items_count == items_count
 
 
 @pytest.mark.asyncio
 async def test_to_list():
-    input = hex_string_to_words64(trie_proofs[0]['accountProof'][0])
-    items = to_list(input)
+    input = trie_proofs[0]['accountProof'][0]
+    items = to_list(Data.from_hex(input).to_ints().values)
 
     assert len(items) == 17
 
 @pytest.mark.asyncio
 async def test_to_list_values():
-    input = hex_string_to_words64(trie_proofs[0]['accountProof'][7])
-    items = to_list(input)
+    input = trie_proofs[0]['accountProof'][7]
+    items = to_list(Data.from_hex(input).to_ints().values)
     for item in items:
         value = extractData(input, item.dataPosition, item.length)
         # print(ints_array_to_bytes(value, item.length).hex())

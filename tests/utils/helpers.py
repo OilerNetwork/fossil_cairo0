@@ -1,12 +1,15 @@
 from __future__ import annotations
 from secrets import token_bytes
 from eth_typing.encoding import HexStr
-from typing import Callable, List, Tuple, Any
+from typing import Callable, List, Tuple, Any, NamedTuple
 from functools import reduce
 from enum import Enum
 
 from web3 import Web3
 
+class IntsSequence(NamedTuple):
+    values: List[int]
+    length: int
 
 class Encoding(Enum):
     LITTLE: str = 'little'
@@ -83,24 +86,29 @@ def word64_to_bytes_recursive_rev(word: int, word_len: int, accumulator = []):
     accumulator.append(r)
     return word64_to_bytes_recursive_rev(word, word_len, accumulator) 
 
-def word64_to_nibbles(word: int, nibbles_len: int, accumulator: List[int] = []) -> List[int]:
+def word64_to_nibbles_rec(word: int, nibbles_len: int, accumulator: List[int] = []) -> List[int]:
     assert nibbles_len > 0
     if nibbles_len == 1:
         return accumulator + [word & 0xF]
-    return word64_to_nibbles(word=(word >> 4), nibbles_len=nibbles_len-1, accumulator=accumulator) + [(word & 0xF)]
+    return word64_to_nibbles_rec(word=(word >> 4), nibbles_len=nibbles_len-1, accumulator=accumulator) + [(word & 0xF)]
 
-def words64_to_nibbles(input_words: List[int], input_size_bytes: int, skip_nibbles: int = 0) -> List[int]:
-    (_, remainder) = divmod(input_size_bytes * 2, 16)
+def word64_to_nibbles(input: IntsSequence) -> List[int]:
+    assert input.length <= 1
+    if input.length == 0: return []
+    return word64_to_nibbles_rec(input.values[0], input.length * 2)
+
+def words64_to_nibbles(input: IntsSequence, skip_nibbles: int = 0) -> List[int]:
+    (_, remainder) = divmod(input.length * 2, 16)
     acc = []
-    for i in range(0, len(input_words)):
-        word = input_words[i]
+    for i in range(0, len(input.values)):
+        word = input.values[i]
         nibbles_len = 16
-        if i == len(input_words) - 1: # For the last word skip empty bits
+        if i == len(input.values) - 1: # For the last word skip empty bits
             nibbles_len = 16 if remainder == 0 else remainder
         if i == 0 and skip_nibbles > 0: # If first word and some nibbles skipped
-            acc.extend(word64_to_nibbles(word=word, nibbles_len=nibbles_len-skip_nibbles))
+            acc.extend(word64_to_nibbles_rec(word=word, nibbles_len=nibbles_len-skip_nibbles))
         else:
-            acc.extend(word64_to_nibbles(word=word, nibbles_len=nibbles_len))
+            acc.extend(word64_to_nibbles_rec(word=word, nibbles_len=nibbles_len))
     return acc
 
 def byte_to_nibbles(input_byte: int) -> Tuple[int, int]:
