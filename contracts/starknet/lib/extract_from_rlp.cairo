@@ -199,6 +199,43 @@ end
 
 func to_list{ range_check_ptr }(rlp: felt*, rlp_len: felt) -> (items: RLPItem*, items_len: felt):
     alloc_locals
+
+    let (local payload: RLPItem*) = getElement(rlp, rlp_len, 0)
+    let (payload_pos: felt, payload_len: felt) = payload
+
+    let payload_end = payload_pos + payload_len
+    let next_element_pos = payload_pos
+
     let (local items : RLPItem*) = alloc()
+    to_list_recursive(rlp, rlp_len, next_element_pos, payload_end, 0, items, 0)
     return (items, 0)
+end
+
+func to_list_recursive{ range_check_ptr }(
+    rlp: felt*,
+    rlp_len: felt,
+    next_element_pos: felt,
+    payload_end: felt,
+    current_index: felt,
+    accumulator: felt*,
+    accumulator_len: felt):
+
+    let (break) = is_le(payload_end, next_element_pos)
+    if break == 1:
+        return ()
+    end
+
+    let (local payload: RLPItem*) = getElement(rlp, rlp_len, next_element_pos)
+    let (payload_pos: felt, payload_len: felt) = payload
+
+    assert accumulator[current_index] = RLPItem(payload_pos, payload_len)
+    return to_list_recursive(
+        rlp=rlp,
+        rlp_len=rlp_len,
+        next_element_pos=payload_pos + payload_len,
+        payload_end=payload_end,
+        current_index=current_index+1,
+        accumulator=accumulator,
+        accumulator_len=accumulator_len+1
+        )
 end

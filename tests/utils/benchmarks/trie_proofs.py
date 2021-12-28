@@ -145,8 +145,3 @@ def verify_proof(
                 else:
                     next_hash = keccak_words64(element, children.length)
     assert False
-
-
-                
-            
-        
