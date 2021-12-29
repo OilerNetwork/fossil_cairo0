@@ -9,6 +9,9 @@ from utils.block_header import build_block_header
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 
+from utils.types import Data
+from utils.rlp import to_list, getElement
+
 class TestsDeps(NamedTuple):
     starknet: Starknet
     extract_rlp_contract: StarknetContract
@@ -46,6 +49,47 @@ async def test_is_rlp_list_invalid_input():
     is_list = is_list_call.result.res
 
     assert is_list == 0
+
+@pytest.mark.asyncio
+async def test_get_element():
+    starknet, extract_rlp_contract = await setup()
+
+    block = mocked_blocks[0]
+    block_header = build_block_header(block)
+    block_rlp = block_header.raw_rlp()
+
+    input = Data.from_bytes(block_rlp)
+
+    get_element_call = await extract_rlp_contract.test_get_element(input.to_ints().values, 0).call()
+    output = get_element_call.result.res
+
+    expected_output = getElement(input.to_ints().values, 0)
+
+    assert output.dataPosition == expected_output.dataPosition
+    assert output.length == expected_output.length
+
+@pytest.mark.asyncio
+async def test_to_list():
+    starknet, extract_rlp_contract = await setup()
+
+    block = mocked_blocks[0]
+    block_header = build_block_header(block)
+    block_rlp = block_header.raw_rlp()
+
+    to_list_call = await extract_rlp_contract.test_to_list(Data.from_bytes(block_rlp).to_ints().values).call()
+    output = to_list_call.result
+
+    expected = to_list(Data.from_bytes(block_rlp).to_ints().values)
+    expected_data_positions = list(map(lambda item: item.dataPosition, expected))
+    expected_lengths = list(map(lambda item: item.length, expected))
+
+    assert output.data_positions == expected_data_positions
+    assert output.lengths == expected_lengths
+
+# TODO
+@pytest.mark.asyncio
+async def test_extract_list_values():
+    starknet, extract_rlp_contract = await setup()
 
 @pytest.mark.asyncio
 async def test_random():

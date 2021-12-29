@@ -1,4 +1,4 @@
-from starknet.lib.extract_from_rlp import extractData, extractElement, jumpOverElement, RLPElement
+from starknet.lib.extract_from_rlp import extractData, extractElement, jumpOverElement, IntsSequence
 from starknet.types import (Keccak256Hash, Address)
 
 ### Elements decoder 
@@ -76,7 +76,7 @@ end
 
 func decode_difficulty{ range_check_ptr }(block_rlp: felt*, block_rlp_len: felt) -> (res: felt):
     alloc_locals
-    let (local difficulty_rlp_element: RLPElement) = extractElement(block_rlp, block_rlp_len, 448)
+    let (local difficulty_rlp_element: IntsSequence) = extractElement(block_rlp, block_rlp_len, 448)
     local difficulty = difficulty_rlp_element.element[0]
     return (difficulty)
 end
@@ -84,7 +84,7 @@ end
 func decode_block_number{ range_check_ptr }(block_rlp: felt*, block_rlp_len: felt) -> (res: felt):
     alloc_locals
     let (blockNumberPosition) = jumpOverElement(block_rlp, block_rlp_len, 448)
-    let (local block_number_rlp_element: RLPElement) = extractElement(block_rlp, block_rlp_len, blockNumberPosition)
+    let (local block_number_rlp_element: IntsSequence) = extractElement(block_rlp, block_rlp_len, blockNumberPosition)
     local block_number = block_number_rlp_element.element[0]
     return (block_number)
 end
