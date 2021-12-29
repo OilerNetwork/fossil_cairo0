@@ -32,7 +32,11 @@ func test_extract_list_values{range_check_ptr}(
     rlp_items_data_positions_len: felt,
     rlp_items_data_positions: felt*,
     rlp_items_lenghts_len: felt,
-    rlp_items_lenghts: felt*) -> (res_len: felt, res: IntsSequence*):
+    rlp_items_lenghts: felt*) -> (
+        flattened_list_elements_len: felt,
+        flattened_list_elements: felt*,
+        flattened_list_sizes_len: felt,
+        flattened_list_sizes: felt*):
     alloc_locals
 
     let (local rlp_items: RLPItem*) = alloc()
@@ -47,7 +51,81 @@ func test_extract_list_values{range_check_ptr}(
         current_index=0)
     
     let (res, res_len) = extract_list_values(rlp, rlp_len, rlp_items, rlp_items_lenghts_len)
-    return (res_len, res)
+
+    let (local flattened_list_elements: felt*) = alloc()
+    let (local flattened_list_sizes: felt*) = alloc()
+    
+    let (elements_acc_len, sizes_acc_len) = flatten_ints_sequence_array(
+        arr=res,
+        arr_len=res_len,
+        elements_acc=flattened_list_elements,
+        elements_acc_len=0,
+        sizes_acc=flattened_list_sizes,
+        sizes_acc_len=0,
+        offset=0,
+        current_index=0)
+
+    return (elements_acc_len, flattened_list_elements, sizes_acc_len, flattened_list_sizes)
+end
+
+func flatten_ints_sequence_array{range_check_ptr}(
+    arr: IntsSequence*,
+    arr_len: felt,
+    elements_acc: felt*,
+    elements_acc_len: felt,
+    sizes_acc: felt*,
+    sizes_acc_len: felt,
+    offset: felt,
+    current_index: felt
+    ) -> (elements_acc_length: felt, sizes_acc_length: felt):
+    if current_index == arr_len:
+        return (elements_acc_len, sizes_acc_len)
+    end
+
+    # Handle elements
+    concat_arr(
+        acc=elements_acc,
+        acc_len=elements_acc_len,
+        arr=arr[current_index].element,
+        arr_len=arr[current_index].element_size,
+        offset=offset,
+        current_index=0)
+
+    # Handle sizes
+    assert sizes_acc[current_index] = arr[current_index].element_size
+
+    return flatten_ints_sequence_array(
+        arr=arr,
+        arr_len=arr_len,
+        elements_acc=elements_acc,
+        elements_acc_len=elements_acc_len,
+        sizes_acc=sizes_acc,
+        sizes_acc_len=sizes_acc_len,
+        offset=offset + arr[current_index].element_size,
+        current_index=current_index + 1)
+
+end
+
+func concat_arr{range_check_ptr}(
+    acc: felt*,
+    acc_len: felt,
+    arr: felt*,
+    arr_len: felt,
+    offset: felt,
+    current_index: felt,
+    ):
+    if current_index == arr_len:
+        return ()
+    end
+
+    assert acc[offset + current_index] = arr[current_index]
+    return concat_arr(
+        acc=acc,
+        acc_len=acc_len,
+        arr=arr,
+        arr_len=arr_len,
+        offset=offset,
+        current_index=current_index + 1)
 end
 
 func costruct_rlp_items_arr{range_check_ptr}(
@@ -72,7 +150,7 @@ func costruct_rlp_items_arr{range_check_ptr}(
         rlp_items_lenghts_len=rlp_items_lenghts_len,
         acc=acc,
         acc_len=acc_len,
-        current_index=current_index+1)
+        current_index=current_index + 1)
 end 
 
 @view 
@@ -111,5 +189,5 @@ func decostruct_rlp_items_arr{range_check_ptr}(
         data_positions_acc_len=data_positions_acc_len,
         lengths_acc=lengths_acc,
         lengths_acc_len=lengths_acc_len,
-        current_index=current_index+1)
+        current_index=current_index + 1)
 end
