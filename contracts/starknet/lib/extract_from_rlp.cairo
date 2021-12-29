@@ -40,7 +40,7 @@ func getElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) ->
     let (le_191) = is_le(firstByte, 191)
     if le_191 == 1:
         let lengthOfLength = firstByte - 183
-        let (local bytes: IntsSequence) = extractData{ range_check_ptr = range_check_ptr }(position, 1, rlp, rlp_len)
+        let (local bytes: IntsSequence) = extractData{ range_check_ptr = range_check_ptr }(position + 1, lengthOfLength, rlp, rlp_len)
         let lengthArr: felt* = bytes.element
         let length = lengthArr[0]
 
@@ -264,7 +264,7 @@ func to_list_recursive{ range_check_ptr }(
         )
 end
 
-func extract_list_values{ range_check_ptr }(rlp: felt*, rlp_len: felt, rlp_items: RLPItem*, rlp_items_len: felt) -> (res: felt*, res_len: felt):
+func extract_list_values{ range_check_ptr }(rlp: felt*, rlp_len: felt, rlp_items: RLPItem*, rlp_items_len: felt) -> (res: IntsSequence*, res_len: felt):
     alloc_locals
     let (local acc: IntsSequence*) = alloc()
     extract_list_values_recursive(rlp, rlp_len, rlp_items, rlp_items_len, acc, 0, 0)

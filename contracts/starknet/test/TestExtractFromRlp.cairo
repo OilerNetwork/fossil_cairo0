@@ -32,7 +32,7 @@ func test_extract_list_values{range_check_ptr}(
     rlp_items_data_positions_len: felt,
     rlp_items_data_positions: felt*,
     rlp_items_lenghts_len: felt,
-    rlp_items_lenghts: felt*) -> (res_len: felt, res: felt*):
+    rlp_items_lenghts: felt*) -> (res_len: felt, res: IntsSequence*):
     alloc_locals
 
     let (local rlp_items: RLPItem*) = alloc()

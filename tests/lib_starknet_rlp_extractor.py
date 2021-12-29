@@ -74,22 +74,36 @@ async def test_to_list():
 
     block = mocked_blocks[0]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
+    block_rlp = Data.from_bytes(block_header.raw_rlp())
 
-    to_list_call = await extract_rlp_contract.test_to_list(Data.from_bytes(block_rlp).to_ints().values).call()
+    to_list_call = await extract_rlp_contract.test_to_list(block_rlp.to_ints().values).call()
     output = to_list_call.result
 
-    expected = to_list(Data.from_bytes(block_rlp).to_ints().values)
+    expected = to_list(block_rlp.to_ints().values)
     expected_data_positions = list(map(lambda item: item.dataPosition, expected))
     expected_lengths = list(map(lambda item: item.length, expected))
 
     assert output.data_positions == expected_data_positions
     assert output.lengths == expected_lengths
 
-# TODO
 @pytest.mark.asyncio
 async def test_extract_list_values():
     starknet, extract_rlp_contract = await setup()
+    block = mocked_blocks[0]
+    block_header = build_block_header(block)
+    block_rlp = Data.from_bytes(block_header.raw_rlp())
+
+    to_list_call = await extract_rlp_contract.test_to_list(block_rlp.to_ints().values).call()
+    output = to_list_call.result
+
+    expected = to_list(block_rlp.to_ints().values)
+    expected_data_positions = list(map(lambda item: item.dataPosition, expected))
+    expected_lengths = list(map(lambda item: item.length, expected))
+
+    assert output.data_positions == expected_data_positions
+    assert output.lengths == expected_lengths
+    # TODO
+
 
 @pytest.mark.asyncio
 async def test_random():
