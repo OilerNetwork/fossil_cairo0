@@ -8,7 +8,8 @@ from starknet.lib.pow import pow
 
 struct IntsSequence:
     member element : felt*
-    member element_size: felt
+    member element_size_words: felt
+    member element_size_bytes: felt
 end
 
 struct RLPItem:
@@ -69,7 +70,7 @@ func extractElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt
 
     if rlpItem.length == 0:
         let (local element: felt*) = alloc()
-        local result: IntsSequence = IntsSequence(element, 0)
+        local result: IntsSequence = IntsSequence(element, 0, 0)
         tempvar range_check_ptr = range_check_ptr
         return (result)
     else: 
@@ -152,11 +153,11 @@ func extractData{ range_check_ptr }(start_pos: felt, size: felt, block_rlp: felt
             tempvar range_check_ptr = range_check_ptr
         end
         tempvar range_check_ptr = range_check_ptr
-        let result: IntsSequence = IntsSequence(words_shifted, full_words+1)
+        let result: IntsSequence = IntsSequence(words_shifted, full_words+1, size)
         return (result)
     else:
         tempvar range_check_ptr = range_check_ptr
-        let result: IntsSequence = IntsSequence(words_shifted, full_words)
+        let result: IntsSequence = IntsSequence(words_shifted, full_words, size)
         return (result)
     end
 end

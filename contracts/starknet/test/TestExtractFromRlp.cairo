@@ -2,17 +2,22 @@
 %builtins pedersen range_check ecdsa
 
 from starknet.lib.extract_from_rlp import extractData, is_rlp_list, to_list, getElement, RLPItem, extract_list_values, IntsSequence
+from starknet.lib.concat_arr import concat_arr
+
 from starkware.cairo.common.alloc import alloc
+from starkware.cairo.common.memcpy import memcpy
+
+
 
 @view
-func test_extractData{range_check_ptr}(start_pos: felt, size: felt, rlp_len: felt, rlp: felt*) -> (res_len:felt, res: felt*):
+func test_extractData{range_check_ptr}(start_pos: felt, size: felt, rlp_len: felt, rlp: felt*) -> (res_len_bytes: felt, res_len:felt, res: felt*):
     alloc_locals
     let (local data: IntsSequence) = extractData(
         start_pos=start_pos,
         size=size,
         block_rlp=rlp,
         block_rlp_len=rlp_len)
-    return (data.element_size, data.element)
+    return (data.element_size_bytes, data.element_size_words, data.element)
 end
 
 @view 
@@ -35,9 +40,14 @@ func test_extract_list_values{range_check_ptr}(
     rlp_items_lenghts: felt*) -> (
         flattened_list_elements_len: felt,
         flattened_list_elements: felt*,
-        flattened_list_sizes_len: felt,
-        flattened_list_sizes: felt*):
+        flattened_list_sizes_words_len: felt,
+        flattened_list_sizes_words: felt*,
+        flattened_list_sizes_bytes_len: felt,
+        flattened_list_sizes_bytes: felt*):
     alloc_locals
+
+    # flattened_list_elements: felt*
+    # flattened_list_sizes: felt*
 
     let (local rlp_items: RLPItem*) = alloc()
 
@@ -53,19 +63,26 @@ func test_extract_list_values{range_check_ptr}(
     let (res, res_len) = extract_list_values(rlp, rlp_len, rlp_items, rlp_items_lenghts_len)
 
     let (local flattened_list_elements: felt*) = alloc()
-    let (local flattened_list_sizes: felt*) = alloc()
+    let (local flattened_list_sizes_words: felt*) = alloc()
+    let (local flattened_list_sizes_bytes: felt*) = alloc()
     
-    let (elements_acc_len, sizes_acc_len) = flatten_ints_sequence_array(
+    let (elements_acc_len, sizes_words_acc_len, sizes_bytes_acc_len) = flatten_ints_sequence_array(
         arr=res,
         arr_len=res_len,
         elements_acc=flattened_list_elements,
         elements_acc_len=0,
-        sizes_acc=flattened_list_sizes,
-        sizes_acc_len=0,
-        offset=0,
+        sizes_words_acc=flattened_list_sizes_words,
+        sizes_words_acc_len=0,
+        sizes_bytes_acc=flattened_list_sizes_bytes,
+        sizes_bytes_acc_len=0,
         current_index=0)
-
-    return (elements_acc_len, flattened_list_elements, sizes_acc_len, flattened_list_sizes)
+    return (
+        elements_acc_len,
+        flattened_list_elements,
+        sizes_words_acc_len,
+        flattened_list_sizes_words,
+        sizes_bytes_acc_len,
+        flattened_list_sizes_bytes)
 end
 
 func flatten_ints_sequence_array{range_check_ptr}(
@@ -73,58 +90,33 @@ func flatten_ints_sequence_array{range_check_ptr}(
     arr_len: felt,
     elements_acc: felt*,
     elements_acc_len: felt,
-    sizes_acc: felt*,
-    sizes_acc_len: felt,
-    offset: felt,
+    sizes_words_acc: felt*,
+    sizes_words_acc_len: felt,
+    sizes_bytes_acc: felt*,
+    sizes_bytes_acc_len: felt,
     current_index: felt
-    ) -> (elements_acc_length: felt, sizes_acc_length: felt):
+    ) -> (elements_acc_length: felt, sizes_words_acc_len: felt, sizes_bytes_acc_len: felt):
+    alloc_locals
     if current_index == arr_len:
-        return (elements_acc_len, sizes_acc_len)
+        return (elements_acc_len, sizes_words_acc_len, sizes_bytes_acc_len)
     end
 
     # Handle elements
-    concat_arr(
-        acc=elements_acc,
-        acc_len=elements_acc_len,
-        arr=arr[current_index].element,
-        arr_len=arr[current_index].element_size,
-        offset=offset,
-        current_index=0)
+    memcpy(elements_acc + elements_acc_len, arr[current_index].element, arr[current_index].element_size_words)
 
     # Handle sizes
-    assert sizes_acc[current_index] = arr[current_index].element_size
+    assert sizes_words_acc[current_index] = arr[current_index].element_size_words
+    assert sizes_bytes_acc[current_index] = arr[current_index].element_size_bytes
 
     return flatten_ints_sequence_array(
         arr=arr,
         arr_len=arr_len,
         elements_acc=elements_acc,
-        elements_acc_len=elements_acc_len,
-        sizes_acc=sizes_acc,
-        sizes_acc_len=sizes_acc_len,
-        offset=offset + arr[current_index].element_size,
-        current_index=current_index + 1)
-
-end
-
-func concat_arr{range_check_ptr}(
-    acc: felt*,
-    acc_len: felt,
-    arr: felt*,
-    arr_len: felt,
-    offset: felt,
-    current_index: felt,
-    ):
-    if current_index == arr_len:
-        return ()
-    end
-
-    assert acc[offset + current_index] = arr[current_index]
-    return concat_arr(
-        acc=acc,
-        acc_len=acc_len,
-        arr=arr,
-        arr_len=arr_len,
-        offset=offset,
+        elements_acc_len=elements_acc_len + arr[current_index].element_size_words,
+        sizes_words_acc=sizes_words_acc,
+        sizes_words_acc_len=sizes_words_acc_len + 1,
+        sizes_bytes_acc=sizes_bytes_acc,
+        sizes_bytes_acc_len=sizes_bytes_acc_len + 1,
         current_index=current_index + 1)
 end
 

@@ -1,5 +1,4 @@
-from re import A
-from typing import NamedTuple
+from typing import NamedTuple, List
 import pytest
 
 from mocks.blocks import mocked_blocks
@@ -10,7 +9,7 @@ from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 
 from utils.types import Data
-from utils.rlp import to_list, getElement
+from utils.rlp import to_list, getElement, extract_list_values, IntsSequence
 
 class TestsDeps(NamedTuple):
     starknet: Starknet
@@ -102,7 +101,63 @@ async def test_extract_list_values():
 
     assert output.data_positions == expected_data_positions
     assert output.lengths == expected_lengths
-    # TODO
+
+    # Extract values:
+    extract_values_call = await extract_rlp_contract.test_extract_list_values(
+        block_rlp.to_ints().values,
+        expected_data_positions,
+        expected_lengths
+    ).call()
+
+    rlp_items = to_list(block_rlp.to_ints().values)
+    rlp_values = extract_list_values(block_rlp.to_ints().values, rlp_items)
+    
+    output_list_elements_flat = extract_values_call.result.flattened_list_elements
+    output_list_elements_sizes_words = extract_values_call.result.flattened_list_sizes_words
+    output_list_elements_sizes_bytes = extract_values_call.result.flattened_list_sizes_bytes
+
+    offset = 0
+    output_list_elements: List[IntsSequence] = []
+    for i in range(0 , len(output_list_elements_sizes_words)):
+        size_words = output_list_elements_sizes_words[i]
+        size_bytes = output_list_elements_sizes_bytes[i]
+        output_list_elements.append(IntsSequence(output_list_elements_flat[offset:offset+size_words], size_bytes))
+        offset += size_words
+
+    assert output_list_elements == rlp_values
+
+
+@pytest.mark.asyncio
+async def test_extract_words():
+    starknet, extract_rlp_contract = await setup()
+    block = mocked_blocks[0]
+    block_header = build_block_header(block)
+    block_rlp = Data.from_bytes(block_header.raw_rlp())
+
+    to_list_call = await extract_rlp_contract.test_to_list(block_rlp.to_ints().values).call()
+    output = to_list_call.result
+
+    expected = to_list(block_rlp.to_ints().values)
+    expected_data_positions = list(map(lambda item: item.dataPosition, expected))
+    expected_lengths = list(map(lambda item: item.length, expected))
+
+    assert output.data_positions == expected_data_positions
+    assert output.lengths == expected_lengths
+
+    rlp_items = to_list(block_rlp.to_ints().values)
+
+    print(rlp_items[0])
+
+    # Extract values:
+    extract_data_call = await extract_rlp_contract.test_extractData(
+        rlp_items[0].dataPosition,
+        rlp_items[0].length,
+        block_rlp.to_ints().values
+    ).call()
+
+    extract_data_result = extract_data_call.result.res
+
+    print(extract_data_result)
 
 
 @pytest.mark.asyncio
