@@ -22,17 +22,31 @@ async def setup():
 
 
 @pytest.mark.asyncio
-async def test_extract_nibble():
+async def test_extract_nibble_from_single_word():
     starknet, words64 = await setup()
 
-    input = Data.from_bytes(random_bytes(29))
-    word = input.to_ints().values[0]
+    for word_length in range(1,9):
+        input = Data.from_bytes(random_bytes(word_length))
+        word = input.to_ints().values[0]
+        for i in range(0, word_length*2):
+            # print(f"extracting {i} nibble from {len(input.to_bytes())} bytes word")
+            extract_nibble_call = await words64.test_extract_nibble(word, len(input.to_bytes()), i).call()
+            res = extract_nibble_call.result.res
+            expected_res = input.to_nibbles()[i]
+            assert res == expected_res, f"Expected {res} to be equal {expected_res} for extracted position {i}"
 
-    for i in range(0, 15):
-        extract_nibble_call = await words64.test_extract_nibble(word, 0).call()
-        res = extract_nibble_call.result.res
-        expected_res = input.to_nibbles()[0]
-        assert res == expected_res, f"Expected {res} to be equal {expected_res} for extracted position {i}"
+@pytest.mark.asyncio
+async def test_extract_nibble_from_ints_sequence():
+    starknet, words64 = await setup()
+
+    for word_length in range(1,35):
+        input = Data.from_bytes(random_bytes(word_length))
+        for i in range(0, len(input.to_bytes())*2):
+            print(f"extracting {i} nibble from {len(input.to_bytes())} bytes word")
+            extract_nibble_call = await words64.test_extract_nibble_from_words(input.to_ints().values, input.to_ints().length, i).call()
+            res = extract_nibble_call.result.res
+            expected_res = input.to_nibbles()[i]
+            assert res == expected_res, f"Expected {res} to be equal {expected_res} for extracted position {i}"
 
 @pytest.mark.asyncio
 async def test_extract_nibble_invalid_position():
