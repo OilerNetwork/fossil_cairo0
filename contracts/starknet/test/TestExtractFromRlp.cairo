@@ -8,7 +8,6 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.memcpy import memcpy
 
 
-
 @view
 func test_extractData{range_check_ptr}(start_pos: felt, size: felt, rlp_len: felt, rlp: felt*) -> (res_len_bytes: felt, res_len:felt, res: felt*):
     alloc_locals

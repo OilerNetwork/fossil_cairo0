@@ -4,14 +4,14 @@ from starknet.lib.bitshift import bitshift_right
 from starknet.lib.extract_from_rlp import IntsSequence
 
 
-func extract_nibble{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(word: felt, word_len_bytes: felt, position: felt) -> (res: felt):
+func extract_nibble{ range_check_ptr }(word: felt, word_len_bytes: felt, position: felt) -> (res: felt):
     assert_le(position, (word_len_bytes*2)-1) # Ensures that the extracted nibble is not out of word range
     let (shifted) = bitshift_right(word, (word_len_bytes*2-1) * 4 - position * 4)
     let (_, nibble) = unsigned_div_rem(shifted, 0x10)
     return (nibble)
 end
 
-func extract_nibble_from_words{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(input: IntsSequence, position: felt) -> (res: felt):
+func extract_nibble_from_words{ range_check_ptr }(input: IntsSequence, position: felt) -> (res: felt):
     alloc_locals
     let (word_index, nibble_index) = unsigned_div_rem(position, 16)
 
