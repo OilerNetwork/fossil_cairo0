@@ -1,7 +1,5 @@
 import pytest
 from brownie import accounts
-from itertools import chain
-from collections import Counter
 from utils.encode_proof import encode_proof
 from web3 import Web3
 
@@ -11,7 +9,6 @@ from utils.types import Data
 
 from utils.helpers import (
     hex_string_to_words64,
-    hex_string_to_nibbles,
     words64_to_nibbles,
     keccak_words64
 )
@@ -147,10 +144,10 @@ def test_count_shared_prefix_len(TestTrieProofs):
     node_path_nibbles = merkle_patricia_input_decode(leaf_node_values[0])
     node_path = test_trie_proofs.merklePatriciaCompactDecode(leaf_node_value)
 
-    block_state_root = Data.from_hex('0x2045bf4ea5561e88a4d0d9afbc316354e49fe892ac7e961a5e68f1f4b9561152')
+    path = Data.from_hex('0x2045bf4ea5561e88a4d0d9afbc316354e49fe892ac7e961a5e68f1f4b9561152')
 
-    shared_prefix_expected = test_trie_proofs.sharedPrefixLength(0, block_state_root.to_bytes(), node_path)
-    shared_prefix = count_shared_prefix_len(0, block_state_root.to_nibbles(), node_path_nibbles)
+    shared_prefix_expected = test_trie_proofs.sharedPrefixLength(0, path.to_bytes(), node_path)
+    shared_prefix = count_shared_prefix_len(0, path.to_nibbles(), node_path_nibbles)
 
     assert shared_prefix_expected == shared_prefix
 

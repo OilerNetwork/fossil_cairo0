@@ -14,23 +14,23 @@ func test_count_shared_prefix_len{ range_check_ptr }(
     path_values_len: felt,
     path_values: felt*,
     path_size_bytes: felt,
-    proof_element_values_len: felt,
-    proof_element_values: felt*,
-    proof_element_size_bytes: felt,
-    leading_leaf_node_rlp_item_data_pos: felt,
-    leading_leaf_node_rlp_item_length: felt) -> (new_path_offset: felt):
+    element_rlp_values_len: felt,
+    element_rlp_values: felt*,
+    element_rlp_size_bytes: felt,
+    node_path_item_data_pos: felt,
+    node_path_item_length: felt) -> (res: felt):
     alloc_locals
 
     let path: IntsSequence = IntsSequence(path_values, path_values_len, path_size_bytes)
-    let proof_element: IntsSequence = IntsSequence(proof_element_values, proof_element_values_len, proof_element_size_bytes)
+    let element_rlp: IntsSequence = IntsSequence(element_rlp_values, element_rlp_values_len, element_rlp_size_bytes)
 
-    let leading_leaf_node_rlp_item: RLPItem = RLPItem(leading_leaf_node_rlp_item_data_pos, leading_leaf_node_rlp_item_length)
+    let node_path_item: RLPItem = RLPItem(node_path_item_data_pos, node_path_item_length)
 
     return count_shared_prefix_len(
         path_offset,
         path,
-        proof_element,
-        leading_leaf_node_rlp_item)
+        element_rlp,
+        node_path_item)
 end
 
 
