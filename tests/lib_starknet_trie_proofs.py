@@ -15,6 +15,7 @@ from utils.benchmarks.trie_proofs import (
     count_shared_prefix_len,
     merkle_patricia_input_decode,
     get_next_hash,
+    verify_proof,
     RLPItem)
 
 
@@ -89,3 +90,46 @@ async def test_get_next_element_hash():
     assert Data.from_ints(IntsSequence(result, 32)) == Data.from_ints(expected_result)
 
 
+@pytest.mark.asyncio
+async def test_verify_valid_account_proof():
+    starknet, trie_proofs_contract = await setup()
+
+    block_state_root = Data.from_hex('0x2045bf4ea5561e88a4d0d9afbc316354e49fe892ac7e961a5e68f1f4b9561152')
+    proof_path = Data.from_hex(Web3.keccak(hexstr=trie_proofs[1]['address']).hex())
+    proof = list(map(lambda element: Data.from_hex(element).to_ints(), trie_proofs[1]['accountProof']))
+
+    # Python implementation as a reference
+    expected_key = Data.from_ints(verify_proof(
+        proof_path.to_ints(),
+        block_state_root.to_ints(),
+        proof)
+    )
+
+    flat_proof = []
+    flat_proof_sizes_bytes = []
+    flat_proof_sizes_words = []
+
+    for proof_element in proof:
+        flat_proof += proof_element.values
+        flat_proof_sizes_bytes += [proof_element.length]
+        flat_proof_sizes_words += [len(proof_element.values)]
+
+    verify_proof_call = await trie_proofs_contract.test_verify_proof(
+        proof_path.to_ints().length,
+        proof_path.to_ints().values,
+        block_state_root.to_ints().length,
+        block_state_root.to_ints().values,
+        flat_proof_sizes_bytes,
+        flat_proof_sizes_words,
+        flat_proof
+    ).call()
+
+    result = Data.from_ints(IntsSequence(verify_proof_call.result.res, verify_proof_call.result.res_size_bytes))
+
+    print("\n\n\nResulting proofs:\n\n")
+
+    print("Python:", expected_key.to_hex())
+
+    print(" Cairo:", result.to_hex())
+
+    assert result == expected_key

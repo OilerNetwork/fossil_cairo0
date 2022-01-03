@@ -41,15 +41,14 @@ func test_get_next_hash{ range_check_ptr }(
     rlp_input_values: felt*,
     rlp_input_values_size_bytes: felt,
     rlp_node_data_pos: felt,
-    rlp_node_data_length: felt) -> (res: Keccak256Hash):
+    rlp_node_data_length: felt) -> (res_len: felt, res: felt*):
     alloc_locals
 
     let rlp_input: IntsSequence = IntsSequence(rlp_input_values, rlp_input_values_len, rlp_input_values_size_bytes)
     let rlp_node: RLPItem = RLPItem(rlp_node_data_pos, rlp_node_data_length)
 
-    return get_next_hash(
-        rlp_input,
-        rlp_node)
+    let (local res: IntsSequence) = get_next_hash(rlp_input, rlp_node)
+    return (res.element_size_words, res.element)
 end
 
 
@@ -68,8 +67,8 @@ func test_verify_proof{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
     proofs_concat_len: felt,
     proofs_concat: felt*) -> (res_size_bytes: felt, res_len: felt, res: felt*):
     alloc_locals
-    let (local path_arg: IntsSequence) = IntsSequence(path, path_len, path_size_bytes)
-    let (local root_hash_arg: IntsSequence) = IntsSequence(root_hash, root_hash_len, root_hash_size_bytes)
+    local path_arg: IntsSequence = IntsSequence(path, path_len, path_size_bytes)
+    local root_hash_arg: IntsSequence = IntsSequence(root_hash, root_hash_len, root_hash_size_bytes)
 
     let (local proof_arg: IntsSequence*) = alloc()
     reconstruct_ints_sequence_list(
