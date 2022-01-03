@@ -102,7 +102,7 @@ func get_next_hash{ range_check_ptr }(rlp_input: IntsSequence, rlp_node: RLPItem
     return (result)
 end
 
-func verify_proof{ range_check_ptr }(
+func verify_proof{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
     path: IntsSequence,
     root_hash: IntsSequence,
     proof: IntsSequence*,
@@ -144,11 +144,11 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
 
-    if current_index == proof_len:
-        return ()
+    if current_index == proof_len + 1:
+        assert 1 = 0
     end
 
-    local current_element = proof[current_index]
+    local current_element: IntsSequence = proof[current_index]
     let (current_element_keccak) = keccak256{keccak_ptr=keccak_ptr}(current_element.element, current_element.element_size_bytes)
 
     if current_index == 0:
@@ -169,7 +169,7 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
             assert current_path_offset = path.element_size_bytes * 2
             return extractData(node[1].dataPosition, node[1].length, current_element.element, current_element.element_size_words)
         else:
-            let (local children: RLPItem) = node[1]
+            local children: RLPItem = node[1]
             let (local is_list) = is_rlp_list(children.dataPosition, current_element.element, current_element.element_size_words)
             if is_list == 0:
                 let (local next_hash: IntsSequence) = get_next_hash(current_element, children)
