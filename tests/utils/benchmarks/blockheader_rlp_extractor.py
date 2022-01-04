@@ -1,7 +1,6 @@
 from typing import List
-from utils.benchmarks.extract_from_block_rlp import extractData, extractElement, jumpOverElement
-
-from utils.helpers import chunk_bytes_input, bytes_to_int_big, ints_array_to_bytes
+from utils.rlp import extractData, extractElement, jumpOverElement
+from utils.types import IntsSequence
 
 
 # idx  Element                 element length with 1 byte storing its length
@@ -34,33 +33,31 @@ from utils.helpers import chunk_bytes_input, bytes_to_int_big, ints_array_to_byt
 # 14	mixHash
 # 15	nonce
 
-def getParentHash(rlp: List[int]) -> List[int]:
+def getParentHash(rlp: List[int]) -> IntsSequence:
     return extractData(rlp, 4, 32)
 
-def getOmmersHash(rlp: List[int]) -> List[int]:
+def getOmmersHash(rlp: List[int]) -> IntsSequence:
     return extractData(rlp, 4+32+1, 32)
 
-def getBeneficiary(rlp: List[int]) -> List[int]:
+def getBeneficiary(rlp: List[int]) -> IntsSequence:
     return extractData(rlp, 4+32+1+32+1, 20)
 
-def getStateRoot(rlp: List[int]) -> List[int]:
+def getStateRoot(rlp: List[int]) -> IntsSequence:
     return extractData(rlp, 4+32+1+32+1+20+1, 32)
 
-def getTransactionsRoot(rlp: List[int]) -> List[int]:
+def getTransactionsRoot(rlp: List[int]) -> IntsSequence:
     return extractData(rlp, 4+32+1+32+1+20+1+32+1, 32)
 
-def getReceiptsRoot(rlp: List[int]) -> List[int]:
+def getReceiptsRoot(rlp: List[int]) -> IntsSequence:
     return extractData(rlp, 4+32+1+32+1+20+1+32+1+32+1, 32)
 
 def getDifficulty(rlp: List[int]) -> int:
-    difficultyIntsArray, _ = extractElement(rlp, 448)
-    return difficultyIntsArray[0]
+    return extractElement(rlp, 448).values[0]
 
 def getBlocknumber(rlp: List[int]) -> int:
     #jump over difficulty
     blockNumberPosition = jumpOverElement(rlp, 448)
-    blockNumberIntsArray, _ = extractElement(rlp, blockNumberPosition)
-    return blockNumberIntsArray[0]
+    return extractElement(rlp, blockNumberPosition).values[0]
 
 def getGasLimit(rlp: List[int]) -> int:
     #jump over difficulty
@@ -68,8 +65,7 @@ def getGasLimit(rlp: List[int]) -> int:
     #jump over blockNumber
     gasLimitPosition = jumpOverElement(rlp, blockNumberPosition)
 
-    gasLimitIntsArray, _ = extractElement(rlp, gasLimitPosition)
-    return gasLimitIntsArray[0]
+    return extractElement(rlp, gasLimitPosition).values[0]
 
 def getGasUsed(rlp: List[int]) -> int:
     #jump over difficulty
@@ -79,8 +75,7 @@ def getGasUsed(rlp: List[int]) -> int:
     #jump over gasLimit
     gasUsedPosition = jumpOverElement(rlp, gasLimitPosition)
 
-    gasUsedIntsArray, _ = extractElement(rlp, gasUsedPosition)
-    return gasUsedIntsArray[0]
+    return extractElement(rlp, gasUsedPosition).values[0]
 
 def getTimestamp(rlp: List[int]) -> int:
     #jump over difficulty
@@ -92,5 +87,4 @@ def getTimestamp(rlp: List[int]) -> int:
     #jump over gasUsed
     timestampPosition = jumpOverElement(rlp, gasUsedPosition)
 
-    timestampIntsArray, _ = extractElement(rlp, timestampPosition)
-    return timestampIntsArray[0]
+    return extractElement(rlp, timestampPosition).values[0]

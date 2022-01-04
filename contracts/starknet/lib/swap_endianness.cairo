@@ -4,6 +4,66 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.math import assert_nn_le, unsigned_div_rem
 from starkware.cairo.common.math_cmp import is_in_range
 from starknet.lib.pow import pow
+from starknet.lib.extract_from_rlp import IntsSequence
+
+# func swap_endianness_many_words{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(input: IntsSequence) -> (output: IntsSequence):
+#     alloc_locals
+#     let (local acc : felt*) = alloc()
+#     swap_endianness_many_words_rec(input, acc, 0)
+#     local res: IntsSequence = IntsSequence(acc, input.element_size_words, input.element_size_bytes)
+#     return (res)
+# end
+
+func swap_endianness_four_words{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(input: IntsSequence) -> (output: IntsSequence):
+    alloc_locals
+    let (local acc : felt*) = alloc()
+
+    let (local swapped_input_0) = swap_endianness_64(input.element[0], 8)
+    assert acc[0] = swapped_input_0
+
+    let (local swapped_input_1) = swap_endianness_64(input.element[1], 8)
+    assert acc[1] = swapped_input_1
+
+    let (local swapped_input_2) = swap_endianness_64(input.element[2], 8)
+    assert acc[2] = swapped_input_2
+
+    let (local swapped_input_3) = swap_endianness_64(input.element[3], 8)
+    assert acc[3] = swapped_input_3
+
+    local res: IntsSequence = IntsSequence(acc, input.element_size_words, input.element_size_bytes)
+    return (res)
+end
+
+# func swap_endianness_many_words_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
+#     input: IntsSequence,
+#     acc: felt*,
+#     current_word: felt):
+#     alloc_locals
+
+#     if current_word == input.element_size_words:
+#         return ()
+#     end
+
+#     # Is 0 when it is last word
+#     let is_last_word = input.element_size_words - current_word - 1
+#     local proper_len
+
+#     if is_last_word == 0:
+#         let (_, last_word_len) = unsigned_div_rem(input.element_size_bytes, 8)
+        
+#         if last_word_len == 0:
+#             proper_len = 8
+#         else:
+#             proper_len = last_word_len
+#         end
+#     else:
+#         proper_len = 8
+#     end
+
+#     let swapped: felt = swap_endianness_64(input.element[current_word], proper_len)
+#     assert acc[current_word] = swapped
+#     return swap_endianness_many_words_rec(input, acc, current_word + 1)
+# end
 
 func swap_endianness_64{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(input: felt, size: felt) -> (output: felt):
     alloc_locals

@@ -5,6 +5,7 @@ venv
 .python-version
 artifacts
 build
+.pytest_cache
 
 **/.DS_Store
 

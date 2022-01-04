@@ -9,13 +9,16 @@ contract L1MessagesSender {
     IStarknetCore public immutable starknetCore;
     uint256 public immutable l2RecipientAddr;
 
+    // TODO - describe
     uint256 constant SUBMIT_L1_BLOCKHASH_SELECTOR = 598342674068027518481179578557554850038206119856216505601406522348670006916;
 
+    // TODO - describe
     constructor(IStarknetCore starknetCore_, uint256 l2RecipientAddr_) {
         starknetCore = starknetCore_;
         l2RecipientAddr = l2RecipientAddr_;
     }
 
+    // TODO - natspec
     function sendExactParentHashToL2(uint256 blockNumber_) external {
         bytes32 parentHash = blockhash(blockNumber_ - 1);
         require(parentHash != bytes32(0), "ERR_INVALID_BLOCK_NUMBER");

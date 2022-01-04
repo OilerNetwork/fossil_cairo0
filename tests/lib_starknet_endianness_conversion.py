@@ -1,4 +1,7 @@
 from typing import NamedTuple
+from utils.types import Data
+from utils.helpers import IntsSequence
+
 import pytest
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
@@ -57,8 +60,6 @@ async def test_swap_endianness_full_word():
 @pytest.mark.asyncio
 async def test_swap_endianness_small_words():
     starknet, converter = await setup()
-    print("\n")
-
     for i in range(8):
         input_str = 'f90218a089abcdef'[0:16-(i*2)]
         input_as_big_endian = int.from_bytes(bytearray.fromhex(input_str), 'big')
@@ -133,3 +134,16 @@ async def test_revert_word_size_above_64bit():
     with pytest.raises(Exception):
         max_word = 2 ** 64 + 1
         await converter.test_to_big_endian(max_word, int(len(input_str)/2)).call()
+
+@pytest.mark.asyncio
+async def test_swap_endianness_many_words():
+    starknet, converter = await setup()
+
+    input = Data.from_hex('0x881e56a54ebf4520546331bcafd9d0a41a967eac92e89fe4521156b9f4f1685e')
+
+    convert_call = await converter.test_four_words_to_big_endian(input.to_ints().values, input.to_ints().length).call()
+    output = Data.from_ints(IntsSequence(convert_call.result.res, convert_call.result.res_len_bytes))
+
+    expected_output = Data.from_hex('0x2045bf4ea5561e88a4d0d9afbc316354e49fe892ac7e961a5e68f1f4b9561152')
+
+    assert output == expected_output

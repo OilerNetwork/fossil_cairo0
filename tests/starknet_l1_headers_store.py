@@ -8,10 +8,13 @@ from starkware.starkware_utils.error_handling import StarkException
 from utils.Signer import Signer
 from utils.block_header import build_block_header
 from utils.create_account import create_account
-from utils.helpers import chunk_bytes_input, bytes_to_int_big, bytes_to_int_little
+from utils.helpers import chunk_bytes_input, bytes_to_int, bytes_to_int_little
 
 
 from mocks.blocks import mocked_blocks
+
+
+bytes_to_int_big = lambda word: bytes_to_int(word)
 
 
 class TestsDeps(NamedTuple):
