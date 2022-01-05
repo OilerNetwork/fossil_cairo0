@@ -1,5 +1,6 @@
-from typing import List, NamedTuple
 import pytest
+import asyncio
+from typing import List, NamedTuple
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 
@@ -27,15 +28,23 @@ class TestsDeps(NamedTuple):
     decoder: StarknetContract
 
 
+@pytest.fixture(scope='module')
+def event_loop():
+    return asyncio.new_event_loop()
+
 async def setup():
     starknet = await Starknet.empty()
     decoder = await starknet.deploy("contracts/starknet/test/TestRlpDecoder.cairo", cairo_path=["contracts"])
     return TestsDeps(starknet=starknet, decoder=decoder)
 
+@pytest.fixture(scope='module')
+async def factory():
+    return await setup()
+
 
 @pytest.mark.asyncio
-async def test_decode_parent_hash():
-    starknet, decoder = await setup()
+async def test_decode_parent_hash(factory):
+    starknet, decoder = factory
 
     # Retrieve rlp block header
     block = mocked_blocks[0]
@@ -54,8 +63,8 @@ async def test_decode_parent_hash():
     assert output == expected_hash
 
 @pytest.mark.asyncio
-async def test_decode_uncles_hash():
-    starknet, decoder = await setup()
+async def test_decode_uncles_hash(factory):
+    starknet, decoder = factory
 
     # Retrieve rlp block header
     block = mocked_blocks[0]
@@ -74,8 +83,8 @@ async def test_decode_uncles_hash():
     assert output == expected_hash
 
 @pytest.mark.asyncio
-async def test_decode_beneficiary():
-    starknet, decoder = await setup()
+async def test_decode_beneficiary(factory):
+    starknet, decoder = factory
 
     # Retrieve rlp block header
     block = mocked_blocks[0]
@@ -94,8 +103,8 @@ async def test_decode_beneficiary():
     assert output_words == expected_words.values
 
 @pytest.mark.asyncio
-async def test_decode_state_root():
-    starknet, decoder = await setup()
+async def test_decode_state_root(factory):
+    starknet, decoder = factory
 
     # Retrieve rlp block header
     block = mocked_blocks[0]
@@ -114,8 +123,8 @@ async def test_decode_state_root():
     assert output == expected_hash
 
 @pytest.mark.asyncio
-async def test_decode_transactions_root():
-    starknet, decoder = await setup()
+async def test_decode_transactions_root(factory):
+    starknet, decoder = factory
 
     # Retrieve rlp block header
     block = mocked_blocks[0]
@@ -134,8 +143,8 @@ async def test_decode_transactions_root():
     assert output == expected_hash
 
 @pytest.mark.asyncio
-async def test_decode_transactions_root():
-    starknet, decoder = await setup()
+async def test_decode_transactions_root(factory):
+    starknet, decoder = factory
 
     # Retrieve rlp block header
     block = mocked_blocks[0]
@@ -154,8 +163,8 @@ async def test_decode_transactions_root():
     assert output == expected_hash
 
 @pytest.mark.asyncio
-async def test_decode_receipts_root():
-    starknet, decoder = await setup()
+async def test_decode_receipts_root(factory):
+    starknet, decoder = factory
 
     # Retrieve rlp block header
     block = mocked_blocks[0]
@@ -174,8 +183,8 @@ async def test_decode_receipts_root():
     assert output == expected_hash
 
 @pytest.mark.asyncio
-async def test_decode_difficulty():
-    starknet, decoder = await setup()
+async def test_decode_difficulty(factory):
+    starknet, decoder = factory
 
     # Retrieve rlp block header
     block = mocked_blocks[0]
@@ -193,8 +202,8 @@ async def test_decode_difficulty():
     assert output == expected_value
 
 @pytest.mark.asyncio
-async def test_decode_block_number():
-    starknet, decoder = await setup()
+async def test_decode_block_number(factory):
+    starknet, decoder = factory
 
     # Retrieve rlp block header
     block = mocked_blocks[0]

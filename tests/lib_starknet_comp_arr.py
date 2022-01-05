@@ -1,5 +1,5 @@
-from typing import NamedTuple
 import pytest
+from typing import NamedTuple
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 
