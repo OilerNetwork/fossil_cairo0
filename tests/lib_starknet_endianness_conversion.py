@@ -1,14 +1,28 @@
+import pytest
+import asyncio
 from typing import NamedTuple
 from utils.types import Data
 from utils.helpers import IntsSequence
 
-import pytest
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 
 class TestsDeps(NamedTuple):
     starknet: Starknet
     converter: StarknetContract
+
+@pytest.fixture(scope='module')
+def event_loop():
+    return asyncio.new_event_loop()
+
+async def setup():
+    starknet = await Starknet.empty()
+    converter = await starknet.deploy("contracts/starknet/test/TestToBigEndian.cairo", cairo_path=["contracts"])
+    return TestsDeps(starknet=starknet, converter=converter)
+
+@pytest.fixture(scope='module')
+async def factory():
+    return await setup()
 
 
 def byteswap_64bit_word(word: int, size: int):
@@ -22,14 +36,9 @@ def byteswap_64bit_word(word: int, size: int):
     else:
         return swapped_4byte_pair >> ((8-size)*8)
 
-async def setup():
-    starknet = await Starknet.empty()
-    converter = await starknet.deploy("contracts/starknet/test/TestToBigEndian.cairo", cairo_path=["contracts"])
-    return TestsDeps(starknet=starknet, converter=converter)
-
 @pytest.mark.asyncio
-async def test_swap_endianness_full_word():
-    starknet, converter = await setup()
+async def test_swap_endianness_full_word(factory):
+    starknet, converter = factory
 
     input_str = 'f90218a089abcdef'
 
@@ -58,8 +67,8 @@ async def test_swap_endianness_full_word():
 
 
 @pytest.mark.asyncio
-async def test_swap_endianness_small_words():
-    starknet, converter = await setup()
+async def test_swap_endianness_small_words(factory):
+    starknet, converter = factory
     for i in range(8):
         input_str = 'f90218a089abcdef'[0:16-(i*2)]
         input_as_big_endian = int.from_bytes(bytearray.fromhex(input_str), 'big')
@@ -71,8 +80,8 @@ async def test_swap_endianness_small_words():
         assert big_to_little_python == big_to_little_cairo
 
 @pytest.mark.asyncio
-async def test_swap_endianness_small_word():
-    starknet, converter = await setup()
+async def test_swap_endianness_small_word(factory):
+    starknet, converter = factory
 
     input_str = 'f90218'
 
@@ -99,8 +108,8 @@ async def test_swap_endianness_small_word():
     assert little_to_big_python == little_to_big_cairo
 
 @pytest.mark.asyncio
-async def test_to_little_endian():
-    starknet, converter = await setup()
+async def test_to_little_endian(factory):
+    starknet, converter = factory
 
     input_str = 'f90218'#a089abcdef'
 
@@ -114,8 +123,8 @@ async def test_to_little_endian():
     assert output == little_swapped
 
 @pytest.mark.asyncio
-async def test_tricky_case():
-    starknet, converter = await setup()
+async def test_tricky_case(factory):
+    starknet, converter = factory
 
     input_str = '0000f9'
 
@@ -129,15 +138,15 @@ async def test_tricky_case():
     assert output == little_swapped
 
 @pytest.mark.asyncio
-async def test_revert_word_size_above_64bit():
-    starknet, converter = await setup()
+async def test_revert_word_size_above_64bit(factory):
+    starknet, converter = factory
     with pytest.raises(Exception):
         max_word = 2 ** 64 + 1
-        await converter.test_to_big_endian(max_word, int(len(input_str)/2)).call()
+        await converter.test_to_big_endian(max_word, int(len("dedd")/2)).call()
 
 @pytest.mark.asyncio
-async def test_swap_endianness_many_words():
-    starknet, converter = await setup()
+async def test_swap_endianness_many_words(factory):
+    starknet, converter = factory
 
     input = Data.from_hex('0x881e56a54ebf4520546331bcafd9d0a41a967eac92e89fe4521156b9f4f1685e')
 

@@ -1,5 +1,6 @@
-from typing import NamedTuple
+import asyncio
 import pytest
+from typing import NamedTuple
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 from web3 import Web3
@@ -17,9 +18,9 @@ class TestsDeps(NamedTuple):
     starknet: Starknet
     keccak_contract: StarknetContract
 
-
-bytes_to_int_big = lambda word: bytes_to_int(word)
-
+@pytest.fixture(scope='module')
+def event_loop():
+    return asyncio.new_event_loop()
 
 async def setup():
     starknet = await Starknet.empty()
@@ -29,13 +30,19 @@ async def setup():
         keccak_contract=keccak_contract
     )
 
+@pytest.fixture(scope='module')
+async def factory():
+    return await setup()
+
+
+bytes_to_int_big = lambda word: bytes_to_int(word)
 
 
 # The testing library uses python's asyncio. So the following
 # decorator and the ``async`` keyword are needed.
 @pytest.mark.asyncio
-async def test_small_input():
-    starknet, keccak_contract = await setup()
+async def test_small_input(factory):
+    starknet, keccak_contract = factory
 
     keccak_input = [
         b'\xf9\x02\x18\xa0\x03\xb0\x16\xcc',
@@ -59,8 +66,8 @@ async def test_small_input():
 
 
 @pytest.mark.asyncio
-async def test_small_tricky_input():
-    starknet, keccak_contract = await setup()
+async def test_small_tricky_input(factory):
+    starknet, keccak_contract = factory
 
     keccak_input = [
         b'\xf9\x02\x18\xa0\x03\xb0\x16\xcc',
@@ -84,8 +91,8 @@ async def test_small_tricky_input():
 
 
 @pytest.mark.asyncio
-async def test_huge_input():
-    starknet, keccak_contract = await setup()
+async def test_huge_input(factory):
+    starknet, keccak_contract = factory
 
     keccak_input = [
         b'\xf9\x02\x18\xa0\x03\xb0\x16\xcc',
@@ -171,8 +178,8 @@ async def test_huge_input():
 
 
 @pytest.mark.asyncio
-async def test_blockheader_input():
-    starknet, keccak_contract = await setup()
+async def test_blockheader_input(factory):
+    starknet, keccak_contract = factory
 
     block = mocked_blocks[0]
     block_header = build_block_header(block)

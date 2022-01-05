@@ -1,4 +1,5 @@
 import pytest
+import asyncio
 from typing import NamedTuple
 
 from starkware.starknet.testing.contract import StarknetContract
@@ -23,6 +24,9 @@ class TestsDeps(NamedTuple):
     starknet: Starknet
     trie_proofs_contract: StarknetContract
 
+@pytest.fixture(scope='module')
+def event_loop():
+    return asyncio.new_event_loop()
 
 async def setup():
     starknet = await Starknet.empty()
@@ -32,10 +36,14 @@ async def setup():
         trie_proofs_contract=trie_proofs_contract
     )
 
+@pytest.fixture(scope='module')
+async def factory():
+    return await setup()
+
 
 @pytest.mark.asyncio
-async def test_count_shared_prefix_len():
-    starknet, trie_proofs_contract = await setup()
+async def test_count_shared_prefix_len(factory):
+    starknet, trie_proofs_contract = factory
 
     # Inputs
     proof = trie_proofs[1]['accountProof']
@@ -64,8 +72,8 @@ async def test_count_shared_prefix_len():
 
 
 @pytest.mark.asyncio
-async def test_get_next_element_hash():
-    starknet, trie_proofs_contract = await setup()
+async def test_get_next_element_hash(factory):
+    starknet, trie_proofs_contract = factory
 
     print(
         Data.from_hex('0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421').to_ints()
@@ -91,8 +99,8 @@ async def test_get_next_element_hash():
 
 
 @pytest.mark.asyncio
-async def test_verify_valid_account_proof():
-    starknet, trie_proofs_contract = await setup()
+async def test_verify_valid_account_proof(factory):
+    starknet, trie_proofs_contract = factory
 
     block_state_root = Data.from_hex('0x2045bf4ea5561e88a4d0d9afbc316354e49fe892ac7e961a5e68f1f4b9561152')
     proof_path = Data.from_hex(Web3.keccak(hexstr=trie_proofs[1]['address']).hex())
