@@ -1,5 +1,4 @@
 import pytest
-import asyncio
 
 from typing import NamedTuple
 
@@ -33,17 +32,9 @@ async def setup():
        account=account,
        signer=signer)
 
-@pytest.fixture(scope='module')
-def event_loop():
-    return asyncio.new_event_loop()
-
-@pytest.fixture(scope='module')
-async def factory():
-    return await setup()
-
 @pytest.mark.asyncio
-async def test_receive_from_l1(factory):
-    starknet, messages_proxy, account, signer = factory
+async def test_receive_from_l1():
+    starknet, messages_proxy, account, signer = await setup()
 
     l1_headers_store = await starknet.deploy(source="contracts/starknet/L1HeadersStore.cairo", cairo_path=["contracts"])
 
@@ -74,8 +65,8 @@ async def test_receive_from_l1(factory):
     assert set_parent_hash == mocked_blocks[0]["parentHash"].hex()
 
 @pytest.mark.asyncio
-async def test_change_contract_addresses(factory):
-    starknet, messages_proxy, account, signer = factory
+async def test_change_contract_addresses():
+    starknet, messages_proxy, account, signer = await setup()
 
     l1_messages_sender = 0xbeaf
     l1_headers_store_addr = 0xdead
@@ -96,8 +87,8 @@ async def test_change_contract_addresses(factory):
 
 
 @pytest.mark.asyncio
-async def test_change_owner_invalid_caller(factory):
-    starknet, messages_proxy, account, signer = factory
+async def test_change_owner_invalid_caller():
+    starknet, messages_proxy, account, signer = await setup()
 
     l1_messages_sender = 0xbeaf
     l1_headers_store_addr = 0xdead
@@ -112,8 +103,8 @@ async def test_change_owner_invalid_caller(factory):
     
 
 @pytest.mark.asyncio
-async def test_change_owner(factory):
-    starknet, messages_proxy, account, signer = factory
+async def test_change_owner():
+    starknet, messages_proxy, account, signer = await setup()
 
     l1_messages_sender = 0xbeaf
     l1_headers_store_addr = 0xdead
@@ -129,8 +120,8 @@ async def test_change_owner(factory):
     assert set_owner_call.result.res == new_owner
 
 @pytest.mark.asyncio
-async def test_initializer(factory):
-    starknet, messages_proxy, account, signer = factory
+async def test_initializer():
+    starknet, messages_proxy, account, signer = await setup()
 
     l1_messages_sender = 0xbeaf
     l1_headers_store_addr = 0xdead
@@ -148,8 +139,8 @@ async def test_initializer(factory):
     assert set_owner_call.result.res == owner
 
 @pytest.mark.asyncio
-async def test_change_contract_addresses_invalid_caller(factory):
-    starknet, messages_proxy, account, signer = factory
+async def test_change_contract_addresses_invalid_caller():
+    starknet, messages_proxy, account, signer = await setup()
 
     l1_messages_sender = 0xbeaf
     l1_headers_store_addr = 0xdead
