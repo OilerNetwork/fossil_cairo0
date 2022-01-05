@@ -1,4 +1,5 @@
 import pytest
+import asyncio
 from typing import NamedTuple
 
 from starkware.starknet.testing.contract import StarknetContract
@@ -13,9 +14,7 @@ from utils.helpers import chunk_bytes_input, bytes_to_int, bytes_to_int_little
 
 from mocks.blocks import mocked_blocks
 
-
 bytes_to_int_big = lambda word: bytes_to_int(word)
-
 
 class TestsDeps(NamedTuple):
     starknet: Starknet
@@ -25,6 +24,9 @@ class TestsDeps(NamedTuple):
     l1_relayer_account: StarknetContract
     l1_relayer_signer: Signer
 
+@pytest.fixture(scope='module')
+def event_loop():
+    return asyncio.new_event_loop()
 
 async def setup():
     starknet = await Starknet.empty()
@@ -43,6 +45,10 @@ async def setup():
         l1_relayer_signer=l1_relayer_signer
     )
 
+@pytest.fixture(scope='module')
+async def factory():
+    return await setup()
+
 async def submit_l1_parent_hash(l1_relayer_signer: Signer, l1_relayer_account: StarknetContract, storage_proof: StarknetContract):
     message = bytearray.fromhex(mocked_blocks[0]["parentHash"].hex()[2:])
     chunked_message = chunk_bytes_input(message)
@@ -57,15 +63,15 @@ async def submit_l1_parent_hash(l1_relayer_signer: Signer, l1_relayer_account: S
 
 
 @pytest.mark.asyncio
-async def test_submit_hash():
-    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
+async def test_submit_hash(factory):
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
     # Submit message using l1_relayer_account
     await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof)
 
 
 @pytest.mark.asyncio
-async def test_process_block():
-    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
+async def test_process_block(factory):
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
 
     await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof)
 
@@ -88,8 +94,8 @@ async def test_process_block():
     assert set_parent_hash == block["parentHash"].hex()
 
 @pytest.mark.asyncio
-async def test_process_invalid_block():
-    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
+async def test_process_invalid_block(factory):
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
 
     await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof)
 
@@ -109,8 +115,8 @@ async def test_process_invalid_block():
 
 
 @pytest.mark.asyncio
-async def test_set_state_root():
-    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
+async def test_set_state_root(factory):
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
 
     await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof)
 
@@ -141,8 +147,8 @@ async def test_set_state_root():
 
 
 @pytest.mark.asyncio
-async def test_set_transactions_root():
-    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
+async def test_set_transactions_root(factory):
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
 
     await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof)
 
@@ -171,8 +177,8 @@ async def test_set_transactions_root():
     assert set_txns_root == block["transactionsRoot"].hex()
 
 @pytest.mark.asyncio
-async def test_set_receipts_root():
-    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
+async def test_set_receipts_root(factory):
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
 
     await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof)
 
@@ -201,8 +207,8 @@ async def test_set_receipts_root():
     assert set_receipts_root == block["receiptsRoot"].hex()
 
 @pytest.mark.asyncio
-async def test_set_uncles_hash():
-    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
+async def test_set_uncles_hash(factory):
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
 
     await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof)
 
@@ -231,8 +237,8 @@ async def test_set_uncles_hash():
     assert set_uncles_hash == block["sha3Uncles"].hex()
 
 @pytest.mark.asyncio
-async def test_set_beneficiary():
-    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
+async def test_set_beneficiary(factory):
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
 
     await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof)
 
@@ -263,8 +269,8 @@ async def test_set_beneficiary():
 
 
 @pytest.mark.asyncio
-async def test_set_difficulty():
-    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
+async def test_set_difficulty(factory):
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
 
     await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof)
 

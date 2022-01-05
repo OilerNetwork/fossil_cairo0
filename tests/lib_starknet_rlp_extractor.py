@@ -1,5 +1,6 @@
-from typing import NamedTuple, List
 import pytest
+import asyncio
+from typing import NamedTuple, List
 
 from mocks.blocks import mocked_blocks
 from utils.helpers import chunk_bytes_input, bytes_to_int, ints_array_to_bytes, random_bytes
@@ -15,9 +16,9 @@ class TestsDeps(NamedTuple):
     starknet: Starknet
     extract_rlp_contract: StarknetContract
 
-
-bytes_to_int_big = lambda word: bytes_to_int(word)
-
+@pytest.fixture(scope='module')
+def event_loop():
+    return asyncio.new_event_loop()
 
 async def setup():
     starknet = await Starknet.empty()
@@ -27,9 +28,17 @@ async def setup():
         extract_rlp_contract=extract_rlp_contract
     )
 
+@pytest.fixture(scope='module')
+async def factory():
+    return await setup()
+
+
+bytes_to_int_big = lambda word: bytes_to_int(word)
+
+
 @pytest.mark.asyncio
-async def test_is_rlp_list_valid_input():
-    starknet, extract_rlp_contract = await setup()
+async def test_is_rlp_list_valid_input(factory):
+    starknet, extract_rlp_contract = factory
     
     block = mocked_blocks[0]
     block_header = build_block_header(block)
@@ -41,8 +50,8 @@ async def test_is_rlp_list_valid_input():
     assert is_list == 1
 
 @pytest.mark.asyncio
-async def test_is_rlp_list_invalid_input():
-    starknet, extract_rlp_contract = await setup()
+async def test_is_rlp_list_invalid_input(factory):
+    starknet, extract_rlp_contract = factory
     
     is_list_call = await extract_rlp_contract.test_is_rlp_list(0, [0x82beef]).call()
     is_list = is_list_call.result.res
@@ -50,8 +59,8 @@ async def test_is_rlp_list_invalid_input():
     assert is_list == 0
 
 @pytest.mark.asyncio
-async def test_get_element():
-    starknet, extract_rlp_contract = await setup()
+async def test_get_element(factory):
+    starknet, extract_rlp_contract = factory
 
     block = mocked_blocks[0]
     block_header = build_block_header(block)
@@ -68,8 +77,8 @@ async def test_get_element():
     assert output.length == expected_output.length
 
 @pytest.mark.asyncio
-async def test_to_list():
-    starknet, extract_rlp_contract = await setup()
+async def test_to_list(factory):
+    starknet, extract_rlp_contract = factory
 
     block = mocked_blocks[0]
     block_header = build_block_header(block)
@@ -86,8 +95,8 @@ async def test_to_list():
     assert output.lengths == expected_lengths
 
 @pytest.mark.asyncio
-async def test_extract_list_values():
-    starknet, extract_rlp_contract = await setup()
+async def test_extract_list_values(factory):
+    starknet, extract_rlp_contract = factory
     block = mocked_blocks[0]
     block_header = build_block_header(block)
     block_rlp = Data.from_bytes(block_header.raw_rlp())
@@ -128,8 +137,8 @@ async def test_extract_list_values():
 
 
 @pytest.mark.asyncio
-async def test_extract_words():
-    starknet, extract_rlp_contract = await setup()
+async def test_extract_words(factory):
+    starknet, extract_rlp_contract = factory
     block = mocked_blocks[0]
     block_header = build_block_header(block)
     block_rlp = Data.from_bytes(block_header.raw_rlp())
@@ -161,8 +170,8 @@ async def test_extract_words():
 
 
 @pytest.mark.asyncio
-async def test_random():
-    starknet, extract_rlp_contract = await setup()
+async def test_random(factory):
+    starknet, extract_rlp_contract = factory
     block_rlp = random_bytes(1337)
     # print("\n0x" + block_rlp.hex())
 
