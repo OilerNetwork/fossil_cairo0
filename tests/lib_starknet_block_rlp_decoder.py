@@ -16,6 +16,7 @@ from utils.benchmarks.blockheader_rlp_extractor import (
     getBlocknumber
 )
 from mocks.blocks import mocked_blocks
+from utils.types import Data
 
 
 bytes_to_int_big = lambda word: bytes_to_int(word)
@@ -49,7 +50,7 @@ async def test_decode_parent_hash():
     output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
 
     expected_words = getParentHash(block_rlp_formatted)
-    expected_hash = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in expected_words)
+    expected_hash = Data.from_ints(expected_words).to_hex()
     assert output == expected_hash
 
 @pytest.mark.asyncio
@@ -69,7 +70,7 @@ async def test_decode_uncles_hash():
     output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
 
     expected_words = getOmmersHash(block_rlp_formatted)
-    expected_hash = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in expected_words)
+    expected_hash = Data.from_ints(expected_words).to_hex()
     assert output == expected_hash
 
 @pytest.mark.asyncio
@@ -86,11 +87,11 @@ async def test_decode_beneficiary():
     block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
 
     decoded = await decoder.test_decode_beneficiary(block_rlp_formatted).call()
-    output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
+    output_words = list(decoded.result.res)
 
     expected_words = getBeneficiary(block_rlp_formatted)
-    expected_address = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in expected_words)
-    assert output == expected_address
+
+    assert output_words == expected_words.values
 
 @pytest.mark.asyncio
 async def test_decode_state_root():
@@ -109,7 +110,7 @@ async def test_decode_state_root():
     output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
 
     expected_words = getStateRoot(block_rlp_formatted)
-    expected_hash = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in expected_words)
+    expected_hash = Data.from_ints(expected_words).to_hex()
     assert output == expected_hash
 
 @pytest.mark.asyncio
@@ -129,7 +130,7 @@ async def test_decode_transactions_root():
     output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
 
     expected_words = getTransactionsRoot(block_rlp_formatted)
-    expected_hash = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in expected_words)
+    expected_hash = Data.from_ints(expected_words).to_hex()
     assert output == expected_hash
 
 @pytest.mark.asyncio
@@ -149,7 +150,7 @@ async def test_decode_transactions_root():
     output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
 
     expected_words = getTransactionsRoot(block_rlp_formatted)
-    expected_hash = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in expected_words)
+    expected_hash = Data.from_ints(expected_words).to_hex()
     assert output == expected_hash
 
 @pytest.mark.asyncio
@@ -169,7 +170,7 @@ async def test_decode_receipts_root():
     output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
 
     expected_words = getReceiptsRoot(block_rlp_formatted)
-    expected_hash = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in expected_words)
+    expected_hash = Data.from_ints(expected_words).to_hex()
     assert output == expected_hash
 
 @pytest.mark.asyncio
