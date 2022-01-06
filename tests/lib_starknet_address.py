@@ -55,7 +55,7 @@ async def test_address_160bit_to_words64(factory):
     address_to_words64_call = await address_contract.test_address_160bit_to_words64(
         int(example_addr[2:], 16)
     ).call()
-    output = address_to_words64_call.result.res
+    output = list(address_to_words64_call.result.res)
     expected_output = Data.from_hex(example_addr).to_ints().values
 
     assert output == expected_output

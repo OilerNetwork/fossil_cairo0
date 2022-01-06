@@ -16,15 +16,15 @@ end
 
 func address_160bit_to_words64{ range_check_ptr }(input: felt) -> (res: Address):
     alloc_locals
-    let max_address_size = 2**160 - 1
-    let (in_range) = is_le(input, max_address_size)
-    assert in_range = 1
-    # assert_le(input, max_address_size)
 
     let (local eigth_byte_exponent) = pow(2, 8 * 8)
     let (local four_byte_exponent) = pow(2, 4 * 8)
     
     let (tmp, third_word) = unsigned_div_rem(input, four_byte_exponent)
+
+    let third_word_max_size = 2**32 - 1
+    assert_le(third_word, third_word_max_size)
+
     let (first_word, second_word) = unsigned_div_rem(tmp, eigth_byte_exponent)
     local res: Address = Address(first_word, second_word, third_word)
     return (res)
