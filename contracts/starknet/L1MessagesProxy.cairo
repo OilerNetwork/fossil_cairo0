@@ -6,7 +6,7 @@ from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.alloc import alloc
 
 
-# L1StorageProof simplified interface
+# L1HeadersStore simplified interface
 @contract_interface
 namespace IL1HeadersStore:
     func receive_from_l1 (parent_hash_len: felt, parent_hash: felt*, block_number: felt):
