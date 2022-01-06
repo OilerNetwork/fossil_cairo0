@@ -1,7 +1,7 @@
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.cairo.common.math import assert_le, unsigned_div_rem
 from starknet.lib.bitshift import bitshift_right
-from starknet.lib.extract_from_rlp import IntsSequence
+from starknet.types import IntsSequence
 
 
 func extract_nibble{ range_check_ptr }(word: felt, word_len_bytes: felt, position: felt) -> (res: felt):

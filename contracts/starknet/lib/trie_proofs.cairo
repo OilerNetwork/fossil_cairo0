@@ -2,13 +2,13 @@ from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.alloc import alloc
 
-from starknet.lib.extract_from_rlp import IntsSequence, RLPItem, extractData, to_list, is_rlp_list
+from starknet.lib.extract_from_rlp import extractData, to_list, is_rlp_list
 from starknet.lib.words64 import extract_nibble, extract_nibble_from_words
 from starknet.lib.keccak import keccak256
 from starknet.lib.comp_arr import arr_eq
 from starknet.lib.swap_endianness import swap_endianness_four_words
 
-from starknet.types import Keccak256Hash
+from starknet.types import Keccak256Hash, IntsSequence, RLPItem
 
 # TODO check for safety
 func is_empty_keccak(input: IntsSequence) -> (res: felt):

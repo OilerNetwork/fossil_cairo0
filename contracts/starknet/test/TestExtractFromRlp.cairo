@@ -1,8 +1,9 @@
 %lang starknet
 %builtins pedersen range_check ecdsa
 
-from starknet.lib.extract_from_rlp import extractData, is_rlp_list, to_list, getElement, RLPItem, extract_list_values, IntsSequence
+from starknet.lib.extract_from_rlp import extractData, is_rlp_list, to_list, getElement, extract_list_values
 from starknet.lib.concat_arr import concat_arr
+from starknet.types import IntsSequence, RLPItem
 
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.memcpy import memcpy

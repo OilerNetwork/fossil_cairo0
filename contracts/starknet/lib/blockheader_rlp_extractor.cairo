@@ -1,5 +1,5 @@
-from starknet.lib.extract_from_rlp import extractData, extractElement, jumpOverElement, IntsSequence
-from starknet.types import (Keccak256Hash, Address)
+from starknet.lib.extract_from_rlp import extractData, extractElement, jumpOverElement
+from starknet.types import (Keccak256Hash, Address, IntsSequence)
 
 ### Elements decoder 
 

@@ -1,7 +1,7 @@
 %lang starknet
 %builtins pedersen range_check ecdsa bitwise
 
-from starknet.lib.extract_from_rlp import IntsSequence
+from starknet.types import IntsSequence
 from starknet.lib.words64 import extract_nibble, extract_nibble_from_words
 
 @view

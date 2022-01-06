@@ -3,19 +3,9 @@ from starkware.cairo.common.math import unsigned_div_rem
 from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.alloc import alloc
 
+from starknet.types import IntsSequence, RLPItem
 from starknet.lib.bitshift import bitshift_right, bitshift_left
 from starknet.lib.pow import pow
-
-struct IntsSequence:
-    member element : felt*
-    member element_size_words: felt
-    member element_size_bytes: felt
-end
-
-struct RLPItem:
-    member dataPosition : felt
-    member length : felt
-end
 
 
 func getElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: RLPItem):

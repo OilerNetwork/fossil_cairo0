@@ -3,7 +3,7 @@
 
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starknet.lib.swap_endianness import swap_endianness_64, swap_endianness_four_words
-from starknet.lib.extract_from_rlp import IntsSequence
+from starknet.types import IntsSequence
 
 @view
 func test_to_big_endian{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(word: felt, size: felt) -> (res: felt):

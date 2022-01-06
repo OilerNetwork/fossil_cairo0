@@ -4,7 +4,7 @@
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.cairo.common.alloc import alloc
 
-from starknet.lib.extract_from_rlp import IntsSequence, RLPItem
+from starknet.types import IntsSequence, RLPItem, reconstruct_ints_sequence_list
 from starknet.lib.trie_proofs import count_shared_prefix_len, get_next_hash, verify_proof
 from starknet.types import Keccak256Hash
 
@@ -91,75 +91,4 @@ func test_verify_proof{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
         proof_sizes_bytes_len)
 
     return (result.element_size_bytes, result.element_size_words, result.element)
-end
-
-func reconstruct_ints_sequence_list{ range_check_ptr }(
-    elements_concat: felt*,
-    elements_concat_len: felt,
-    elements_sizes_words: felt*,
-    elements_sizes_words_len: felt,
-    elements_sizes_bytes: felt*,
-    elements_sizes_bytes_len: felt,
-    acc: IntsSequence*,
-    acc_len: felt,
-    offset: felt,
-    current_index: felt):
-    alloc_locals
-
-    if current_index == elements_sizes_words_len:
-        return ()
-    end
-
-    let (current_sequence_element_acc) = alloc()
-
-    let (offset_updated) = slice_arr(
-        offset,
-        elements_sizes_words[current_index],
-        elements_concat,
-        elements_concat_len,
-        current_sequence_element_acc,
-        0,
-        0)
-
-    assert acc[current_index] = IntsSequence(
-        current_sequence_element_acc,
-        elements_sizes_words[current_index],
-        elements_sizes_bytes[current_index])
-
-
-    return reconstruct_ints_sequence_list(
-        elements_concat,
-        elements_concat_len,
-        elements_sizes_words,
-        elements_sizes_words_len,
-        elements_sizes_bytes,
-        elements_sizes_bytes_len,
-        acc,
-        acc_len + 1,
-        offset_updated,
-        current_index + 1)
-end
-
-func slice_arr{ range_check_ptr }(
-    start: felt,
-    size: felt,
-    arr: felt*,
-    arr_len: felt,
-    acc: felt*,
-    acc_len: felt,
-    current_index: felt) -> (offset: felt):
-    if current_index == size:
-        return (start + current_index)
-    end
-
-    assert acc[current_index] = arr[start + current_index]
-
-    return slice_arr(
-        start,
-        size,
-        arr,
-        arr_len,
-        acc,
-        acc_len + 1,
-        current_index + 1)
 end
