@@ -33,6 +33,10 @@ namespace IL1HeadersStore:
 end
 
 @storage_var
+func _initialized() -> (res: felt):
+end
+
+@storage_var
 func _l1_headers_store_addr() -> (res : felt):
 end
 
@@ -94,6 +98,20 @@ func get_verified_account_nonce{
         range_check_ptr } (account: Address, block: felt) -> (res: felt):
     let (address_160) = address_words64_to_160bit(account)
     return _verified_account_nonce.read(address_160, block)
+end
+
+# Initializes the contract
+@external
+func initialize{
+        pedersen_ptr: HashBuiltin*,
+        syscall_ptr: felt*,
+        range_check_ptr
+    } (l1_headers_store_addr: felt):
+    let (initialized) = _initialized.read()
+    assert initialized = 0
+    _initialized.write(1)
+    _l1_headers_store_addr.write(l1_headers_store_addr)
+    return ()
 end
 
 # options_set: indicates which element of the decoded proof should be saved in state
