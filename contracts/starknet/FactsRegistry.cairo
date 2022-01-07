@@ -52,6 +52,50 @@ end
 func _verified_account_nonce(account : felt, block : felt) -> (res : felt):
 end
 
+@view
+func get_l1_headers_store_addr{
+        syscall_ptr: felt*,
+        pedersen_ptr : HashBuiltin*,
+        range_check_ptr } () -> (res: felt):
+    return _l1_headers_store_addr.read()
+end
+
+@view
+func get_verified_account_storage_hash{
+        syscall_ptr: felt*,
+        pedersen_ptr : HashBuiltin*,
+        range_check_ptr } (account: Address, block: felt) -> (res: Keccak256Hash):
+    let (address_160) = address_words64_to_160bit(account)
+    return _verified_account_storage_hash.read(address_160, block)
+end
+
+@view
+func get_verified_account_code_hash{
+        syscall_ptr: felt*,
+        pedersen_ptr : HashBuiltin*,
+        range_check_ptr } (account: Address, block: felt) -> (res: Keccak256Hash):
+    let (address_160) = address_words64_to_160bit(account)
+    return _verified_account_code_hash.read(address_160, block)
+end
+
+@view
+func get_verified_account_balance{
+        syscall_ptr: felt*,
+        pedersen_ptr : HashBuiltin*,
+        range_check_ptr } (account: Address, block: felt) -> (res: felt):
+    let (address_160) = address_words64_to_160bit(account)
+    return _verified_account_balance.read(address_160, block)
+end
+
+@view
+func get_verified_account_nonce{
+        syscall_ptr: felt*,
+        pedersen_ptr : HashBuiltin*,
+        range_check_ptr } (account: Address, block: felt) -> (res: felt):
+    let (address_160) = address_words64_to_160bit(account)
+    return _verified_account_nonce.read(address_160, block)
+end
+
 # options_set: indicates which element of the decoded proof should be saved in state
 # options_set: is a felt in range 0 to 16
 # options_set: storage_hash will be saved if 1st bit of the arg is positive
@@ -60,11 +104,20 @@ end
 # options_set: balance will be saved if 4th bit of the arg is positive
 @external
 func prove_account{
-        syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr,
-        bitwise_ptr : BitwiseBuiltin*}(
-        options_set : felt, block_number : felt, account : Address, proof_sizes_bytes_len : felt,
-        proof_sizes_bytes : felt*, proof_sizes_words_len : felt, proof_sizes_words : felt*,
-        proofs_concat_len : felt, proofs_concat : felt*):
+        syscall_ptr : felt*,
+        pedersen_ptr : HashBuiltin*,
+        range_check_ptr,
+        bitwise_ptr : BitwiseBuiltin*
+    }(
+        options_set : felt,
+        block_number : felt,
+        account : Address,
+        proof_sizes_bytes_len : felt,
+        proof_sizes_bytes : felt*,
+        proof_sizes_words_len : felt,
+        proof_sizes_words : felt*,
+        proofs_concat_len : felt,
+        proofs_concat : felt*):
     alloc_locals
     let (local account_raw) = alloc()
     assert account_raw[0] = account.word_1
@@ -78,8 +131,7 @@ func prove_account{
     local path : IntsSequence = IntsSequence(path_raw, 4, 32)
 
     let (local headers_store_addr) = _l1_headers_store_addr.read()
-    let (local state_root_raw : Keccak256Hash) = IL1HeadersStore.get_state_root(
-        headers_store_addr, block_number)
+    let (local state_root_raw : Keccak256Hash) = IL1HeadersStore.get_state_root(headers_store_addr, block_number)
 
     assert_not_zero(state_root_raw.word_1)
     assert_not_zero(state_root_raw.word_2)
@@ -109,10 +161,8 @@ func prove_account{
         0)
 
     let (local result : IntsSequence) = verify_proof(path, state_root, proof, proof_sizes_bytes_len)
-    let (local result_items : RLPItem*, result_items_len : felt) = to_list(
-        result.element, result.element_size_words)
-    let (local result_values : IntsSequence*, result_values_len : felt) = extract_list_values(
-        result.element, result.element_size_words, result_items, result_items_len)
+    let (local result_items : RLPItem*, result_items_len : felt) = to_list(result.element, result.element_size_words)
+    let (local result_values : IntsSequence*, result_values_len : felt) = extract_list_values(result.element, result.element_size_words, result_items, result_items_len)
 
     let (local address_160) = address_words64_to_160bit(account)
 
