@@ -40,22 +40,25 @@ async def test_rlp_account_entry():
     input_hex = '0xf8440180a0199c2e6b850bcc9beaea25bf1bacc5741a7aad954d28af9b23f4b53f5404937ba04e36f96ee1667a663dfaac57c4d185a0e369a3a217e0079d49620f34f85d1ac7'
     input = Data.from_hex(input_hex)
 
-    code_hash_element = extractData(input.to_ints().values, 38, 32)
+    print(input.to_hex())
+    code_hash_element = extractData(input.to_ints(), 38, 32)
 
     print("raw: ", code_hash_element)
     print("hex: ", Data.from_ints(code_hash_element).to_hex())
 
 
-# @pytest.mark.asyncio
-# async def test_random():
-#     block_rlp = random_bytes(1337)
-
-#     block_rlp_chunked = chunk_bytes_input(block_rlp)
-#     block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
-
-#     for start_byte in range(0, 1200):
-#         for size in range(1, 66):
-#             extracted_words = extractData(block_rlp_formatted, start_byte, size)
-#             extracted_bytes = ints_array_to_bytes(extracted_words, size)
-#             expected_bytes = block_rlp[start_byte:start_byte+size]
-#             assert extracted_bytes == expected_bytes
+@pytest.mark.asyncio
+async def test_random():
+    for length in range (1, 100):
+        input = Data.from_bytes(random_bytes(length))
+        print(f"{length}")
+        for start_byte in range(0, length):
+            for size in range(0, length-start_byte+1):
+                # print(f"{length}: {start_byte}-{start_byte+size}")
+                output = Data.from_ints(extractData(input.to_ints(), start_byte, size))
+                expected_output = Data.from_bytes(input.to_bytes()[start_byte:start_byte+size])
+                if output != expected_output:
+                    print(input.to_hex())
+                    print(output.to_hex())
+                    print(expected_output.to_hex())
+                assert output == expected_output
