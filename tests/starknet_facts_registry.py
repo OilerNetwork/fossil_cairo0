@@ -9,7 +9,7 @@ from starkware.starkware_utils.error_handling import StarkException
 from utils.types import Data
 from utils.Signer import Signer
 from utils.create_account import create_account
-from utils.helpers import chunk_bytes_input, bytes_to_int
+from utils.helpers import chunk_bytes_input, bytes_to_int, Encoding
 from utils.block_header import build_block_header
 
 from mocks.blocks import mocked_blocks
@@ -63,20 +63,21 @@ async def registry_initialized():
     await signer.send_transaction(
         account, facts_registry.contract_address, 'initialize', [storage_proof.contract_address])
 
-    # Submit blockhash from L1
-    block_parent_hash = Data.from_hex("0x961056e860e9f4b93deb4aeba4893882f4a82cd1231a79a932c6939e918c0df9")
-
-    await l1_relayer_signer.send_transaction(
-        l1_relayer_account,
-        storage_proof.contract_address,
-        'receive_from_l1',
-        [len(block_parent_hash.to_ints().values)] + block_parent_hash.to_ints().values + [mocked_blocks[2]['number']])
-
     block = mocked_blocks[2]
     block_header = build_block_header(block)
     block_rlp = block_header.raw_rlp()
     block_rlp_chunked = chunk_bytes_input(block_rlp)
     block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+
+    block_parent_hash = Data.from_hex("0x62a8a05ef6fcd39a11b2d642d4b7ab177056e1eb4bde4454f67285164ef8ce65")
+    assert block_parent_hash.to_hex() == block_header.hash().hex()
+
+    # Submit blockhash from L1
+    await l1_relayer_signer.send_transaction(
+        l1_relayer_account,
+        storage_proof.contract_address,
+        'receive_from_l1',
+        [len(block_parent_hash.to_ints(Encoding.LITTLE).values)] + block_parent_hash.to_ints(Encoding.LITTLE).values + [mocked_blocks[2]['number'] + 1])
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,

@@ -1,3 +1,4 @@
+from hexbytes.main import HexBytes
 from rlp import Serializable, encode
 from web3.types import BlockData
 from rlp.sedes import (
@@ -36,7 +37,7 @@ class BlockHeader(Serializable):
         ('baseFeePerGas', big_endian_int)
     )
 
-    def hash(self) -> str:
+    def hash(self) -> HexBytes:
         _rlp = encode(self)
         return Web3.keccak(_rlp)
     
