@@ -15,7 +15,7 @@ async def test_count_items():
     input = trie_proofs[0]['accountProof'][0]
 
     expected_items_count = 17
-    items_count = count_items(Data.from_hex(input).to_ints().values, 0)
+    items_count = count_items(Data.from_hex(input).to_ints(), 0)
 
     assert expected_items_count == items_count
 
@@ -23,16 +23,16 @@ async def test_count_items():
 @pytest.mark.asyncio
 async def test_to_list():
     input = trie_proofs[0]['accountProof'][0]
-    items = to_list(Data.from_hex(input).to_ints().values)
+    items = to_list(Data.from_hex(input).to_ints())
 
     assert len(items) == 17
 
 @pytest.mark.asyncio
 async def test_to_list_values():
     input = Data.from_hex(trie_proofs[0]['accountProof'][7])
-    items = to_list(input.to_ints().values)
+    items = to_list(input.to_ints())
     for item in items:
-        value = extractData(input.to_ints().values, item.dataPosition, item.length)
+        value = extractData(input.to_ints(), item.dataPosition, item.length)
         # print(ints_array_to_bytes(value, item.length).hex())
 
 @pytest.mark.asyncio
@@ -40,18 +40,13 @@ async def test_rlp_account_entry():
     input_hex = '0xf8440180a0199c2e6b850bcc9beaea25bf1bacc5741a7aad954d28af9b23f4b53f5404937ba04e36f96ee1667a663dfaac57c4d185a0e369a3a217e0079d49620f34f85d1ac7'
     input = Data.from_hex(input_hex)
 
-    print(input.to_hex())
     code_hash_element = extractData(input.to_ints(), 38, 32)
-
-    print("raw: ", code_hash_element)
-    print("hex: ", Data.from_ints(code_hash_element).to_hex())
 
 
 @pytest.mark.asyncio
 async def test_random():
     for length in range (1, 100):
         input = Data.from_bytes(random_bytes(length))
-        print(f"{length}")
         for start_byte in range(0, length):
             for size in range(0, length-start_byte+1):
                 # print(f"{length}: {start_byte}-{start_byte+size}")

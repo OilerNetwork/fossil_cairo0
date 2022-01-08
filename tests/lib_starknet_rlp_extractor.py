@@ -71,7 +71,7 @@ async def test_get_element(factory):
     get_element_call = await extract_rlp_contract.test_get_element(input.to_ints().values, 0).call()
     output = get_element_call.result.res
 
-    expected_output = getElement(input.to_ints().values, 0)
+    expected_output = getElement(input.to_ints(), 0)
 
     assert output.dataPosition == expected_output.dataPosition
     assert output.length == expected_output.length
@@ -119,7 +119,7 @@ async def test_extract_list_values(factory):
     ).call()
 
     rlp_items = to_list(block_rlp.to_ints().values)
-    rlp_values = extract_list_values(block_rlp.to_ints().values, rlp_items)
+    rlp_values = extract_list_values(block_rlp.to_ints(), rlp_items)
     
     output_list_elements_flat = extract_values_call.result.flattened_list_elements
     output_list_elements_sizes_words = extract_values_call.result.flattened_list_sizes_words
@@ -159,7 +159,7 @@ async def test_extract_list_from_account_rlp_entry(factory):
     ).call()
 
     rlp_items = to_list(input.to_ints().values)
-    rlp_values = extract_list_values(input.to_ints().values, rlp_items)
+    rlp_values = extract_list_values(input.to_ints(), rlp_items)
     
     output_list_elements_flat = extract_values_call.result.flattened_list_elements
     output_list_elements_sizes_words = extract_values_call.result.flattened_list_sizes_words
@@ -177,7 +177,7 @@ async def test_extract_list_from_account_rlp_entry(factory):
 
     print(rlp_items)
     print(rlp_values)
-    
+
 
     for value in rlp_values:
         print("Extracted value: ", Data.from_ints(IntsSequence(value.values, value.length)).to_hex())

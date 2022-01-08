@@ -13,7 +13,7 @@ async def test_decode_parent_hash():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints().values
+    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
     extracted_hash = Data.from_ints(getParentHash(block_rlp_formatted)).to_bytes()
 
@@ -27,7 +27,7 @@ async def test_decode_uncles_hash():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints().values
+    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
     extracted_hash = Data.from_ints(getOmmersHash(block_rlp_formatted)).to_bytes()
 
@@ -41,7 +41,7 @@ async def test_decode_beneficiary():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints().values
+    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
     extracted_hash = Data.from_ints(getBeneficiary(block_rlp_formatted)).to_bytes()
 
@@ -55,7 +55,7 @@ async def test_decode_state_root():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints().values
+    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
     extracted_hash = Data.from_ints(getStateRoot(block_rlp_formatted)).to_bytes()
 
@@ -69,7 +69,7 @@ async def test_decode_transactions_root():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints().values
+    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
     extracted_hash = Data.from_ints(getTransactionsRoot(block_rlp_formatted)).to_bytes()
 
@@ -83,7 +83,7 @@ async def test_decode_receipts_root():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints().values
+    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
     extracted_hash = Data.from_ints(getReceiptsRoot(block_rlp_formatted)).to_bytes()
 
@@ -97,7 +97,7 @@ async def test_decode_difficulty():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints().values
+    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
     difficulty = getDifficulty(block_rlp_formatted)
 
@@ -111,7 +111,7 @@ async def test_decode_block_number():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints().values
+    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
     block_number = getBlocknumber(block_rlp_formatted)
 
@@ -126,7 +126,7 @@ async def test_decode_gasLimit():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints().values
+    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
     gasLimit = getGasLimit(block_rlp_formatted)
 
@@ -141,7 +141,7 @@ async def test_decode_getGasUsed():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints().values
+    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
     gasUsed = getGasUsed(block_rlp_formatted)
 
@@ -157,7 +157,7 @@ async def test_decode_getTimestamp():
     block_rlp = block_header.raw_rlp()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints().values
+    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
     timestamp = getTimestamp(block_rlp_formatted)
 

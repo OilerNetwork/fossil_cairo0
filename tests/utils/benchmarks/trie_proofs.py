@@ -59,7 +59,7 @@ def extract_nibble(input: IntsSequence, position: int) -> int:
     return (input.values[target_word] >> (4*(15 - index))) & 0xF
 
 
-def get_next_hash(rlp: List[int], node: RLPItem) -> IntsSequence:
+def get_next_hash(rlp: IntsSequence, node: RLPItem) -> IntsSequence:
     assert node.length == 32
     res = extractData(rlp, node.dataPosition, 32)
     assert len(res.values) == 4
@@ -98,31 +98,31 @@ def verify_proof(
         else:
             assert next_hash == keccak_words64(element_rlp)
 
-        node = to_list(element_rlp.values)
+        node = to_list(element_rlp)
 
         # Handle leaf node
         if len(node) == 2:
-            node_path = merkle_patricia_input_decode(extractData(element_rlp.values, node[0].dataPosition, node[0].length))
+            node_path = merkle_patricia_input_decode(extractData(element_rlp, node[0].dataPosition, node[0].length))
             path_offset += count_shared_prefix_len(path_offset, words64_to_nibbles(path), node_path)
             if i == len(proof) - 1:
                 assert path_offset == path.length*2 # Unexpected end of proof (leaf)
-                return extractData(element_rlp.values, node[1].dataPosition, node[1].length)
+                return extractData(element_rlp, node[1].dataPosition, node[1].length)
             else:
                 children = node[1]
-                if not isRlpList(element_rlp.values, children.dataPosition):
-                    next_hash = get_next_hash(element_rlp.values, children)
+                if not isRlpList(element_rlp, children.dataPosition):
+                    next_hash = get_next_hash(element_rlp, children)
                 else:
-                    next_hash = keccak_words64(extractData(element_rlp.values, children.dataPosition, children.length))
+                    next_hash = keccak_words64(extractData(element_rlp, children.dataPosition, children.length))
         else:
             assert len(node) == 17
 
             if i == element_rlp.length - 1:
                 if path_offset + 1 == path.length*2:
-                    return extractData(element_rlp.values, node[16].dataPosition, node[16].length)
+                    return extractData(element_rlp, node[16].dataPosition, node[16].length)
                 else:
                     node_children = extract_nibble(path, path_offset)
                     children = node[node_children]
-                    assert len(extractData(element_rlp.values, children.dataPosition, children.length)) == 0
+                    assert len(extractData(element_rlp, children.dataPosition, children.length)) == 0
                     return IntsSequence([], 0)
             else:
                 assert path_offset < path.length*2
@@ -131,8 +131,8 @@ def verify_proof(
 
                 path_offset += 1
 
-                if not isRlpList(element_rlp.values, children.dataPosition):
-                    next_hash = get_next_hash(element_rlp.values, children)
+                if not isRlpList(element_rlp, children.dataPosition):
+                    next_hash = get_next_hash(element_rlp, children)
                 else:
                     next_hash = keccak_words64(element_rlp)
     assert False

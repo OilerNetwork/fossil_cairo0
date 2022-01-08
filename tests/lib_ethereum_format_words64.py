@@ -1,7 +1,7 @@
 from brownie import accounts
 
 from mocks.blocks import mocked_blocks
-from utils.helpers import chunk_bytes_input, bytes_to_int
+from utils.helpers import bytes_to_int
 from utils.types import Data
 
 bytes_to_int_big = lambda word: bytes_to_int(word)

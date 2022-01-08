@@ -99,8 +99,8 @@ def test_merkle_patricia_decode_leaf(TestTrieProofs):
     account_proof = trie_proofs[0]['accountProof']
     leaf_node = Data.from_hex(account_proof[len(account_proof) - 1])
 
-    leaf_node_items = to_list(leaf_node.to_ints().values)
-    leaf_node_values = extract_list_values(leaf_node.to_ints().values, leaf_node_items)
+    leaf_node_items = to_list(leaf_node.to_ints())
+    leaf_node_values = extract_list_values(leaf_node.to_ints(), leaf_node_items)
 
     leaf_node_value = decode(leaf_node.to_bytes())[0]
 
@@ -136,8 +136,8 @@ def test_count_shared_prefix_len(TestTrieProofs):
     proof = trie_proofs[1]['accountProof']
     leaf_node = Data.from_hex(proof[len(proof) - 1])
 
-    leaf_node_items = to_list(leaf_node.to_ints().values)
-    leaf_node_values = extract_list_values(leaf_node.to_ints().values, leaf_node_items)
+    leaf_node_items = to_list(leaf_node.to_ints())
+    leaf_node_values = extract_list_values(leaf_node.to_ints(), leaf_node_items)
 
     leaf_node_value = decode(leaf_node.to_bytes())[0]
 

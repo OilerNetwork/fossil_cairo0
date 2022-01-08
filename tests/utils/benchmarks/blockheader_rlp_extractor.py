@@ -33,33 +33,33 @@ from utils.types import IntsSequence
 # 14	mixHash
 # 15	nonce
 
-def getParentHash(rlp: List[int]) -> IntsSequence:
+def getParentHash(rlp: IntsSequence) -> IntsSequence:
     return extractData(rlp, 4, 32)
 
-def getOmmersHash(rlp: List[int]) -> IntsSequence:
+def getOmmersHash(rlp: IntsSequence) -> IntsSequence:
     return extractData(rlp, 4+32+1, 32)
 
-def getBeneficiary(rlp: List[int]) -> IntsSequence:
+def getBeneficiary(rlp: IntsSequence) -> IntsSequence:
     return extractData(rlp, 4+32+1+32+1, 20)
 
-def getStateRoot(rlp: List[int]) -> IntsSequence:
+def getStateRoot(rlp: IntsSequence) -> IntsSequence:
     return extractData(rlp, 4+32+1+32+1+20+1, 32)
 
-def getTransactionsRoot(rlp: List[int]) -> IntsSequence:
+def getTransactionsRoot(rlp: IntsSequence) -> IntsSequence:
     return extractData(rlp, 4+32+1+32+1+20+1+32+1, 32)
 
-def getReceiptsRoot(rlp: List[int]) -> IntsSequence:
+def getReceiptsRoot(rlp: IntsSequence) -> IntsSequence:
     return extractData(rlp, 4+32+1+32+1+20+1+32+1+32+1, 32)
 
-def getDifficulty(rlp: List[int]) -> int:
+def getDifficulty(rlp: IntsSequence) -> int:
     return extractElement(rlp, 448).values[0]
 
-def getBlocknumber(rlp: List[int]) -> int:
+def getBlocknumber(rlp: IntsSequence) -> int:
     #jump over difficulty
     blockNumberPosition = jumpOverElement(rlp, 448)
     return extractElement(rlp, blockNumberPosition).values[0]
 
-def getGasLimit(rlp: List[int]) -> int:
+def getGasLimit(rlp: IntsSequence) -> int:
     #jump over difficulty
     blockNumberPosition = jumpOverElement(rlp, 448)
     #jump over blockNumber
@@ -67,7 +67,7 @@ def getGasLimit(rlp: List[int]) -> int:
 
     return extractElement(rlp, gasLimitPosition).values[0]
 
-def getGasUsed(rlp: List[int]) -> int:
+def getGasUsed(rlp: IntsSequence) -> int:
     #jump over difficulty
     blockNumberPosition = jumpOverElement(rlp, 448)
     #jump over blockNumber
@@ -77,7 +77,7 @@ def getGasUsed(rlp: List[int]) -> int:
 
     return extractElement(rlp, gasUsedPosition).values[0]
 
-def getTimestamp(rlp: List[int]) -> int:
+def getTimestamp(rlp: IntsSequence) -> int:
     #jump over difficulty
     blockNumberPosition = jumpOverElement(rlp, 448)
     #jump over blockNumber

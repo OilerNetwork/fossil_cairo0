@@ -54,7 +54,7 @@ async def test_count_shared_prefix_len(factory):
 
     # Get expected values
     node_path_items = to_list(element_rlp.to_ints().values)
-    node_path_items_extracted = extract_list_values(element_rlp.to_ints().values, node_path_items)
+    node_path_items_extracted = extract_list_values(element_rlp.to_ints(), node_path_items)
     node_path_nibbles = merkle_patricia_input_decode(node_path_items_extracted[0])
     expected_shared_prefix = path_offset + count_shared_prefix_len(path_offset, path.to_nibbles(), node_path_nibbles)
 
@@ -84,7 +84,7 @@ async def test_get_next_element_hash(factory):
     element_rlp = Data.from_hex(proof[len(proof) - 2])
     rlp_item = RLPItem(dataPosition=173, length=32)
 
-    expected_result = get_next_hash(element_rlp.to_ints().values, rlp_item)
+    expected_result = get_next_hash(element_rlp.to_ints(), rlp_item)
 
     get_next_hash_call = await trie_proofs_contract.test_get_next_hash(
         element_rlp.to_ints().values,
