@@ -1,10 +1,14 @@
 import pytest
+from utils.helpers import ints_array_to_bytes
 
 from utils.rlp import extractData, count_items, to_list, extract_list_values
 from utils.types import Data
+from utils.helpers import random_bytes, ints_array_to_bytes, bytes_to_int
 
 from mocks.trie_proofs import trie_proofs
 
+
+bytes_to_int_big = lambda word: bytes_to_int(word)
 
 @pytest.mark.asyncio
 async def test_count_items():
@@ -30,6 +34,17 @@ async def test_to_list_values():
     for item in items:
         value = extractData(input.to_ints().values, item.dataPosition, item.length)
         # print(ints_array_to_bytes(value, item.length).hex())
+
+@pytest.mark.asyncio
+async def test_rlp_account_entry():
+    input_hex = '0xf8440180a0199c2e6b850bcc9beaea25bf1bacc5741a7aad954d28af9b23f4b53f5404937ba04e36f96ee1667a663dfaac57c4d185a0e369a3a217e0079d49620f34f85d1ac7'
+    input = Data.from_hex(input_hex)
+
+    code_hash_element = extractData(input.to_ints().values, 38, 32)
+
+    print("raw: ", code_hash_element)
+    print("hex: ", Data.from_ints(code_hash_element).to_hex())
+
 
 # @pytest.mark.asyncio
 # async def test_random():

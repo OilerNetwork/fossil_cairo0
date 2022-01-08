@@ -284,6 +284,6 @@ func extract_list_values_recursive{ range_check_ptr }(
         rlp_items=rlp_items,
         rlp_items_len=rlp_items_len,
         acc=acc,
-        acc_len=acc_len,
+        acc_len=acc_len + 1,
         current_index=current_index + 1)
 end

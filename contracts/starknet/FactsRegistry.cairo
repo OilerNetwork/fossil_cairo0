@@ -12,6 +12,7 @@ from starknet.lib.trie_proofs import verify_proof
 from starknet.lib.bitset import bitset4_get
 from starknet.lib.extract_from_rlp import to_list, extract_list_values
 from starknet.lib.address import address_words64_to_160bit
+from starknet.lib.swap_endianness import swap_endianness_64
 
 # L1HeadersStore simplified interface
 @contract_interface
@@ -68,36 +69,32 @@ end
 func get_verified_account_storage_hash{
         syscall_ptr: felt*,
         pedersen_ptr : HashBuiltin*,
-        range_check_ptr } (account: Address, block: felt) -> (res: Keccak256Hash):
-    let (address_160) = address_words64_to_160bit(account)
-    return _verified_account_storage_hash.read(address_160, block)
+        range_check_ptr } (account_160: felt, block: felt) -> (res: Keccak256Hash):
+    return _verified_account_storage_hash.read(account_160, block)
 end
 
 @view
 func get_verified_account_code_hash{
         syscall_ptr: felt*,
         pedersen_ptr : HashBuiltin*,
-        range_check_ptr } (account: Address, block: felt) -> (res: Keccak256Hash):
-    let (address_160) = address_words64_to_160bit(account)
-    return _verified_account_code_hash.read(address_160, block)
+        range_check_ptr } (account_160: felt, block: felt) -> (res: Keccak256Hash):
+    return _verified_account_code_hash.read(account_160, block)
 end
 
 @view
 func get_verified_account_balance{
         syscall_ptr: felt*,
         pedersen_ptr : HashBuiltin*,
-        range_check_ptr } (account: Address, block: felt) -> (res: felt):
-    let (address_160) = address_words64_to_160bit(account)
-    return _verified_account_balance.read(address_160, block)
+        range_check_ptr } (account_160: felt, block: felt) -> (res: felt):
+    return _verified_account_balance.read(account_160, block)
 end
 
 @view
 func get_verified_account_nonce{
         syscall_ptr: felt*,
         pedersen_ptr : HashBuiltin*,
-        range_check_ptr } (account: Address, block: felt) -> (res: felt):
-    let (address_160) = address_words64_to_160bit(account)
-    return _verified_account_nonce.read(address_160, block)
+        range_check_ptr } (account_160: felt, block: felt) -> (res: felt):
+    return _verified_account_nonce.read(account_160, block)
 end
 
 # Initializes the contract
@@ -144,7 +141,18 @@ func prove_account{
 
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
-    let (local path_raw) = keccak256{keccak_ptr=keccak_ptr}(account_raw, 20)
+    let (local path_raw_little) = keccak256{keccak_ptr=keccak_ptr}(account_raw, 20)
+
+    let (local path_raw) = alloc()
+
+    let (local path_word_1) = swap_endianness_64(path_raw_little[0], 8)
+    assert path_raw[0] = path_word_1
+    let (local path_word_2) = swap_endianness_64(path_raw_little[1], 8)
+    assert path_raw[1] = path_word_2
+    let (local path_word_3) = swap_endianness_64(path_raw_little[2], 8)
+    assert path_raw[2] = path_word_3
+    let (local path_word_4) = swap_endianness_64(path_raw_little[3], 8)
+    assert path_raw[3] = path_word_4
 
     local path : IntsSequence = IntsSequence(path_raw, 4, 32)
 
@@ -181,7 +189,7 @@ func prove_account{
     let (local result : IntsSequence) = verify_proof(path, state_root, proof, proof_sizes_bytes_len)
     let (local result_items : RLPItem*, result_items_len : felt) = to_list(result.element, result.element_size_words)
     let (local result_values : IntsSequence*, result_values_len : felt) = extract_list_values(result.element, result.element_size_words, result_items, result_items_len)
-
+    
     let (local address_160) = address_words64_to_160bit(account)
 
     let (local save_storage_hash) = bitset4_get(options_set, 1)
@@ -228,7 +236,14 @@ func prove_account{
 
     let (local save_nonce) = bitset4_get(options_set, 3)
     if save_nonce == 1:
-        local nonce = result_values[0].element[0]
+        if result_values[0].element_size_bytes == 0:
+            tempvar temp_nonce = 0
+        else:
+            tempvar temp_nonce = result_values[0].element[0]
+        end
+
+        local nonce = temp_nonce
+
         _verified_account_nonce.write(address_160, block_number, nonce)
         tempvar syscall_ptr = syscall_ptr
         tempvar range_check_ptr = range_check_ptr
@@ -244,8 +259,15 @@ func prove_account{
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
     let (local save_balance) = bitset4_get(options_set, 4)
-    if save_nonce == 1:
-        local balance = result_values[1].element[0]
+    if save_balance == 1:
+        if result_values[1].element_size_bytes == 0:
+            tempvar temp_balance = 0
+        else:
+            tempvar temp_balance = result_values[1].element[0]
+        end
+
+        local balance = temp_balance
+
         _verified_account_balance.write(address_160, block_number, balance)
         tempvar syscall_ptr = syscall_ptr
         tempvar range_check_ptr = range_check_ptr

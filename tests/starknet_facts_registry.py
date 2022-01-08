@@ -9,10 +9,12 @@ from starkware.starkware_utils.error_handling import StarkException
 from utils.types import Data
 from utils.Signer import Signer
 from utils.create_account import create_account
-from utils.helpers import chunk_bytes_input, bytes_to_int, Encoding
+from utils.helpers import chunk_bytes_input, bytes_to_int, Encoding, IntsSequence
 from utils.block_header import build_block_header
 
 from mocks.blocks import mocked_blocks
+from mocks.trie_proofs import trie_proofs
+
 
 bytes_to_int_big = lambda word: bytes_to_int(word)
 
@@ -25,11 +27,11 @@ class BaseTestsDeps(NamedTuple):
 class RegistryTestsDeps(NamedTuple):
     starknet: Starknet
     facts_registry: StarknetContract
+    storage_proof: StarknetContract
     account: StarknetContract
     signer: Signer
     l1_relayer_account: StarknetContract
     l1_relayer_signer: Signer
-    storage_proof: StarknetContract
 
 @pytest.fixture(scope='module')
 def event_loop():
@@ -82,7 +84,7 @@ async def registry_initialized():
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
-        'process_block',
+        'set_block_state_root',
         [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
     )
 
@@ -121,6 +123,64 @@ async def test_initializer(base_factory):
 async def test_prove_account(registry_initialized):
     starknet, facts_registry, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = registry_initialized
 
+    proof = list(map(lambda element: Data.from_hex(element).to_ints(), trie_proofs[1]['accountProof']))
+    flat_proof = []
+    flat_proof_sizes_bytes = []
+    flat_proof_sizes_words = []
+    for proof_element in proof:
+        flat_proof += proof_element.values
+        flat_proof_sizes_bytes += [proof_element.length]
+        flat_proof_sizes_words += [len(proof_element.values)]
 
+    options_set = 15 # saves everything in state
 
+    l1_account_address = Data.from_hex(trie_proofs[1]['address'])
+    account_words64 = l1_account_address.to_ints()
 
+    set_state_root_call = await storage_proof.get_state_root(mocked_blocks[2]['number']).call()
+    set_state_root = set_state_root_call.result.res
+    print(Data.from_ints(IntsSequence(list(set_state_root), 32)).to_hex())
+
+    prove_account_tx = await signer.send_transaction(
+        account,
+        facts_registry.contract_address,
+        "prove_account",
+        [
+            options_set,
+            mocked_blocks[2]['number'],
+            account_words64.values[0],
+            account_words64.values[1],
+            account_words64.values[2],
+            len(flat_proof_sizes_bytes)] +
+            flat_proof_sizes_bytes +
+            [len(flat_proof_sizes_words)] +
+            flat_proof_sizes_words +
+            [len(flat_proof)] +
+            flat_proof)
+
+    print(prove_account_tx)
+
+    get_storage_hash_call = await facts_registry.get_verified_account_storage_hash(
+        int(l1_account_address.to_hex()[2:], 16),
+        mocked_blocks[2]['number']).call()
+    set_storage_hash = get_storage_hash_call.result.res
+
+    get_code_hash_call = await facts_registry.get_verified_account_code_hash(
+        int(l1_account_address.to_hex()[2:], 16),
+        mocked_blocks[2]['number']).call()
+    set_code_hash = get_code_hash_call.result.res
+
+    get_balance_call = await facts_registry.get_verified_account_balance(
+        int(l1_account_address.to_hex()[2:], 16),
+        mocked_blocks[2]['number']).call()
+    set_balance = get_balance_call.result.res
+
+    get_nonce_call = await facts_registry.get_verified_account_nonce(
+        int(l1_account_address.to_hex()[2:], 16),
+        mocked_blocks[2]['number']).call()
+    set_nonce = get_nonce_call.result.res
+
+    print("set_storage_hash: ", Data.from_ints(IntsSequence(list(set_storage_hash), 32)))
+    print("set_code_hash: ", Data.from_ints(IntsSequence(list(set_code_hash), 32)))
+    print("set_balance: ", set_balance)
+    print("set_nonce: ", set_nonce)

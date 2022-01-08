@@ -135,6 +135,53 @@ async def test_extract_list_values(factory):
 
     assert output_list_elements == rlp_values
 
+@pytest.mark.asyncio
+async def test_extract_list_from_account_rlp_entry(factory):
+    starknet, extract_rlp_contract = factory
+    input_hex = '0xf8440180a0199c2e6b850bcc9beaea25bf1bacc5741a7aad954d28af9b23f4b53f5404937ba04e36f96ee1667a663dfaac57c4d185a0e369a3a217e0079d49620f34f85d1ac7' 
+    input = Data.from_hex(input_hex)
+
+    to_list_call = await extract_rlp_contract.test_to_list(input.to_ints().values).call()
+    output = to_list_call.result
+
+    expected = to_list(input.to_ints().values)
+    expected_data_positions = list(map(lambda item: item.dataPosition, expected))
+    expected_lengths = list(map(lambda item: item.length, expected))
+
+    assert output.data_positions == expected_data_positions
+    assert output.lengths == expected_lengths
+
+    # Extract values:
+    extract_values_call = await extract_rlp_contract.test_extract_list_values(
+        input.to_ints().values,
+        expected_data_positions,
+        expected_lengths
+    ).call()
+
+    rlp_items = to_list(input.to_ints().values)
+    rlp_values = extract_list_values(input.to_ints().values, rlp_items)
+    
+    output_list_elements_flat = extract_values_call.result.flattened_list_elements
+    output_list_elements_sizes_words = extract_values_call.result.flattened_list_sizes_words
+    output_list_elements_sizes_bytes = extract_values_call.result.flattened_list_sizes_bytes
+
+    offset = 0
+    output_list_elements: List[IntsSequence] = []
+    for i in range(0 , len(output_list_elements_sizes_words)):
+        size_words = output_list_elements_sizes_words[i]
+        size_bytes = output_list_elements_sizes_bytes[i]
+        output_list_elements.append(IntsSequence(output_list_elements_flat[offset:offset+size_words], size_bytes))
+        offset += size_words
+
+    assert output_list_elements == rlp_values
+
+    print(rlp_items)
+    print(rlp_values)
+    
+
+    for value in rlp_values:
+        print("Extracted value: ", Data.from_ints(IntsSequence(value.values, value.length)).to_hex())
+
 
 @pytest.mark.asyncio
 async def test_extract_words(factory):
