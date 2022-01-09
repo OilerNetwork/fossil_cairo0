@@ -12,22 +12,29 @@ from starkware.cairo.common.memcpy import memcpy
 @view
 func test_extractData{range_check_ptr}(start_pos: felt, size: felt, rlp_len: felt, rlp: felt*) -> (res_len_bytes: felt, res_len:felt, res: felt*):
     alloc_locals
+    # TODO bytes size
+    local input: IntsSequence = IntsSequence(rlp, rlp_len, 0)
     let (local data: IntsSequence) = extractData(
         start_pos=start_pos,
         size=size,
-        block_rlp=rlp,
-        block_rlp_len=rlp_len)
+        rlp=input)
     return (data.element_size_bytes, data.element_size_words, data.element)
 end
 
 @view 
 func test_is_rlp_list{range_check_ptr}(pos: felt, rlp_len: felt, rlp: felt*) -> (res: felt):
-    return is_rlp_list(pos, rlp, rlp_len)
+    alloc_locals
+    # TODO bytes size
+    local input: IntsSequence = IntsSequence(rlp, rlp_len, 0)
+    return is_rlp_list(pos, input)
 end
 
 @view
 func test_get_element{range_check_ptr}(rlp_len: felt, rlp: felt*, position: felt) -> (res: RLPItem):
-    return getElement(rlp, rlp_len, position)
+    alloc_locals
+    # TODO bytes size
+    local input: IntsSequence = IntsSequence(rlp, rlp_len, 0)
+    return getElement(input, position)
 end
 
 @view
@@ -59,8 +66,10 @@ func test_extract_list_values{range_check_ptr}(
         acc=rlp_items,
         acc_len=0,
         current_index=0)
-    
-    let (res, res_len) = extract_list_values(rlp, rlp_len, rlp_items, rlp_items_lenghts_len)
+
+    # TODO bytes size
+    local input: IntsSequence = IntsSequence(rlp, rlp_len, 0) 
+    let (res, res_len) = extract_list_values(input, rlp_items, rlp_items_lenghts_len)
 
     let (local flattened_list_elements: felt*) = alloc()
     let (local flattened_list_sizes_words: felt*) = alloc()
@@ -148,7 +157,9 @@ end
 @view 
 func test_to_list{range_check_ptr}(rlp_len: felt, rlp: felt*) -> (data_positions_len: felt, data_positions: felt*, lengths_len: felt, lengths: felt*):
     alloc_locals
-    let (local list: RLPItem*, list_len) = to_list(rlp, rlp_len)
+    # TODO bytes size
+    local input: IntsSequence = IntsSequence(rlp, rlp_len, 0) 
+    let (local list: RLPItem*, list_len) = to_list(input)
 
     let (local data_positions: felt*) = alloc()
     let (local lengths: felt*) = alloc()

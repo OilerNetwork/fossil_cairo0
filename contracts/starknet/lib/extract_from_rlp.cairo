@@ -8,10 +8,10 @@ from starknet.lib.bitshift import bitshift_right, bitshift_left
 from starknet.lib.pow import pow
 
 
-func getElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: RLPItem):
+func getElement{ range_check_ptr }(rlp: IntsSequence, position: felt) -> (res: RLPItem):
     alloc_locals
 
-    let (local data: IntsSequence) = extractData{ range_check_ptr = range_check_ptr }(position, 1, rlp, rlp_len)
+    let (local data: IntsSequence) = extractData{ range_check_ptr = range_check_ptr }(position, 1, rlp)
     let firstByteArr: felt* = data.element
     let firstByte = firstByteArr[0]
 
@@ -31,7 +31,7 @@ func getElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) ->
     let (le_191) = is_le(firstByte, 191)
     if le_191 == 1:
         let lengthOfLength = firstByte - 183
-        let (local bytes: IntsSequence) = extractData{ range_check_ptr = range_check_ptr }(position + 1, lengthOfLength, rlp, rlp_len)
+        let (local bytes: IntsSequence) = extractData{ range_check_ptr = range_check_ptr }(position + 1, lengthOfLength, rlp)
         let lengthArr: felt* = bytes.element
         let length = lengthArr[0]
 
@@ -46,7 +46,7 @@ func getElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) ->
     end
 
     let lengthOfLength = firstByte - 247
-    let (local bytes: IntsSequence) = extractData{ range_check_ptr = range_check_ptr }(position+1, lengthOfLength, rlp, rlp_len)
+    let (local bytes: IntsSequence) = extractData{ range_check_ptr = range_check_ptr }(position+1, lengthOfLength, rlp)
     let lengthArr: felt* = bytes.element
     let length = lengthArr[0]
 
@@ -54,9 +54,9 @@ func getElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) ->
     return (result)
 end
 
-func extractElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: IntsSequence):
+func extractElement{ range_check_ptr }(rlp: IntsSequence, position: felt) -> (res: IntsSequence):
     alloc_locals
-    let (rlpItem: RLPItem) = getElement{ range_check_ptr = range_check_ptr }(rlp, rlp_len, position)
+    let (rlpItem: RLPItem) = getElement{ range_check_ptr = range_check_ptr }(rlp, position)
 
     if rlpItem.length == 0:
         let (local element: felt*) = alloc()
@@ -67,15 +67,15 @@ func extractElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt
         tempvar range_check_ptr = range_check_ptr
     end
 
-    return extractData{ range_check_ptr = range_check_ptr }(rlpItem.dataPosition, rlpItem.length, rlp, rlp_len)
+    return extractData{ range_check_ptr = range_check_ptr }(rlpItem.dataPosition, rlpItem.length, rlp)
 end
 
-func jumpOverElement{ range_check_ptr }(rlp: felt*, rlp_len: felt, position: felt) -> (res: felt):
-    let (rlpItem: RLPItem) = getElement{ range_check_ptr = range_check_ptr }(rlp, rlp_len, position)
+func jumpOverElement{ range_check_ptr }(rlp: IntsSequence, position: felt) -> (res: felt):
+    let (rlpItem: RLPItem) = getElement{ range_check_ptr = range_check_ptr }(rlp, position)
     return (rlpItem.dataPosition + rlpItem.length)
 end
 
-func extractData{ range_check_ptr }(start_pos: felt, size: felt, block_rlp: felt*, block_rlp_len: felt) -> (res: IntsSequence):
+func extractData{ range_check_ptr }(start_pos: felt, size: felt, rlp: IntsSequence) -> (res: IntsSequence):
     alloc_locals
 
     let (start_word, left_shift) = unsigned_div_rem(start_pos, 8)
@@ -105,8 +105,8 @@ func extractData{ range_check_ptr }(start_pos: felt, size: felt, block_rlp: felt
             start_word=start_word,
             left_shift=left_shift,
             right_shift=right_shift,
-            block_rlp=block_rlp,
-            block_rlp_len=block_rlp_len,
+            rlp=rlp.element,
+            rlp_len=rlp.element_size_words,
             accumulator=words_shifted,
             accumulator_len=full_words
         )
@@ -120,8 +120,8 @@ func extractData{ range_check_ptr }(start_pos: felt, size: felt, block_rlp: felt
     if remainder != 0:
         let (above_8) = is_le(9, remainder + left_shift)
         if above_8 == 1:
-            let (left_part) = bitshift_left(block_rlp[end_word - 1], left_shift * 8)
-            let (right_part) = bitshift_right(block_rlp[end_word], right_shift * 8)
+            let (left_part) = bitshift_left(rlp.element[end_word - 1], left_shift * 8)
+            let (right_part) = bitshift_right(rlp.element[end_word], right_shift * 8)
             let final_word = left_part + right_part
 
             let (final_word_shifted) = bitshift_right(final_word, (8 - remainder) * 8)
@@ -133,7 +133,7 @@ func extractData{ range_check_ptr }(start_pos: felt, size: felt, block_rlp: felt
 
             tempvar range_check_ptr = range_check_ptr
         else:
-            let (final_word_shifted) = bitshift_right(block_rlp[end_word], (8 - end_pos) * 8)
+            let (final_word_shifted) = bitshift_right(rlp.element[end_word], (8 - end_pos) * 8)
 
             let (local divider: felt) = pow(2, (end_pos-left_shift)*8)
             let (_, new_word) = unsigned_div_rem(final_word_shifted, divider)
@@ -157,8 +157,8 @@ func shift_words{ range_check_ptr }(
     start_word: felt,
     left_shift: felt,
     right_shift: felt,
-    block_rlp: felt*,
-    block_rlp_len: felt,
+    rlp: felt*,
+    rlp_len: felt,
     accumulator: felt*,
     accumulator_len: felt):
     alloc_locals
@@ -168,8 +168,8 @@ func shift_words{ range_check_ptr }(
         return ()
     else:
         if left_shift != 0:
-            let (left_part) = bitshift_left(block_rlp[start_word + current_index], left_shift * 8)
-            let (right_part) = bitshift_right(block_rlp[start_word + current_index + 1], right_shift * 8)
+            let (left_part) = bitshift_left(rlp[start_word + current_index], left_shift * 8)
+            let (right_part) = bitshift_right(rlp[start_word + current_index + 1], right_shift * 8)
         
             local new_word = left_part + right_part
             let (local divider: felt) = pow(2, 64)
@@ -178,7 +178,7 @@ func shift_words{ range_check_ptr }(
             assert accumulator[current_index] = new_word_masked
             tempvar range_check_ptr = range_check_ptr
         else:
-            assert accumulator[current_index] = block_rlp[start_word + current_index]
+            assert accumulator[current_index] = rlp[start_word + current_index]
             tempvar range_check_ptr = range_check_ptr
         end
 
@@ -187,8 +187,8 @@ func shift_words{ range_check_ptr }(
             start_word=start_word,
             left_shift=left_shift,
             right_shift=right_shift,
-            block_rlp=block_rlp,
-            block_rlp_len=block_rlp_len,
+            rlp=rlp,
+            rlp_len=rlp_len,
             accumulator=accumulator,
             accumulator_len=accumulator_len)
 
@@ -197,20 +197,20 @@ func shift_words{ range_check_ptr }(
     return ()
 end
 
-func is_rlp_list{ range_check_ptr }(pos: felt, rlp: felt*, rlp_len: felt) -> (res: felt):
+func is_rlp_list{ range_check_ptr }(pos: felt, rlp: IntsSequence) -> (res: felt):
     alloc_locals
-    let (local data: IntsSequence) = extractData(pos, 1, rlp, rlp_len)
+    let (local data: IntsSequence) = extractData(pos, 1, rlp)
     let (is_list) = is_le(191, data.element[0])
     return (is_list)
 end
 
-func to_list{ range_check_ptr }(rlp: felt*, rlp_len: felt) -> (items: RLPItem*, items_len: felt):
+func to_list{ range_check_ptr }(rlp: IntsSequence) -> (items: RLPItem*, items_len: felt):
     alloc_locals
 
-    let (is_list) = is_rlp_list(0, rlp, rlp_len)
+    let (is_list) = is_rlp_list(0, rlp)
     assert is_list = 1
 
-    let (local payload: RLPItem) = getElement(rlp, rlp_len, 0)
+    let (local payload: RLPItem) = getElement(rlp, 0)
 
     local payload_pos = payload.dataPosition
     local payload_len = payload.length
@@ -219,13 +219,12 @@ func to_list{ range_check_ptr }(rlp: felt*, rlp_len: felt) -> (items: RLPItem*, 
     let next_element_pos = payload_pos
 
     let (local items : RLPItem*) = alloc()
-    let (items_len) = to_list_recursive(rlp, rlp_len, next_element_pos, payload_end, 0, items, 0)
+    let (items_len) = to_list_recursive(rlp, next_element_pos, payload_end, 0, items, 0)
     return (items, items_len)
 end
 
 func to_list_recursive{ range_check_ptr }(
-    rlp: felt*,
-    rlp_len: felt,
+    rlp: IntsSequence,
     next_element_pos: felt,
     payload_end: felt,
     current_index: felt,
@@ -238,7 +237,7 @@ func to_list_recursive{ range_check_ptr }(
         return (current_index)
     end
 
-    let (local payload: RLPItem) = getElement(rlp, rlp_len, next_element_pos)
+    let (local payload: RLPItem) = getElement(rlp, next_element_pos)
 
     local payload_pos = payload.dataPosition
     local payload_len = payload.length
@@ -246,7 +245,6 @@ func to_list_recursive{ range_check_ptr }(
     assert accumulator[current_index] = RLPItem(payload_pos, payload_len)
     return to_list_recursive(
         rlp=rlp,
-        rlp_len=rlp_len,
         next_element_pos=payload_pos + payload_len,
         payload_end=payload_end,
         current_index=current_index+1,
@@ -255,16 +253,15 @@ func to_list_recursive{ range_check_ptr }(
         )
 end
 
-func extract_list_values{ range_check_ptr }(rlp: felt*, rlp_len: felt, rlp_items: RLPItem*, rlp_items_len: felt) -> (res: IntsSequence*, res_len: felt):
+func extract_list_values{ range_check_ptr }(rlp: IntsSequence, rlp_items: RLPItem*, rlp_items_len: felt) -> (res: IntsSequence*, res_len: felt):
     alloc_locals
     let (local acc: IntsSequence*) = alloc()
-    extract_list_values_recursive(rlp, rlp_len, rlp_items, rlp_items_len, acc, 0, 0)
+    extract_list_values_recursive(rlp, rlp_items, rlp_items_len, acc, 0, 0)
     return (acc, rlp_items_len)
 end
 
 func extract_list_values_recursive{ range_check_ptr }(
-    rlp: felt*,
-    rlp_len: felt,
+    rlp: IntsSequence,
     rlp_items: RLPItem*,
     rlp_items_len: felt,
     acc: IntsSequence*,
@@ -275,12 +272,11 @@ func extract_list_values_recursive{ range_check_ptr }(
         return ()
     end
 
-    let (local data: IntsSequence) = extractData(rlp_items[current_index].dataPosition, rlp_items[current_index].length, rlp, rlp_len)
+    let (local data: IntsSequence) = extractData(rlp_items[current_index].dataPosition, rlp_items[current_index].length, rlp)
     assert acc[current_index] = data
 
     return extract_list_values_recursive(
         rlp=rlp,
-        rlp_len=rlp_len,
         rlp_items=rlp_items,
         rlp_items_len=rlp_items_len,
         acc=acc,

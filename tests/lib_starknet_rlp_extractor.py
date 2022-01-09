@@ -87,7 +87,7 @@ async def test_to_list(factory):
     to_list_call = await extract_rlp_contract.test_to_list(block_rlp.to_ints().values).call()
     output = to_list_call.result
 
-    expected = to_list(block_rlp.to_ints().values)
+    expected = to_list(block_rlp.to_ints())
     expected_data_positions = list(map(lambda item: item.dataPosition, expected))
     expected_lengths = list(map(lambda item: item.length, expected))
 
@@ -104,7 +104,7 @@ async def test_extract_list_values(factory):
     to_list_call = await extract_rlp_contract.test_to_list(block_rlp.to_ints().values).call()
     output = to_list_call.result
 
-    expected = to_list(block_rlp.to_ints().values)
+    expected = to_list(block_rlp.to_ints())
     expected_data_positions = list(map(lambda item: item.dataPosition, expected))
     expected_lengths = list(map(lambda item: item.length, expected))
 
@@ -118,7 +118,7 @@ async def test_extract_list_values(factory):
         expected_lengths
     ).call()
 
-    rlp_items = to_list(block_rlp.to_ints().values)
+    rlp_items = to_list(block_rlp.to_ints())
     rlp_values = extract_list_values(block_rlp.to_ints(), rlp_items)
     
     output_list_elements_flat = extract_values_call.result.flattened_list_elements
@@ -144,7 +144,7 @@ async def test_extract_list_from_account_rlp_entry(factory):
     to_list_call = await extract_rlp_contract.test_to_list(input.to_ints().values).call()
     output = to_list_call.result
 
-    expected = to_list(input.to_ints().values)
+    expected = to_list(input.to_ints())
     expected_data_positions = list(map(lambda item: item.dataPosition, expected))
     expected_lengths = list(map(lambda item: item.length, expected))
 
@@ -158,7 +158,7 @@ async def test_extract_list_from_account_rlp_entry(factory):
         expected_lengths
     ).call()
 
-    rlp_items = to_list(input.to_ints().values)
+    rlp_items = to_list(input.to_ints())
     rlp_values = extract_list_values(input.to_ints(), rlp_items)
     
     output_list_elements_flat = extract_values_call.result.flattened_list_elements
@@ -193,14 +193,14 @@ async def test_extract_words(factory):
     to_list_call = await extract_rlp_contract.test_to_list(block_rlp.to_ints().values).call()
     output = to_list_call.result
 
-    expected = to_list(block_rlp.to_ints().values)
+    expected = to_list(block_rlp.to_ints())
     expected_data_positions = list(map(lambda item: item.dataPosition, expected))
     expected_lengths = list(map(lambda item: item.length, expected))
 
     assert output.data_positions == expected_data_positions
     assert output.lengths == expected_lengths
 
-    rlp_items = to_list(block_rlp.to_ints().values)
+    rlp_items = to_list(block_rlp.to_ints())
 
     print(rlp_items[0])
 
