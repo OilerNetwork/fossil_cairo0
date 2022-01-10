@@ -31,8 +31,7 @@ func count_shared_prefix_len{ range_check_ptr }(
     let (local node_path_decoded: IntsSequence) = extractData(
         node_path_item.dataPosition,
         node_path_item.length,
-        element_rlp.element,
-        element_rlp.element_size_words)
+        element_rlp)
 
     # TODO assert input_decoded len > 0
 
@@ -96,7 +95,7 @@ end
 func get_next_hash{ range_check_ptr }(rlp_input: IntsSequence, rlp_node: RLPItem) -> (res: IntsSequence):
     alloc_locals
     assert rlp_node.length = 32
-    let (local res: IntsSequence) = extractData(rlp_node.dataPosition, rlp_node.length, rlp_input.element, rlp_input.element_size_words)
+    let (local res: IntsSequence) = extractData(rlp_node.dataPosition, rlp_node.length, rlp_input)
     assert res.element_size_words = 4
     return (res)
 end
@@ -161,7 +160,7 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
         assert hashes_match = 1
     end
 
-    let (node, node_len) = to_list(current_element.element, current_element.element_size_words)
+    let (node, node_len) = to_list(current_element)
 
     # Handle leaf node otherwise branch node
     if node_len == 2:
@@ -169,11 +168,11 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
         let (current_path_offset) = count_shared_prefix_len(path_offset, path, current_element, node[0])
         if current_index == proof_len - 1:
             assert current_path_offset = path.element_size_bytes * 2
-            let (local res: IntsSequence) = extractData(node[1].dataPosition, node[1].length, current_element.element, current_element.element_size_words)
+            let (local res: IntsSequence) = extractData(node[1].dataPosition, node[1].length, current_element)
             return (res)
         else:
             local children: RLPItem = node[1]
-            let (local is_list) = is_rlp_list(children.dataPosition, current_element.element, current_element.element_size_words)
+            let (local is_list) = is_rlp_list(children.dataPosition, current_element)
             if is_list == 0:
                 let (local next_hash: IntsSequence) = get_next_hash(current_element, children)
                 return verify_proof_rec(
@@ -185,7 +184,7 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
                     path_offset=current_path_offset,
                     current_index=current_index + 1)
             else:
-                let (local element_data_extracted: IntsSequence) = extractData(children.dataPosition, children.length, current_element.element, current_element.element_size_words)
+                let (local element_data_extracted: IntsSequence) = extractData(children.dataPosition, children.length, current_element)
                 let (local next_hash_words_le: felt*) = keccak256{keccak_ptr=keccak_ptr}(
                     element_data_extracted.element,
                     element_data_extracted.element_size_bytes)
@@ -209,12 +208,12 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
 
         if current_index == current_element.element_size_bytes - 1:
             if path_offset + 1 == path.element_size_bytes * 2:
-                let (local res: IntsSequence) = extractData(node[16].dataPosition, node[16].length, current_element.element, current_element.element_size_words)
+                let (local res: IntsSequence) = extractData(node[16].dataPosition, node[16].length, current_element)
                 return (res)
             else:
                 let (local node_children: felt) = extract_nibble_from_words(path, path_offset)
                 local children: RLPItem = node[node_children]
-                let (local children_data: IntsSequence) = extractData(children.dataPosition, children.length, current_element.element, current_element.element_size_words)
+                let (local children_data: IntsSequence) = extractData(children.dataPosition, children.length, current_element)
                 assert children_data.element_size_bytes = 0
                 let (empty_arr) = alloc()
                 local res: IntsSequence = IntsSequence(empty_arr, 0 , 0)
@@ -227,7 +226,7 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
             local children: RLPItem = node[node_children]
             let current_path_offset = path_offset + 1
 
-            let (local is_list) = is_rlp_list(children.dataPosition, current_element.element, current_element.element_size_words)
+            let (local is_list) = is_rlp_list(children.dataPosition, current_element)
 
             if is_list == 0:
                 let (local next_hash: IntsSequence) = get_next_hash(current_element, children)

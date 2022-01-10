@@ -1,10 +1,10 @@
 import pytest
 import asyncio
-from typing import List, NamedTuple
+from typing import  NamedTuple
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 
-from utils.helpers import chunk_bytes_input, bytes_to_int
+from utils.helpers import bytes_to_int, IntsSequence
 from utils.block_header import build_block_header
 from utils.benchmarks.blockheader_rlp_extractor import (
     getParentHash,
@@ -18,9 +18,6 @@ from utils.benchmarks.blockheader_rlp_extractor import (
 )
 from mocks.blocks import mocked_blocks
 from utils.types import Data
-
-
-bytes_to_int_big = lambda word: bytes_to_int(word)
 
 
 class TestsDeps(NamedTuple):
@@ -49,18 +46,15 @@ async def test_decode_parent_hash(factory):
     # Retrieve rlp block header
     block = mocked_blocks[0]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
 
-    decoded = await decoder.test_decode_parent_hash(block_rlp_formatted).call()
-    output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
+    call = await decoder.test_decode_parent_hash(block_rlp.length, block_rlp.values).call()
+    output = Data.from_ints(IntsSequence(list(call.result.res), 32))
 
-    expected_words = getParentHash(block_rlp_formatted)
-    expected_hash = Data.from_ints(expected_words).to_hex()
-    assert output == expected_hash
+    expected_output = Data.from_ints(getParentHash(block_rlp))
+    assert output == expected_output
 
 @pytest.mark.asyncio
 async def test_decode_uncles_hash(factory):
@@ -69,18 +63,15 @@ async def test_decode_uncles_hash(factory):
     # Retrieve rlp block header
     block = mocked_blocks[0]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
 
-    decoded = await decoder.test_decode_uncles_hash(block_rlp_formatted).call()
-    output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
+    call = await decoder.test_decode_uncles_hash(block_rlp.length, block_rlp.values).call()
+    output = Data.from_ints(IntsSequence(list(call.result.res), 32))
 
-    expected_words = getOmmersHash(block_rlp_formatted)
-    expected_hash = Data.from_ints(expected_words).to_hex()
-    assert output == expected_hash
+    expected_output = Data.from_ints(getOmmersHash(block_rlp))
+    assert output == expected_output
 
 @pytest.mark.asyncio
 async def test_decode_beneficiary(factory):
@@ -89,18 +80,15 @@ async def test_decode_beneficiary(factory):
     # Retrieve rlp block header
     block = mocked_blocks[0]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
 
-    decoded = await decoder.test_decode_beneficiary(block_rlp_formatted).call()
-    output_words = list(decoded.result.res)
+    call = await decoder.test_decode_beneficiary(block_rlp.length, block_rlp.values).call()
+    output = Data.from_ints(IntsSequence(list(call.result.res), 20))
 
-    expected_words = getBeneficiary(block_rlp_formatted)
-
-    assert output_words == expected_words.values
+    expected_output = Data.from_ints(getBeneficiary(block_rlp))
+    assert output == expected_output
 
 @pytest.mark.asyncio
 async def test_decode_state_root(factory):
@@ -109,18 +97,15 @@ async def test_decode_state_root(factory):
     # Retrieve rlp block header
     block = mocked_blocks[0]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
 
-    decoded = await decoder.test_decode_state_root(block_rlp_formatted).call()
-    output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
+    call = await decoder.test_decode_state_root(block_rlp.length, block_rlp.values).call()
+    output = Data.from_ints(IntsSequence(list(call.result.res), 32))
 
-    expected_words = getStateRoot(block_rlp_formatted)
-    expected_hash = Data.from_ints(expected_words).to_hex()
-    assert output == expected_hash
+    expected_output = Data.from_ints(getStateRoot(block_rlp))
+    assert output == expected_output
 
 @pytest.mark.asyncio
 async def test_decode_transactions_root(factory):
@@ -129,38 +114,15 @@ async def test_decode_transactions_root(factory):
     # Retrieve rlp block header
     block = mocked_blocks[0]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
 
-    decoded = await decoder.test_decode_transactions_root(block_rlp_formatted).call()
-    output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
+    call = await decoder.test_decode_transactions_root(block_rlp.length, block_rlp.values).call()
+    output = Data.from_ints(IntsSequence(list(call.result.res), 32))
 
-    expected_words = getTransactionsRoot(block_rlp_formatted)
-    expected_hash = Data.from_ints(expected_words).to_hex()
-    assert output == expected_hash
-
-@pytest.mark.asyncio
-async def test_decode_transactions_root(factory):
-    starknet, decoder = factory
-
-    # Retrieve rlp block header
-    block = mocked_blocks[0]
-    block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-
-    assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
-
-    decoded = await decoder.test_decode_transactions_root(block_rlp_formatted).call()
-    output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
-
-    expected_words = getTransactionsRoot(block_rlp_formatted)
-    expected_hash = Data.from_ints(expected_words).to_hex()
-    assert output == expected_hash
+    expected_output = Data.from_ints(getTransactionsRoot(block_rlp))
+    assert output == expected_output
 
 @pytest.mark.asyncio
 async def test_decode_receipts_root(factory):
@@ -169,18 +131,15 @@ async def test_decode_receipts_root(factory):
     # Retrieve rlp block header
     block = mocked_blocks[0]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
 
-    decoded = await decoder.test_decode_receipts_root(block_rlp_formatted).call()
-    output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in decoded.result.res)
+    call = await decoder.test_decode_receipts_root(block_rlp.length, block_rlp.values).call()
+    output = Data.from_ints(IntsSequence(list(call.result.res), 32))
 
-    expected_words = getReceiptsRoot(block_rlp_formatted)
-    expected_hash = Data.from_ints(expected_words).to_hex()
-    assert output == expected_hash
+    expected_output = Data.from_ints(getReceiptsRoot(block_rlp))
+    assert output == expected_output
 
 @pytest.mark.asyncio
 async def test_decode_difficulty(factory):
@@ -189,17 +148,15 @@ async def test_decode_difficulty(factory):
     # Retrieve rlp block header
     block = mocked_blocks[0]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
 
-    decoded = await decoder.test_decode_difficulty(block_rlp_formatted).call()
+    call = await decoder.test_decode_difficulty(block_rlp.length, block_rlp.values).call()
+    output = call.result.res
 
-    output = decoded.result.res
-    expected_value = getDifficulty(block_rlp_formatted)
-    assert output == expected_value
+    expected_output = getDifficulty(block_rlp)
+    assert output == expected_output
 
 @pytest.mark.asyncio
 async def test_decode_block_number(factory):
@@ -208,14 +165,12 @@ async def test_decode_block_number(factory):
     # Retrieve rlp block header
     block = mocked_blocks[0]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     assert block_header.hash() == block["hash"]
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
 
-    decoded = await decoder.test_decode_block_number(block_rlp_formatted).call()
+    call = await decoder.test_decode_block_number(block_rlp.length, block_rlp.values).call()
+    output = call.result.res
 
-    output = decoded.result.res
-    expected_value = getBlocknumber(block_rlp_formatted)
-    assert output == expected_value
+    expected_output = getBlocknumber(block_rlp)
+    assert output == expected_output

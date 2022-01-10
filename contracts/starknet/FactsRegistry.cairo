@@ -187,8 +187,8 @@ func prove_account{
         0)
 
     let (local result : IntsSequence) = verify_proof(path, state_root, proof, proof_sizes_bytes_len)
-    let (local result_items : RLPItem*, result_items_len : felt) = to_list(result.element, result.element_size_words)
-    let (local result_values : IntsSequence*, result_values_len : felt) = extract_list_values(result.element, result.element_size_words, result_items, result_items_len)
+    let (local result_items : RLPItem*, result_items_len : felt) = to_list(result)
+    let (local result_values : IntsSequence*, result_values_len : felt) = extract_list_values(result, result_items, result_items_len)
     
     let (local address_160) = address_words64_to_160bit(account)
 

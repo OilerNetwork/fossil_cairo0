@@ -158,8 +158,6 @@ async def test_prove_account(registry_initialized):
             [len(flat_proof)] +
             flat_proof)
 
-    print(prove_account_tx)
-
     get_storage_hash_call = await facts_registry.get_verified_account_storage_hash(
         int(l1_account_address.to_hex()[2:], 16),
         mocked_blocks[2]['number']).call()
