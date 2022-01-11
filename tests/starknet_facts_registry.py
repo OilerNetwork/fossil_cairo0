@@ -139,7 +139,6 @@ async def test_prove_account(registry_initialized):
 
     set_state_root_call = await storage_proof.get_state_root(mocked_blocks[2]['number']).call()
     set_state_root = set_state_root_call.result.res
-    print(Data.from_ints(IntsSequence(list(set_state_root), 32)).to_hex())
 
     prove_account_tx = await signer.send_transaction(
         account,
@@ -157,8 +156,6 @@ async def test_prove_account(registry_initialized):
             flat_proof_sizes_words +
             [len(flat_proof)] +
             flat_proof)
-
-    print(prove_account_tx)
 
     get_storage_hash_call = await facts_registry.get_verified_account_storage_hash(
         int(l1_account_address.to_hex()[2:], 16),
@@ -180,7 +177,7 @@ async def test_prove_account(registry_initialized):
         mocked_blocks[2]['number']).call()
     set_nonce = get_nonce_call.result.res
 
-    print("set_storage_hash: ", Data.from_ints(IntsSequence(list(set_storage_hash), 32)))
-    print("set_code_hash: ", Data.from_ints(IntsSequence(list(set_code_hash), 32)))
-    print("set_balance: ", set_balance)
-    print("set_nonce: ", set_nonce)
+    assert set_nonce == int(trie_proofs[1]['nonce'][2:], 16)
+    assert set_balance == int(trie_proofs[1]['balance'][2:], 16)
+    assert Data.from_ints(IntsSequence(list(set_storage_hash), 32)).to_hex() == trie_proofs[1]['storageHash']
+    assert Data.from_ints(IntsSequence(list(set_code_hash), 32)).to_hex() == trie_proofs[1]['codeHash']

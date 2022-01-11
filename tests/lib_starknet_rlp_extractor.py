@@ -87,7 +87,7 @@ async def test_to_list(factory):
     to_list_call = await extract_rlp_contract.test_to_list(block_rlp.to_ints().values).call()
     output = to_list_call.result
 
-    expected = to_list(block_rlp.to_ints().values)
+    expected = to_list(block_rlp.to_ints())
     expected_data_positions = list(map(lambda item: item.dataPosition, expected))
     expected_lengths = list(map(lambda item: item.length, expected))
 
@@ -104,7 +104,7 @@ async def test_extract_list_values(factory):
     to_list_call = await extract_rlp_contract.test_to_list(block_rlp.to_ints().values).call()
     output = to_list_call.result
 
-    expected = to_list(block_rlp.to_ints().values)
+    expected = to_list(block_rlp.to_ints())
     expected_data_positions = list(map(lambda item: item.dataPosition, expected))
     expected_lengths = list(map(lambda item: item.length, expected))
 
@@ -113,12 +113,13 @@ async def test_extract_list_values(factory):
 
     # Extract values:
     extract_values_call = await extract_rlp_contract.test_extract_list_values(
+        block_rlp.to_ints().length,
         block_rlp.to_ints().values,
         expected_data_positions,
         expected_lengths
     ).call()
 
-    rlp_items = to_list(block_rlp.to_ints().values)
+    rlp_items = to_list(block_rlp.to_ints())
     rlp_values = extract_list_values(block_rlp.to_ints(), rlp_items)
     
     output_list_elements_flat = extract_values_call.result.flattened_list_elements
@@ -132,8 +133,16 @@ async def test_extract_list_values(factory):
         size_bytes = output_list_elements_sizes_bytes[i]
         output_list_elements.append(IntsSequence(output_list_elements_flat[offset:offset+size_words], size_bytes))
         offset += size_words
+        if (output_list_elements[i] != rlp_values[i]):
+            print(block_rlp.to_hex())
+            print(f"{expected[i].dataPosition}-{expected[i].dataPosition+expected[i].length} : {expected[i].length}")
+            print(block_rlp.to_hex()[2+(2*expected[i].dataPosition):2+(2*(expected[i].dataPosition+expected[i].length))])
+            print(f"Word 66: {block_rlp.to_hex()[2+(66*2*8):2+(66*2*8)+16+1]}")
+            print(f"Word 67: {block_rlp.to_hex()[2+(67*2*8):]}")
+            print(f"{Data.from_ints(output_list_elements[i]).to_hex()}\n{Data.from_ints(rlp_values[i]).to_hex()}")
+        assert output_list_elements[i] == rlp_values[i]
 
-    assert output_list_elements == rlp_values
+
 
 @pytest.mark.asyncio
 async def test_extract_list_from_account_rlp_entry(factory):
@@ -144,7 +153,7 @@ async def test_extract_list_from_account_rlp_entry(factory):
     to_list_call = await extract_rlp_contract.test_to_list(input.to_ints().values).call()
     output = to_list_call.result
 
-    expected = to_list(input.to_ints().values)
+    expected = to_list(input.to_ints())
     expected_data_positions = list(map(lambda item: item.dataPosition, expected))
     expected_lengths = list(map(lambda item: item.length, expected))
 
@@ -158,7 +167,7 @@ async def test_extract_list_from_account_rlp_entry(factory):
         expected_lengths
     ).call()
 
-    rlp_items = to_list(input.to_ints().values)
+    rlp_items = to_list(input.to_ints())
     rlp_values = extract_list_values(input.to_ints(), rlp_items)
     
     output_list_elements_flat = extract_values_call.result.flattened_list_elements
@@ -193,14 +202,14 @@ async def test_extract_words(factory):
     to_list_call = await extract_rlp_contract.test_to_list(block_rlp.to_ints().values).call()
     output = to_list_call.result
 
-    expected = to_list(block_rlp.to_ints().values)
+    expected = to_list(block_rlp.to_ints())
     expected_data_positions = list(map(lambda item: item.dataPosition, expected))
     expected_lengths = list(map(lambda item: item.length, expected))
 
     assert output.data_positions == expected_data_positions
     assert output.lengths == expected_lengths
 
-    rlp_items = to_list(block_rlp.to_ints().values)
+    rlp_items = to_list(block_rlp.to_ints())
 
     print(rlp_items[0])
 
@@ -219,17 +228,18 @@ async def test_extract_words(factory):
 @pytest.mark.asyncio
 async def test_random(factory):
     starknet, extract_rlp_contract = factory
-    block_rlp = random_bytes(1337)
-    # print("\n0x" + block_rlp.hex())
-
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
-
-    for start_byte in range(0, 20):
-        for size in range(1, 35):
-            extracted_words_call = await extract_rlp_contract.test_extractData(start_byte, size, block_rlp_formatted).call()
-            extracted_words = extracted_words_call.result.res
-            extracted_bytes = ints_array_to_bytes(IntsSequence(extracted_words, size))
-            expected_bytes = block_rlp[start_byte:start_byte+size]
-            assert extracted_bytes == expected_bytes
-
+    for length in range (0, 35):
+        input = Data.from_bytes(random_bytes(length))
+        for start_byte in range(0, length):
+            for size in range(0, length-start_byte+1):
+                print(f"{length}: {start_byte}-{start_byte+size}")
+                # print(input.to_hex())
+                # print(input.to_ints().values)
+                extracted_words_call = await extract_rlp_contract.test_extractData(start_byte, size, input.to_ints().length, input.to_ints().values).call()
+                output = Data.from_ints(IntsSequence(extracted_words_call.result.res, extracted_words_call.result.res_len_bytes))
+                expected_output = Data.from_bytes(input.to_bytes()[start_byte:start_byte+size])
+                if output != expected_output:
+                    print(input.to_hex())
+                    print(output.to_hex())
+                    print(expected_output.to_hex())
+                assert output == expected_output

@@ -9,12 +9,11 @@ from starkware.starkware_utils.error_handling import StarkException
 from utils.Signer import Signer
 from utils.block_header import build_block_header
 from utils.create_account import create_account
-from utils.helpers import chunk_bytes_input, bytes_to_int, bytes_to_int_little
+from utils.helpers import chunk_bytes_input, bytes_to_int_little, IntsSequence
+from utils.types import Data
 
 
 from mocks.blocks import mocked_blocks
-
-bytes_to_int_big = lambda word: bytes_to_int(word)
 
 class TestsDeps(NamedTuple):
     starknet: Starknet
@@ -77,21 +76,19 @@ async def test_process_block(factory):
 
     block = mocked_blocks[1]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_block_parent_hash_call = await storage_proof.get_parent_hash(block['number']).call()
-    set_parent_hash = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in set_block_parent_hash_call.result.res)
+    set_parent_hash = Data.from_ints(IntsSequence(list(set_block_parent_hash_call.result.res), 32))
 
-    assert set_parent_hash == block["parentHash"].hex()
+    assert set_parent_hash.to_hex() == block["parentHash"].hex()
 
 @pytest.mark.asyncio
 async def test_process_invalid_block(factory):
@@ -101,16 +98,14 @@ async def test_process_invalid_block(factory):
 
     block = mocked_blocks[0]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     with pytest.raises(StarkException):
         await l1_relayer_signer.send_transaction(
             l1_relayer_account,
             storage_proof.contract_address,
             'process_block',
-            [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+            [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
         )
 
 
@@ -122,28 +117,26 @@ async def test_set_state_root(factory):
 
     block = mocked_blocks[1]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'set_block_state_root',
-        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_state_root_call = await storage_proof.get_state_root(block['number']).call()
-    set_state_root = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in set_state_root_call.result.res)
+    set_state_root = Data.from_ints(IntsSequence(list(set_state_root_call.result.res), 32))
 
-    assert set_state_root == block["stateRoot"].hex()
+    assert set_state_root.to_hex() == block["stateRoot"].hex()
 
 
 @pytest.mark.asyncio
@@ -154,27 +147,25 @@ async def test_set_transactions_root(factory):
 
     block = mocked_blocks[1]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'set_block_transactions_root',
-        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_txns_root_call = await storage_proof.get_transactions_root(block['number']).call()
-    set_txns_root = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in set_txns_root_call.result.res)
-    assert set_txns_root == block["transactionsRoot"].hex()
+    set_txns_root = Data.from_ints(IntsSequence(list(set_txns_root_call.result.res), 32))
+    assert set_txns_root.to_hex() == block["transactionsRoot"].hex()
 
 @pytest.mark.asyncio
 async def test_set_receipts_root(factory):
@@ -184,27 +175,25 @@ async def test_set_receipts_root(factory):
 
     block = mocked_blocks[1]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'set_block_receipts_root',
-        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_receipts_root_call = await storage_proof.get_receipts_root(block['number']).call()
-    set_receipts_root = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in set_receipts_root_call.result.res)
-    assert set_receipts_root == block["receiptsRoot"].hex()
+    set_receipts_root = Data.from_ints(IntsSequence(list(set_receipts_root_call.result.res), 32))
+    assert set_receipts_root.to_hex() == block["receiptsRoot"].hex()
 
 @pytest.mark.asyncio
 async def test_set_uncles_hash(factory):
@@ -214,27 +203,25 @@ async def test_set_uncles_hash(factory):
 
     block = mocked_blocks[1]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'set_block_uncles_hash',
-        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_uncles_hash_call = await storage_proof.get_uncles_hash(block['number']).call()
-    set_uncles_hash = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in set_uncles_hash_call.result.res)
-    assert set_uncles_hash == block["sha3Uncles"].hex()
+    set_uncles_hash = Data.from_ints(IntsSequence(list(set_uncles_hash_call.result.res), 32))
+    assert set_uncles_hash.to_hex() == block["sha3Uncles"].hex()
 
 @pytest.mark.asyncio
 async def test_set_beneficiary(factory):
@@ -244,28 +231,25 @@ async def test_set_beneficiary(factory):
 
     block = mocked_blocks[1]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'set_block_beneficiary',
-        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_beneficiary_call = await storage_proof.get_beneficiary(block['number']).call()
-    set_beneficiary = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in set_beneficiary_call.result.res)
-    # TODO the address is as expected however it reconstruction from words puts some 0s
-    # assert set_beneficiary == block["miner"]
+    set_beneficiary = Data.from_ints(IntsSequence(list(set_beneficiary_call.result.res), 20))
+    assert set_beneficiary == Data.from_hex(block["miner"])
 
 
 @pytest.mark.asyncio
@@ -276,22 +260,20 @@ async def test_set_difficulty(factory):
 
     block = mocked_blocks[1]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'set_block_difficulty',
-        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_difficulty_call = await storage_proof.get_difficulty(block['number']).call()

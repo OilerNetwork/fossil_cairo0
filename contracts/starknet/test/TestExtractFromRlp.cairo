@@ -1,7 +1,7 @@
 %lang starknet
 %builtins pedersen range_check ecdsa
 
-from starknet.lib.extract_from_rlp import extractData, is_rlp_list, to_list, getElement, extract_list_values
+from starknet.lib.extract_from_rlp import extract_data, is_rlp_list, to_list, getElement, extract_list_values
 from starknet.lib.concat_arr import concat_arr
 from starknet.types import IntsSequence, RLPItem
 
@@ -10,28 +10,33 @@ from starkware.cairo.common.memcpy import memcpy
 
 
 @view
-func test_extractData{range_check_ptr}(start_pos: felt, size: felt, rlp_len: felt, rlp: felt*) -> (res_len_bytes: felt, res_len:felt, res: felt*):
+func test_extractData{range_check_ptr}(start_pos: felt, size: felt, rlp_len_bytes: felt, rlp_len: felt, rlp: felt*) -> (res_len_bytes: felt, res_len:felt, res: felt*):
     alloc_locals
-    let (local data: IntsSequence) = extractData(
+    local input: IntsSequence = IntsSequence(rlp, rlp_len, rlp_len_bytes)
+    let (local data: IntsSequence) = extract_data(
         start_pos=start_pos,
         size=size,
-        block_rlp=rlp,
-        block_rlp_len=rlp_len)
+        rlp=input)
     return (data.element_size_bytes, data.element_size_words, data.element)
 end
 
 @view 
-func test_is_rlp_list{range_check_ptr}(pos: felt, rlp_len: felt, rlp: felt*) -> (res: felt):
-    return is_rlp_list(pos, rlp, rlp_len)
+func test_is_rlp_list{range_check_ptr}(pos: felt, rlp_len_bytes: felt, rlp_len: felt, rlp: felt*) -> (res: felt):
+    alloc_locals
+    local input: IntsSequence = IntsSequence(rlp, rlp_len, rlp_len_bytes)
+    return is_rlp_list(pos, input)
 end
 
 @view
-func test_get_element{range_check_ptr}(rlp_len: felt, rlp: felt*, position: felt) -> (res: RLPItem):
-    return getElement(rlp, rlp_len, position)
+func test_get_element{range_check_ptr}(rlp_len_bytes: felt, rlp_len: felt, rlp: felt*, position: felt) -> (res: RLPItem):
+    alloc_locals
+    local input: IntsSequence = IntsSequence(rlp, rlp_len, rlp_len_bytes)
+    return getElement(input, position)
 end
 
 @view
 func test_extract_list_values{range_check_ptr}(
+    rlp_len_bytes: felt,
     rlp_len: felt,
     rlp: felt*,
     rlp_items_data_positions_len: felt,
@@ -59,8 +64,9 @@ func test_extract_list_values{range_check_ptr}(
         acc=rlp_items,
         acc_len=0,
         current_index=0)
-    
-    let (res, res_len) = extract_list_values(rlp, rlp_len, rlp_items, rlp_items_lenghts_len)
+
+    local rlp_input: IntsSequence = IntsSequence(rlp, rlp_len, rlp_len_bytes) 
+    let (res, res_len) = extract_list_values(rlp_input, rlp_items, rlp_items_lenghts_len)
 
     let (local flattened_list_elements: felt*) = alloc()
     let (local flattened_list_sizes_words: felt*) = alloc()
@@ -146,9 +152,10 @@ func costruct_rlp_items_arr{range_check_ptr}(
 end 
 
 @view 
-func test_to_list{range_check_ptr}(rlp_len: felt, rlp: felt*) -> (data_positions_len: felt, data_positions: felt*, lengths_len: felt, lengths: felt*):
+func test_to_list{range_check_ptr}(rlp_len_bytes: felt, rlp_len: felt, rlp: felt*) -> (data_positions_len: felt, data_positions: felt*, lengths_len: felt, lengths: felt*):
     alloc_locals
-    let (local list: RLPItem*, list_len) = to_list(rlp, rlp_len)
+    local input: IntsSequence = IntsSequence(rlp, rlp_len, rlp_len_bytes) 
+    let (local list: RLPItem*, list_len) = to_list(input)
 
     let (local data_positions: felt*) = alloc()
     let (local lengths: felt*) = alloc()
