@@ -1,11 +1,11 @@
-from starknet.lib.extract_from_rlp import extractData, extractElement, jumpOverElement
+from starknet.lib.extract_from_rlp import extract_data, extractElement, jumpOverElement
 from starknet.types import (Keccak256Hash, Address, IntsSequence)
 
 ### Elements decoder 
 
 func decode_parent_hash{ range_check_ptr }(block_rlp: IntsSequence) -> (res: Keccak256Hash):
     alloc_locals
-    let (local data: IntsSequence) = extractData(4, 32, block_rlp)
+    let (local data: IntsSequence) = extract_data(4, 32, block_rlp)
     let parent_hash = data.element
     local hash: Keccak256Hash = Keccak256Hash(
         word_1=parent_hash[0],
@@ -18,7 +18,7 @@ end
 
 func decode_uncles_hash{ range_check_ptr }(block_rlp: IntsSequence) -> (res: Keccak256Hash):
     alloc_locals
-    let (local data: IntsSequence) = extractData(4+32+1, 32, block_rlp)
+    let (local data: IntsSequence) = extract_data(4+32+1, 32, block_rlp)
     let uncles_hash = data.element
     local hash: Keccak256Hash = Keccak256Hash(
         word_1=uncles_hash[0],
@@ -31,7 +31,7 @@ end
 
 func decode_beneficiary{ range_check_ptr }(block_rlp: IntsSequence) -> (res: Address):
     alloc_locals
-    let (local data: IntsSequence) = extractData(4+32+1+32+1, 20, block_rlp)
+    let (local data: IntsSequence) = extract_data(4+32+1+32+1, 20, block_rlp)
     let beneficiary = data.element
     local address: Address = Address(
         word_1=beneficiary[0],
@@ -43,7 +43,7 @@ end
 
 func decode_state_root{ range_check_ptr }(block_rlp: IntsSequence) -> (res: Keccak256Hash):
     alloc_locals
-    let (local data: IntsSequence) = extractData(4+32+1+32+1+20+1, 32, block_rlp)
+    let (local data: IntsSequence) = extract_data(4+32+1+32+1+20+1, 32, block_rlp)
     let state_root = data.element
     local hash: Keccak256Hash = Keccak256Hash(
         word_1=state_root[0],
@@ -56,7 +56,7 @@ end
 
 func decode_transactions_root{ range_check_ptr }(block_rlp: IntsSequence) -> (res: Keccak256Hash):
     alloc_locals
-    let (local data: IntsSequence) = extractData(4+32+1+32+1+20+1+32+1, 32, block_rlp)
+    let (local data: IntsSequence) = extract_data(4+32+1+32+1+20+1+32+1, 32, block_rlp)
     let transactions_root = data.element
     local hash: Keccak256Hash = Keccak256Hash(
         word_1=transactions_root[0],
@@ -69,7 +69,7 @@ end
 
 func decode_receipts_root{ range_check_ptr }(block_rlp: IntsSequence) -> (res: Keccak256Hash):
     alloc_locals
-    let (local data: IntsSequence) = extractData(4+32+1+32+1+20+1+32+1+32+1, 32, block_rlp)
+    let (local data: IntsSequence) = extract_data(4+32+1+32+1+20+1+32+1+32+1, 32, block_rlp)
     let receipts_root = data.element
     local hash: Keccak256Hash = Keccak256Hash(
         word_1=receipts_root[0],
