@@ -195,7 +195,7 @@ func extract_data_rec{ range_check_ptr }(
     let (local left_part) = bitshift_left(rlp.element[current_index], left_shift * 8)
     local right_part
     if current_index == rlp.element_size_words - 2:
-        let (local is_last_word_right_shift_negative) = is_le(last_word_right_shift + 8, 7)
+        let (local is_last_word_right_shift_negative) = is_le(last_word_right_shift, -1)
         if is_last_word_right_shift_negative == 1:
             let (local right_part_tmp) = bitshift_left(rlp.element[current_index + 1], -8 * last_word_right_shift)
             right_part = right_part_tmp
