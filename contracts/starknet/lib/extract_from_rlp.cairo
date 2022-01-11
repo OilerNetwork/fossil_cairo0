@@ -11,7 +11,7 @@ from starknet.lib.pow import pow
 func getElement{ range_check_ptr }(rlp: IntsSequence, position: felt) -> (res: RLPItem):
     alloc_locals
 
-    let (local data: IntsSequence) = extractData{ range_check_ptr = range_check_ptr }(position, 1, rlp)
+    let (local data: IntsSequence) = extract_data{ range_check_ptr = range_check_ptr }(position, 1, rlp)
     let firstByteArr: felt* = data.element
     let firstByte = firstByteArr[0]
 
@@ -31,7 +31,7 @@ func getElement{ range_check_ptr }(rlp: IntsSequence, position: felt) -> (res: R
     let (le_191) = is_le(firstByte, 191)
     if le_191 == 1:
         let lengthOfLength = firstByte - 183
-        let (local bytes: IntsSequence) = extractData{ range_check_ptr = range_check_ptr }(position + 1, lengthOfLength, rlp)
+        let (local bytes: IntsSequence) = extract_data{ range_check_ptr = range_check_ptr }(position + 1, lengthOfLength, rlp)
         let lengthArr: felt* = bytes.element
         let length = lengthArr[0]
 
@@ -46,7 +46,7 @@ func getElement{ range_check_ptr }(rlp: IntsSequence, position: felt) -> (res: R
     end
 
     let lengthOfLength = firstByte - 247
-    let (local bytes: IntsSequence) = extractData{ range_check_ptr = range_check_ptr }(position+1, lengthOfLength, rlp)
+    let (local bytes: IntsSequence) = extract_data{ range_check_ptr = range_check_ptr }(position+1, lengthOfLength, rlp)
     let lengthArr: felt* = bytes.element
     let length = lengthArr[0]
 
@@ -67,7 +67,7 @@ func extractElement{ range_check_ptr }(rlp: IntsSequence, position: felt) -> (re
         tempvar range_check_ptr = range_check_ptr
     end
 
-    return extractData{ range_check_ptr = range_check_ptr }(rlpItem.dataPosition, rlpItem.length, rlp)
+    return extract_data{ range_check_ptr = range_check_ptr }(rlpItem.dataPosition, rlpItem.length, rlp)
 end
 
 func jumpOverElement{ range_check_ptr }(rlp: IntsSequence, position: felt) -> (res: felt):
@@ -82,6 +82,8 @@ func extract_data{ range_check_ptr }(start_pos: felt, size: felt, rlp: IntsSeque
 
     let (full_words, remainder) = unsigned_div_rem(size, 8)
 
+    # end_pos is a bad name - it conflicts with start_pos
+    # start_pos is absolute, and end_pos is relative inside the world
     local end_pos
     local end_word
     if end_pos_tmp == 0:
@@ -128,7 +130,7 @@ func extract_data{ range_check_ptr }(start_pos: felt, size: felt, rlp: IntsSeque
 
             local right_part
             if end_word == rlp.element_size_words - 1:
-                let (local is_last_word_right_shift_negative) = is_le(last_word_right_shift, -1)
+                let (local is_last_word_right_shift_negative) = is_le(last_word_right_shift + 8, 7)
                 if is_last_word_right_shift_negative == 1:
                     let (local right_part_tmp) = bitshift_left(rlp.element[end_word], -8 * last_word_right_shift)
                     right_part = right_part_tmp
@@ -193,7 +195,7 @@ func extract_data_rec{ range_check_ptr }(
     let (local left_part) = bitshift_left(rlp.element[current_index], left_shift * 8)
     local right_part
     if current_index == rlp.element_size_words - 2:
-        let (local is_last_word_right_shift_negative) = is_le(last_word_right_shift, -1)
+        let (local is_last_word_right_shift_negative) = is_le(last_word_right_shift + 8, 7)
         if is_last_word_right_shift_negative == 1:
             let (local right_part_tmp) = bitshift_left(rlp.element[current_index + 1], -8 * last_word_right_shift)
             right_part = right_part_tmp
@@ -239,79 +241,79 @@ func extract_data_rec{ range_check_ptr }(
         current_index=current_index + 1)
 end
 
-func extractData{ range_check_ptr }(start_pos: felt, size: felt, rlp: IntsSequence) -> (res: IntsSequence):
-    alloc_locals
+# func extractData{ range_check_ptr }(start_pos: felt, size: felt, rlp: IntsSequence) -> (res: IntsSequence):
+#     alloc_locals
 
-    let (start_word, left_shift) = unsigned_div_rem(start_pos, 8)
-    let (end_word_tmp, end_pos_tmp) = unsigned_div_rem(start_pos + size, 8)
+#     let (start_word, left_shift) = unsigned_div_rem(start_pos, 8)
+#     let (end_word_tmp, end_pos_tmp) = unsigned_div_rem(start_pos + size, 8)
 
-    let (full_words, remainder) = unsigned_div_rem(size, 8)
+#     let (full_words, remainder) = unsigned_div_rem(size, 8)
 
-    local end_pos
-    local end_word
-    if end_pos_tmp == 0:
-        end_pos = 8
-        end_word = end_word_tmp - 1
-    else:
-        end_pos = end_pos_tmp
-        end_word = end_word_tmp
-    end
+#     local end_pos
+#     local end_word
+#     if end_pos_tmp == 0:
+#         end_pos = 8
+#         end_word = end_word_tmp - 1
+#     else:
+#         end_pos = end_pos_tmp
+#         end_word = end_word_tmp
+#     end
 
-    local right_shift = 8 - left_shift
-    let (local words_shifted : felt*) = alloc()
+#     local right_shift = 8 - left_shift
+#     let (local words_shifted : felt*) = alloc()
 
-    if full_words != 0:
-        shift_words{ range_check_ptr = range_check_ptr }(
-            current_index=full_words - 1,
-            start_word=start_word,
-            left_shift=left_shift,
-            right_shift=right_shift,
-            rlp=rlp.element,
-            rlp_len=rlp.element_size_words,
-            accumulator=words_shifted,
-            accumulator_len=full_words
-        )
-        tempvar range_check_ptr = range_check_ptr
-    else:
-        tempvar range_check_ptr = range_check_ptr
-    end
+#     if full_words != 0:
+#         shift_words{ range_check_ptr = range_check_ptr }(
+#             current_index=full_words - 1,
+#             start_word=start_word,
+#             left_shift=left_shift,
+#             right_shift=right_shift,
+#             rlp=rlp.element,
+#             rlp_len=rlp.element_size_words,
+#             accumulator=words_shifted,
+#             accumulator_len=full_words
+#         )
+#         tempvar range_check_ptr = range_check_ptr
+#     else:
+#         tempvar range_check_ptr = range_check_ptr
+#     end
 
-    local range_check_ptr = range_check_ptr
+#     local range_check_ptr = range_check_ptr
 
-    if remainder != 0:
-        let (above_8) = is_le(9, remainder + left_shift)
-        if above_8 == 1:
-            let (left_part) = bitshift_left(rlp.element[end_word - 1], left_shift * 8)
-            let (right_part) = bitshift_right(rlp.element[end_word], right_shift * 8)
-            let final_word = left_part + right_part
+#     if remainder != 0:
+#         let (above_8) = is_le(9, remainder + left_shift)
+#         if above_8 == 1:
+#             let (left_part) = bitshift_left(rlp.element[end_word - 1], left_shift * 8)
+#             let (right_part) = bitshift_right(rlp.element[end_word], right_shift * 8)
+#             let final_word = left_part + right_part
 
-            let (final_word_shifted) = bitshift_right(final_word, (8 - remainder) * 8)
+#             let (final_word_shifted) = bitshift_right(final_word, (8 - remainder) * 8)
 
-            let (local divider: felt) = pow(2, remainder*8)
-            let (_, new_word) = unsigned_div_rem(final_word_shifted, divider)
+#             let (local divider: felt) = pow(2, remainder*8)
+#             let (_, new_word) = unsigned_div_rem(final_word_shifted, divider)
 
-            assert words_shifted[full_words] = new_word
+#             assert words_shifted[full_words] = new_word
 
-            tempvar range_check_ptr = range_check_ptr
-        else:
-            let (final_word_shifted) = bitshift_right(rlp.element[end_word], (8 - end_pos) * 8)
+#             tempvar range_check_ptr = range_check_ptr
+#         else:
+#             let (final_word_shifted) = bitshift_right(rlp.element[end_word], (8 - end_pos) * 8)
 
-            let (local divider: felt) = pow(2, (end_pos-left_shift)*8)
-            let (_, new_word) = unsigned_div_rem(final_word_shifted, divider)
+#             let (local divider: felt) = pow(2, (end_pos-left_shift)*8)
+#             let (_, new_word) = unsigned_div_rem(final_word_shifted, divider)
 
-            assert words_shifted[full_words] = new_word
+#             assert words_shifted[full_words] = new_word
 
-            tempvar range_check_ptr = range_check_ptr
-        end
-        tempvar range_check_ptr = range_check_ptr
-        let result: IntsSequence = IntsSequence(words_shifted, full_words+1, size)
-        return (result)
-    else:
-        tempvar range_check_ptr = range_check_ptr
-        let result: IntsSequence = IntsSequence(words_shifted, full_words, size)
-        return (result)
-    end
-end
+#             tempvar range_check_ptr = range_check_ptr
+#         end
+#         tempvar range_check_ptr = range_check_ptr
+#         let result: IntsSequence = IntsSequence(words_shifted, full_words+1, size)
+#         return (result)
+#     else:
+#         tempvar range_check_ptr = range_check_ptr
+#         let result: IntsSequence = IntsSequence(words_shifted, full_words, size)
+#         return (result)
+#     end
+# end
 
 func shift_words{ range_check_ptr }(
     current_index: felt,
@@ -360,7 +362,7 @@ end
 
 func is_rlp_list{ range_check_ptr }(pos: felt, rlp: IntsSequence) -> (res: felt):
     alloc_locals
-    let (local data: IntsSequence) = extractData(pos, 1, rlp)
+    let (local data: IntsSequence) = extract_data(pos, 1, rlp)
     let (is_list) = is_le(191, data.element[0])
     return (is_list)
 end
@@ -433,7 +435,7 @@ func extract_list_values_recursive{ range_check_ptr }(
         return ()
     end
 
-    let (local data: IntsSequence) = extractData(rlp_items[current_index].dataPosition, rlp_items[current_index].length, rlp)
+    let (local data: IntsSequence) = extract_data(rlp_items[current_index].dataPosition, rlp_items[current_index].length, rlp)
     assert acc[current_index] = data
 
     return extract_list_values_recursive(

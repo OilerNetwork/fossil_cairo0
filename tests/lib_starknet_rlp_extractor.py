@@ -128,12 +128,21 @@ async def test_extract_list_values(factory):
     offset = 0
     output_list_elements: List[IntsSequence] = []
     for i in range(0 , len(output_list_elements_sizes_words)):
+        print(f"{i} of {len(output_list_elements_sizes_words) - 1}")
         size_words = output_list_elements_sizes_words[i]
         size_bytes = output_list_elements_sizes_bytes[i]
         output_list_elements.append(IntsSequence(output_list_elements_flat[offset:offset+size_words], size_bytes))
         offset += size_words
+        if (output_list_elements[i] != rlp_values[i]):
+            print(block_rlp.to_hex())
+            print(f"{expected[i].dataPosition}-{expected[i].dataPosition+expected[i].length} : {expected[i].length}")
+            print(block_rlp.to_hex()[2+(2*expected[i].dataPosition):2+(2*(expected[i].dataPosition+expected[i].length))])
+            print(f"Word 66: {block_rlp.to_hex()[2+(66*2*8):2+(66*2*8)+16+1]}")
+            print(f"Word 67: {block_rlp.to_hex()[2+(67*2*8):]}")
+            print(f"{Data.from_ints(output_list_elements[i]).to_hex()}\n{Data.from_ints(rlp_values[i]).to_hex()}")
+        assert output_list_elements[i] == rlp_values[i]
 
-    assert output_list_elements == rlp_values
+
 
 @pytest.mark.asyncio
 async def test_extract_list_from_account_rlp_entry(factory):

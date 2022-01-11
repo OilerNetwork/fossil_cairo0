@@ -1,7 +1,7 @@
 %lang starknet
 %builtins pedersen range_check ecdsa
 
-from starknet.lib.extract_from_rlp import extractData, extract_data, is_rlp_list, to_list, getElement, extract_list_values
+from starknet.lib.extract_from_rlp import extract_data, is_rlp_list, to_list, getElement, extract_list_values
 from starknet.lib.concat_arr import concat_arr
 from starknet.types import IntsSequence, RLPItem
 
@@ -12,7 +12,6 @@ from starkware.cairo.common.memcpy import memcpy
 @view
 func test_extractData{range_check_ptr}(start_pos: felt, size: felt, rlp_len: felt, rlp: felt*) -> (res_len_bytes: felt, res_len:felt, res: felt*):
     alloc_locals
-    # TODO bytes size
     local input: IntsSequence = IntsSequence(rlp, rlp_len, 0)
     let (local data: IntsSequence) = extract_data(
         start_pos=start_pos,
@@ -24,7 +23,6 @@ end
 @view 
 func test_is_rlp_list{range_check_ptr}(pos: felt, rlp_len: felt, rlp: felt*) -> (res: felt):
     alloc_locals
-    # TODO bytes size
     local input: IntsSequence = IntsSequence(rlp, rlp_len, 0)
     return is_rlp_list(pos, input)
 end
@@ -32,7 +30,6 @@ end
 @view
 func test_get_element{range_check_ptr}(rlp_len: felt, rlp: felt*, position: felt) -> (res: RLPItem):
     alloc_locals
-    # TODO bytes size
     local input: IntsSequence = IntsSequence(rlp, rlp_len, 0)
     return getElement(input, position)
 end
@@ -67,7 +64,6 @@ func test_extract_list_values{range_check_ptr}(
         acc_len=0,
         current_index=0)
 
-    # TODO bytes size
     local input: IntsSequence = IntsSequence(rlp, rlp_len, 0) 
     let (res, res_len) = extract_list_values(input, rlp_items, rlp_items_lenghts_len)
 
