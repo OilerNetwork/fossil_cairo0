@@ -22,6 +22,7 @@ struct IntsSequence:
 end
 
 struct RLPItem:
+    member firstByte : felt
     member dataPosition : felt
     member length : felt
 end

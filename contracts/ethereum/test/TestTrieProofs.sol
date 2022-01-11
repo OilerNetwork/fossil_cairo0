@@ -10,6 +10,21 @@ contract TestTrieProofs {
 
     bytes32 internal constant EMPTY_TRIE_ROOT_HASH = 0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421;
 
+    function bytes2hex(bytes memory input) public pure returns (string memory) {
+        bytes memory bstr = new bytes(input.length * 2);
+        for (uint i = 0; i<input.length; i++) {
+            uint8 nibble1 = (uint8(input[i]) & 0xF0) >> 4;
+            uint8 nibble2 = uint8(input[i]) & 0x0F;
+            bstr[i*2] = nibble1 > 9 ?
+                bytes1(uint8(55 + nibble1)) :
+                bytes1(uint8(48 + nibble1)); // 55 = 65 - 10
+            bstr[i*2 + 1] = nibble2 > 9 ?
+                bytes1(uint8(55 + nibble2)) :
+                bytes1(uint8(48 + nibble2)); // 55 = 65 - 10
+        }
+        return string(bstr);
+    }
+
     function extractNibble(bytes32 path, uint256 position) public pure returns (uint8 nibble) {
         require(position < 64, "Invalid nibble position");
         bytes1 shifted = position == 0 ? bytes1(path >> 4) : bytes1(path << ((position - 1) * 4));
@@ -157,6 +172,7 @@ contract TestTrieProofs {
                     } else {
                         nodeChildren = extractNibble(path32, pathOffset);
                         children = node[nodeChildren];
+                        // require(false, bytes2hex(abi.encodePacked(children.toRLPBytes())));
 
                         // Ensure that the next path item is empty, end of exclusion proof
                         require(children.toBytes().length == 0, "Invalid exclusion proof");

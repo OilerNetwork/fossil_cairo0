@@ -127,6 +127,8 @@ func flatten_ints_sequence_array{range_check_ptr}(
 end
 
 func costruct_rlp_items_arr{range_check_ptr}(
+    rlp_items_first_bytes: felt*,
+    rlp_items_first_bytes_len: felt,
     rlp_items_data_positions: felt*,
     rlp_items_data_positions_len: felt,
     rlp_items_lenghts: felt*,
@@ -139,9 +141,11 @@ func costruct_rlp_items_arr{range_check_ptr}(
         return ()
     end
 
-    assert acc[current_index] = RLPItem(rlp_items_data_positions[current_index], rlp_items_lenghts[current_index])
+    assert acc[current_index] = RLPItem(rlp_items_first_bytes[current_index], rlp_items_data_positions[current_index], rlp_items_lenghts[current_index])
 
     return costruct_rlp_items_arr(
+        rlp_items_first_bytes=rlp_items_first_bytes,
+        rlp_items_first_bytes_len=rlp_items_first_bytes_len,
         rlp_items_data_positions=rlp_items_data_positions,
         rlp_items_data_positions_len=rlp_items_data_positions_len,
         rlp_items_lenghts=rlp_items_lenghts,

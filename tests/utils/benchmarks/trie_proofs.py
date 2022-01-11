@@ -2,7 +2,7 @@ from typing import List, Tuple
 from utils.types import Data
 
 from utils.helpers import hex_string_to_words64, keccak_words64, words64_to_nibbles, words64_to_nibbles, IntsSequence
-from utils.rlp import extractData, to_list, RLPItem, isRlpList, extract_list_values
+from utils.rlp import extractData, to_list, RLPItem, isRlpList_RlpItem
 
 
 EMPTY_TRIE_ROOT_HASH = "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
@@ -96,12 +96,12 @@ def verify_proof(
         if i == 0:
             assert root_hash == keccak_words64(element_rlp)
         else:
-            if next_hash != keccak_words64(element_rlp):
-                print(f"Expected: {Data.from_ints(next_hash).to_hex()}")
-                print(f"Computed: {Data.from_ints(keccak_words64(element_rlp)).to_hex()}")
-                print(f"Hashed: {Data.from_ints(element_rlp).to_hex()}")
-                print(f"I: {i}")
-                print(f"Element to_list: {to_list(element_rlp)}")
+            # if next_hash != keccak_words64(element_rlp):
+            #     print(f"Expected: {Data.from_ints(next_hash).to_hex()}")
+            #     print(f"Computed: {Data.from_ints(keccak_words64(element_rlp)).to_hex()}")
+            #     print(f"Hashed: {Data.from_ints(element_rlp).to_hex()}")
+            #     print(f"I: {i}")
+            #     print(f"Element to_list: {to_list(element_rlp)}")
             assert next_hash == keccak_words64(element_rlp)
 
         node = to_list(element_rlp)
@@ -115,22 +115,20 @@ def verify_proof(
                 return extractData(element_rlp, node[1].dataPosition, node[1].length)
             else:
                 children = node[1]
-                if not isRlpList(element_rlp, children.dataPosition):
-                    print(f"i: {i}, 119")
+                if not isRlpList_RlpItem(element_rlp, children):
                     next_hash = get_next_hash(element_rlp, children)
                 else:
-                    print(f"i: {i}, 122")
                     next_hash = keccak_words64(extractData(element_rlp, children.dataPosition, children.length))
         else:
             assert len(node) == 17
 
-            if i == element_rlp.length - 1:
+            if i == len(proof) - 1:
                 if path_offset + 1 == path.length*2:
                     return extractData(element_rlp, node[16].dataPosition, node[16].length)
                 else:
                     node_children = extract_nibble(path, path_offset)
                     children = node[node_children]
-                    assert len(extractData(element_rlp, children.dataPosition, children.length)) == 0
+                    assert children.length == 0
                     return IntsSequence([], 0)
             else:
                 assert path_offset < path.length*2
@@ -139,11 +137,8 @@ def verify_proof(
 
                 path_offset += 1
 
-                if not isRlpList(element_rlp, children.dataPosition):
-                    print(f"i: {i}, 143")
+                if not isRlpList_RlpItem(element_rlp, children):
                     next_hash = get_next_hash(element_rlp, children)
                 else:
-                    print(f"i: {i}, 146")
-                    print(f"Setting hash of ${Data.from_ints(extract_list_values(element_rlp, [children])[0]).to_hex()} as next hash")
-                    next_hash = keccak_words64(extract_list_values(element_rlp, [children])[0])
+                    next_hash = keccak_words64(extractData(element_rlp, children.dataPosition, children.length))
     assert False

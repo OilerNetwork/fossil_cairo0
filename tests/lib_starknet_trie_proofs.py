@@ -82,7 +82,7 @@ async def test_get_next_element_hash(factory):
     # Inputs
     proof = trie_proofs[1]['accountProof']
     element_rlp = Data.from_hex(proof[len(proof) - 2])
-    rlp_item = RLPItem(dataPosition=173, length=32)
+    rlp_item = RLPItem(160, dataPosition=173, length=32)
 
     expected_result = get_next_hash(element_rlp.to_ints(), rlp_item)
 
