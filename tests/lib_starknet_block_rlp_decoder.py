@@ -4,7 +4,7 @@ from typing import  NamedTuple
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 
-from utils.helpers import bytes_to_int, IntsSequence
+from utils.helpers import IntsSequence
 from utils.block_header import build_block_header
 from utils.benchmarks.blockheader_rlp_extractor import (
     getParentHash,

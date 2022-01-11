@@ -231,5 +231,7 @@ async def test_random(factory):
             extracted_words = extracted_words_call.result.res
             extracted_bytes = ints_array_to_bytes(IntsSequence(extracted_words, size))
             expected_bytes = block_rlp[start_byte:start_byte+size]
+            if extracted_bytes != expected_bytes:
+                print(f"start_byte: {start_byte}, size: {size}")
             assert extracted_bytes == expected_bytes
 

@@ -1,7 +1,7 @@
 %lang starknet
 %builtins pedersen range_check ecdsa
 
-from starknet.lib.extract_from_rlp import extractData, is_rlp_list, to_list, getElement, extract_list_values
+from starknet.lib.extract_from_rlp import extractData, extract_data, is_rlp_list, to_list, getElement, extract_list_values
 from starknet.lib.concat_arr import concat_arr
 from starknet.types import IntsSequence, RLPItem
 
@@ -14,7 +14,7 @@ func test_extractData{range_check_ptr}(start_pos: felt, size: felt, rlp_len: fel
     alloc_locals
     # TODO bytes size
     local input: IntsSequence = IntsSequence(rlp, rlp_len, 0)
-    let (local data: IntsSequence) = extractData(
+    let (local data: IntsSequence) = extract_data(
         start_pos=start_pos,
         size=size,
         rlp=input)
