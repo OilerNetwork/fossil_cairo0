@@ -132,10 +132,82 @@ async def test_verify_valid_account_proof(factory):
 
     result = Data.from_ints(IntsSequence(verify_proof_call.result.res, verify_proof_call.result.res_size_bytes))
 
-    print("\n\n\nResulting proofs:\n\n")
+    assert result == expected_key
 
-    print("Python:", expected_key.to_hex())
 
-    print(" Cairo:", result.to_hex())
+@pytest.mark.asyncio
+async def test_verify_valid_storage_proof(factory):
+    starknet, trie_proofs_contract = factory
+
+    account_state_root = Data.from_hex('0x199c2e6b850bcc9beaea25bf1bacc5741a7aad954d28af9b23f4b53f5404937b')
+    proof_path = Data.from_hex(Web3.keccak(hexstr=trie_proofs[1]['storageProof'][0]['key']).hex())
+    proof = list(map(lambda element: Data.from_hex(element).to_ints(), trie_proofs[1]['storageProof'][0]['proof']))
+
+    # Python implementation as a reference
+    expected_key = Data.from_ints(verify_proof(
+        proof_path.to_ints(),
+        account_state_root.to_ints(),
+        proof)
+    )
+
+    flat_proof = []
+    flat_proof_sizes_bytes = []
+    flat_proof_sizes_words = []
+
+    for proof_element in proof:
+        flat_proof += proof_element.values
+        flat_proof_sizes_bytes += [proof_element.length]
+        flat_proof_sizes_words += [len(proof_element.values)]
+
+    verify_proof_call = await trie_proofs_contract.test_verify_proof(
+        proof_path.to_ints().length,
+        proof_path.to_ints().values,
+        account_state_root.to_ints().length,
+        account_state_root.to_ints().values,
+        flat_proof_sizes_bytes,
+        flat_proof_sizes_words,
+        flat_proof
+    ).call()
+
+    result = Data.from_ints(IntsSequence(verify_proof_call.result.res, verify_proof_call.result.res_size_bytes))
+
+    assert result == expected_key
+
+
+@pytest.mark.asyncio
+async def test_verify_valid_storage_proof_non_zero_value(factory):
+    starknet, trie_proofs_contract = factory
+
+    account_state_root = Data.from_hex('0x199c2e6b850bcc9beaea25bf1bacc5741a7aad954d28af9b23f4b53f5404937b')
+    proof_path = Data.from_hex(Web3.keccak(hexstr=trie_proofs[2]['storageProof'][0]['key']).hex())
+    proof = list(map(lambda element: Data.from_hex(element).to_ints(), trie_proofs[2]['storageProof'][0]['proof']))
+
+    # Python implementation as a reference
+    expected_key = Data.from_ints(verify_proof(
+        proof_path.to_ints(),
+        account_state_root.to_ints(),
+        proof)
+    )
+
+    flat_proof = []
+    flat_proof_sizes_bytes = []
+    flat_proof_sizes_words = []
+
+    for proof_element in proof:
+        flat_proof += proof_element.values
+        flat_proof_sizes_bytes += [proof_element.length]
+        flat_proof_sizes_words += [len(proof_element.values)]
+
+    verify_proof_call = await trie_proofs_contract.test_verify_proof(
+        proof_path.to_ints().length,
+        proof_path.to_ints().values,
+        account_state_root.to_ints().length,
+        account_state_root.to_ints().values,
+        flat_proof_sizes_bytes,
+        flat_proof_sizes_words,
+        flat_proof
+    ).call()
+
+    result = Data.from_ints(IntsSequence(verify_proof_call.result.res, verify_proof_call.result.res_size_bytes))
 
     assert result == expected_key

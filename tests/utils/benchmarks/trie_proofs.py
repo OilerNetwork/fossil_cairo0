@@ -66,7 +66,6 @@ def get_next_hash(rlp: IntsSequence, node: RLPItem) -> IntsSequence:
     return res
 
 
-# TODO check if 64 should be replaced with len(path)
 def verify_proof(
     path: IntsSequence,
     root_hash: IntsSequence,

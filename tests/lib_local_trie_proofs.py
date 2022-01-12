@@ -198,6 +198,27 @@ def test_verify_valid_storage_proof(TestTrieProofs):
 
     assert value == expected_value
 
+    print(value)
+
+def test_verify_valid_storage_proof_non_zero_value(TestTrieProofs):
+    test_trie_proofs = accounts[0].deploy(TestTrieProofs)
+
+    account_state_root = Data.from_hex('0x199c2e6b850bcc9beaea25bf1bacc5741a7aad954d28af9b23f4b53f5404937b')
+    proof = Data.from_hex(encode_proof(trie_proofs[2]['storageProof'][0]['proof']))
+    proof_path = Data.from_hex(Web3.keccak(hexstr=trie_proofs[2]['storageProof'][0]['key']).hex())
+
+    expected_value = Data.from_hex(str(test_trie_proofs.verify(proof.to_bytes(), account_state_root.to_bytes(), proof_path.to_bytes(), {"from": accounts[0]})))
+
+    proof_to_ints = list(map(lambda element: Data.from_hex(element).to_ints(), trie_proofs[2]['storageProof'][0]['proof']))
+    value = Data.from_ints(verify_proof(
+        proof_path.to_ints(),
+        account_state_root.to_ints(),
+        proof_to_ints
+    ))
+
+    assert value == expected_value
+
+
 # TODO fix
 def test_verify_valid_transaction_proof(TestTrieProofs):
     test_trie_proofs = accounts[0].deploy(TestTrieProofs)
