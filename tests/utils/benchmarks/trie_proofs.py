@@ -1,5 +1,4 @@
-from typing import List, Tuple
-from utils.types import Data
+from typing import List
 
 from utils.helpers import hex_string_to_words64, keccak_words64, words64_to_nibbles, words64_to_nibbles, IntsSequence
 from utils.rlp import extractData, to_list, RLPItem, isRlpList_RlpItem

@@ -6,11 +6,11 @@ from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.math import assert_not_zero
 
-from starknet.types import Keccak256Hash, Address, IntsSequence, RLPItem, reconstruct_ints_sequence_list
+from starknet.types import Keccak256Hash, StorageSlot, Address, IntsSequence, RLPItem, reconstruct_ints_sequence_list
 from starknet.lib.keccak import keccak256
 from starknet.lib.trie_proofs import verify_proof
 from starknet.lib.bitset import bitset4_get
-from starknet.lib.extract_from_rlp import to_list, extract_list_values
+from starknet.lib.extract_from_rlp import to_list, extract_list_values, extractElement, extract_data
 from starknet.lib.address import address_words64_to_160bit
 from starknet.lib.swap_endianness import swap_endianness_64
 
@@ -279,4 +279,79 @@ func prove_account{
     end
 
     return ()
+end
+
+@view
+func get_storage{
+        syscall_ptr : felt*,
+        pedersen_ptr : HashBuiltin*,
+        range_check_ptr,
+        bitwise_ptr : BitwiseBuiltin*
+    }(
+        block: felt,
+        account_160: felt,
+        slot: StorageSlot,
+        proof_sizes_bytes_len : felt,
+        proof_sizes_bytes : felt*,
+        proof_sizes_words_len : felt,
+        proof_sizes_words : felt*,
+        proofs_concat_len : felt,
+        proofs_concat : felt*) -> (res_bytes_len: felt, res_len: felt, res: felt*):
+    alloc_locals
+    let (local account_state_root: Keccak256Hash) = _verified_account_storage_hash.read(account_160, block)
+
+    assert_not_zero(account_state_root.word_1)
+    assert_not_zero(account_state_root.word_2)
+    assert_not_zero(account_state_root.word_3)
+    assert_not_zero(account_state_root.word_4)
+
+    let (storage_root_elements) = alloc()
+    assert storage_root_elements[0] = account_state_root.word_1
+    assert storage_root_elements[1] = account_state_root.word_2
+    assert storage_root_elements[2] = account_state_root.word_3
+    assert storage_root_elements[3] = account_state_root.word_4
+
+    local storage_root : IntsSequence = IntsSequence(storage_root_elements, 4, 32)
+
+    let (local slot_raw) = alloc()
+    assert slot_raw[0] = slot.word_1
+    assert slot_raw[1] = slot.word_2
+    assert slot_raw[2] = slot.word_3
+    assert slot_raw[3] = slot.word_4
+
+    let (local keccak_ptr : felt*) = alloc()
+    let keccak_ptr_start = keccak_ptr
+    let (local path_raw_little) = keccak256{keccak_ptr=keccak_ptr}(slot_raw, 32)
+
+    let (local path_raw) = alloc()
+
+    let (local path_word_1) = swap_endianness_64(path_raw_little[0], 8)
+    assert path_raw[0] = path_word_1
+    let (local path_word_2) = swap_endianness_64(path_raw_little[1], 8)
+    assert path_raw[1] = path_word_2
+    let (local path_word_3) = swap_endianness_64(path_raw_little[2], 8)
+    assert path_raw[2] = path_word_3
+    let (local path_word_4) = swap_endianness_64(path_raw_little[3], 8)
+    assert path_raw[3] = path_word_4
+
+    local path : IntsSequence = IntsSequence(path_raw, 4, 32)
+
+    let (local proof : IntsSequence*) = alloc()
+    reconstruct_ints_sequence_list(
+        proofs_concat,
+        proofs_concat_len,
+        proof_sizes_words,
+        proof_sizes_words_len,
+        proof_sizes_bytes,
+        proof_sizes_bytes_len,
+        proof,
+        0,
+        0,
+        0)
+
+    let (local result : IntsSequence) = verify_proof(path, storage_root, proof, proof_sizes_bytes_len)
+    # Removed length prefix from rlp
+    let (local slot_value) = extract_data(1, result.element_size_bytes - 1, result)
+
+    return (slot_value.element_size_bytes, slot_value.element_size_words, slot_value.element)
 end
