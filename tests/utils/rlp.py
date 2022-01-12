@@ -20,14 +20,14 @@ def getElement(rlp: IntsSequence, position: int) -> RLPItem:
 
     if firstByte <= 191:
         lengthOfLength = firstByte - 183
-        _, length = extractData(rlp, position + 1, lengthOfLength).values[0]
+        length = extractData(rlp, position + 1, lengthOfLength).values[0]
         return RLPItem(firstByte, position + 1 + lengthOfLength, length)
 
     if firstByte <= 247:
         return  RLPItem(firstByte, position + 1, firstByte - 192)
 
     lengthOfLength = firstByte - 247
-    _, length = extractData(rlp, position + 1, lengthOfLength).values[0]
+    length = extractData(rlp, position + 1, lengthOfLength).values[0]
     return RLPItem(firstByte, position + 1 + lengthOfLength, length)
 
 

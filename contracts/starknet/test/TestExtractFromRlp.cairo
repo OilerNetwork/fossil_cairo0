@@ -39,6 +39,8 @@ func test_extract_list_values{range_check_ptr}(
     rlp_len_bytes: felt,
     rlp_len: felt,
     rlp: felt*,
+    rlp_items_first_bytes_len: felt,
+    rlp_items_first_bytes: felt*,
     rlp_items_data_positions_len: felt,
     rlp_items_data_positions: felt*,
     rlp_items_lenghts_len: felt,
@@ -57,6 +59,8 @@ func test_extract_list_values{range_check_ptr}(
     let (local rlp_items: RLPItem*) = alloc()
 
     costruct_rlp_items_arr(
+        rlp_items_first_bytes,
+        rlp_items_first_bytes_len,
         rlp_items_data_positions,
         rlp_items_data_positions_len,
         rlp_items_lenghts,
