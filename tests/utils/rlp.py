@@ -20,14 +20,14 @@ def getElement(rlp: IntsSequence, position: int) -> RLPItem:
 
     if firstByte <= 191:
         lengthOfLength = firstByte - 183
-        length = extractData(rlp, position + 1, lengthOfLength).values[0]
+        _, length = extractData(rlp, position + 1, lengthOfLength).values[0]
         return RLPItem(firstByte, position + 1 + lengthOfLength, length)
 
     if firstByte <= 247:
         return  RLPItem(firstByte, position + 1, firstByte - 192)
 
     lengthOfLength = firstByte - 247
-    length = extractData(rlp, position + 1, lengthOfLength).values[0]
+    _, length = extractData(rlp, position + 1, lengthOfLength).values[0]
     return RLPItem(firstByte, position + 1 + lengthOfLength, length)
 
 
@@ -41,7 +41,7 @@ def isRlpList_RlpItem(rlp: IntsSequence, item: RLPItem) -> bool:
 
 # returns RLPElement - list of ints, and a position of next element
 def extractElement(rlp: IntsSequence, position: int) -> IntsSequence:
-    dataPosition, length = getElement(rlp, position)
+    _ ,dataPosition, length = getElement(rlp, position)
 
     if length == 0:
         return IntsSequence([], dataPosition)
@@ -50,7 +50,7 @@ def extractElement(rlp: IntsSequence, position: int) -> IntsSequence:
 
 # returns next element position
 def jumpOverElement(rlp: IntsSequence, position: int) -> int:
-    dataPosition, length = getElement(rlp, position)
+    _, dataPosition, length = getElement(rlp, position)
     return dataPosition + length
     
 def extractData(rlp: IntsSequence, start_pos: int, size: int) -> IntsSequence:
