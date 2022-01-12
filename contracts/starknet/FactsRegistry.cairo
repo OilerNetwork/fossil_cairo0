@@ -351,7 +351,6 @@ func get_storage{
 
     let (local result : IntsSequence) = verify_proof(path, storage_root, proof, proof_sizes_bytes_len)
     # Removed length prefix from rlp
-    let (local slot_value) = extract_data(1, result.element_size_bytes - 1, result)
-
+    let (local slot_value) = extractElement(result, 0)
     return (slot_value.element_size_bytes, slot_value.element_size_words, slot_value.element)
 end

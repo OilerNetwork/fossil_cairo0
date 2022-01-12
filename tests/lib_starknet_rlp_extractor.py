@@ -218,6 +218,16 @@ async def test_extract_words(factory):
 
     extract_data_result = extract_data_call.result.res
 
+@pytest.mark.asyncio
+async def test_extract_element(factory):
+    starknet, extract_rlp_contract = factory
+
+    input = Data.from_hex('0x2A').to_ints()
+
+    extract_element_call = await extract_rlp_contract.test_extractElement(0, input.length, input.values).call()
+    result = extract_element_call.result
+    assert result.res == [42]
+
 
 @pytest.mark.asyncio
 async def test_random(factory):
