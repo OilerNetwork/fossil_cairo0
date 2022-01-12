@@ -18,13 +18,13 @@ func getElement{ range_check_ptr }(rlp: IntsSequence, position: felt) -> (res: R
     let (le_127) = is_le(firstByte, 127)
 
     if le_127 == 1:
-        local result: RLPItem = RLPItem(position, 1)
+        local result: RLPItem = RLPItem(firstByte, position, 1)
         return (result)
     end
 
     let (le_183) = is_le(firstByte, 183)
     if le_183 == 1:
-        local result: RLPItem = RLPItem(position+1, firstByte-128)
+        local result: RLPItem = RLPItem(firstByte, position+1, firstByte-128)
         return (result)
     end
 
@@ -35,13 +35,13 @@ func getElement{ range_check_ptr }(rlp: IntsSequence, position: felt) -> (res: R
         let lengthArr: felt* = bytes.element
         let length = lengthArr[0]
 
-        local result: RLPItem = RLPItem(position + 1 + lengthOfLength, length)
+        local result: RLPItem = RLPItem(firstByte, position + 1 + lengthOfLength, length)
         return (result)
     end
 
     let (le_247) = is_le(firstByte, 247)
     if le_247 == 1:
-        local result: RLPItem = RLPItem(position+1, firstByte-192)
+        local result: RLPItem = RLPItem(firstByte, position+1, firstByte-192)
         return (result)
     end
 
@@ -50,7 +50,7 @@ func getElement{ range_check_ptr }(rlp: IntsSequence, position: felt) -> (res: R
     let lengthArr: felt* = bytes.element
     let length = lengthArr[0]
 
-    local result: RLPItem = RLPItem(position + 1 + lengthOfLength, length)
+    local result: RLPItem = RLPItem(firstByte, position + 1 + lengthOfLength, length)
     return (result)
 end
 
@@ -248,6 +248,13 @@ func is_rlp_list{ range_check_ptr }(pos: felt, rlp: IntsSequence) -> (res: felt)
     return (is_list)
 end
 
+func is_rlp_list_rlp_item{ range_check_ptr }(item: RLPItem, rlp: IntsSequence) -> (res: felt):
+    alloc_locals
+    local firstByte = item.firstByte
+    let (is_list) = is_le(191, firstByte)
+    return (is_list)
+end
+
 func to_list{ range_check_ptr }(rlp: IntsSequence) -> (items: RLPItem*, items_len: felt):
     alloc_locals
 
@@ -283,10 +290,11 @@ func to_list_recursive{ range_check_ptr }(
 
     let (local payload: RLPItem) = getElement(rlp, next_element_pos)
 
+    local payload_firstByte = payload.firstByte
     local payload_pos = payload.dataPosition
     local payload_len = payload.length
 
-    assert accumulator[current_index] = RLPItem(payload_pos, payload_len)
+    assert accumulator[current_index] = RLPItem(payload_firstByte, payload_pos, payload_len)
     return to_list_recursive(
         rlp=rlp,
         next_element_pos=payload_pos + payload_len,

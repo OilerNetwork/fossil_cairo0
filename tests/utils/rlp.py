@@ -3,6 +3,7 @@ from utils.types import IntsSequence
 
 
 class RLPItem(NamedTuple):
+    firstByte: int
     dataPosition: int
     length: int
 
@@ -12,31 +13,35 @@ def getElement(rlp: IntsSequence, position: int) -> RLPItem:
     firstByte = extractData(rlp, position, 1).values[0]
 
     if firstByte <= 127:
-        return RLPItem(position, 1)
+        return RLPItem(firstByte, position, 1)
 
     if firstByte <= 183:
-        return RLPItem(position + 1, firstByte - 128)
+        return RLPItem(firstByte, position + 1, firstByte - 128)
 
     if firstByte <= 191:
         lengthOfLength = firstByte - 183
         length = extractData(rlp, position + 1, lengthOfLength).values[0]
-        return RLPItem(position + 1 + lengthOfLength, length)
+        return RLPItem(firstByte, position + 1 + lengthOfLength, length)
 
     if firstByte <= 247:
-        return  RLPItem(position + 1, firstByte - 192)
+        return  RLPItem(firstByte, position + 1, firstByte - 192)
 
     lengthOfLength = firstByte - 247
     length = extractData(rlp, position + 1, lengthOfLength).values[0]
-    return RLPItem(position + 1 + lengthOfLength, length)
+    return RLPItem(firstByte, position + 1 + lengthOfLength, length)
 
 
 def isRlpList(rlp: IntsSequence, position: int) -> bool:
     firstByte = extractData(rlp, position, 1).values[0]
     return firstByte >= 192
 
+def isRlpList_RlpItem(rlp: IntsSequence, item: RLPItem) -> bool:
+    firstByte = item.firstByte
+    return firstByte >= 192
+
 # returns RLPElement - list of ints, and a position of next element
 def extractElement(rlp: IntsSequence, position: int) -> IntsSequence:
-    dataPosition, length = getElement(rlp, position)
+    _ ,dataPosition, length = getElement(rlp, position)
 
     if length == 0:
         return IntsSequence([], dataPosition)
@@ -45,7 +50,7 @@ def extractElement(rlp: IntsSequence, position: int) -> IntsSequence:
 
 # returns next element position
 def jumpOverElement(rlp: IntsSequence, position: int) -> int:
-    dataPosition, length = getElement(rlp, position)
+    _, dataPosition, length = getElement(rlp, position)
     return dataPosition + length
     
 def extractData(rlp: IntsSequence, start_pos: int, size: int) -> IntsSequence:
@@ -131,14 +136,14 @@ def to_list(rlp: IntsSequence) -> List[RLPItem]:
 
     res: List[RLPItem] = []
 
-    (payload_pos, payload_len) = getElement(rlp, 0)
+    (_, payload_pos, payload_len) = getElement(rlp, 0)
     payload_end = payload_pos + payload_len
     next_element_pos = payload_pos
 
     while next_element_pos < payload_end:
-        (element_pos, element_len) = getElement(rlp, next_element_pos)
+        (firstByte, element_pos, element_len) = getElement(rlp, next_element_pos)
         next_element_pos = element_pos + element_len
-        res.append(RLPItem(element_pos, element_len))
+        res.append(RLPItem(firstByte, element_pos, element_len))
     return res
 
 def extract_list_values(rlp: IntsSequence, rlp_items: List[RLPItem]) -> List[IntsSequence]:
