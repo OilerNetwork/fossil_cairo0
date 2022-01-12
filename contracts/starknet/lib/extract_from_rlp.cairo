@@ -250,7 +250,7 @@ end
 
 func is_rlp_list_rlp_item{ range_check_ptr }(item: RLPItem, rlp: IntsSequence) -> (res: felt):
     alloc_locals
-    let (firstByte) = item.firstByte
+    local firstByte = item.firstByte
     let (is_list) = is_le(191, firstByte)
     return (is_list)
 end

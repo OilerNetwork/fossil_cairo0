@@ -65,6 +65,7 @@ async def test_count_shared_prefix_len(factory):
         path.to_ints().length,
         element_rlp.to_ints().values,
         element_rlp.to_ints().length,
+        node_path_items[0].firstByte,
         node_path_items[0].dataPosition,
         node_path_items[0].length).call()
 
@@ -74,10 +75,6 @@ async def test_count_shared_prefix_len(factory):
 @pytest.mark.asyncio
 async def test_get_next_element_hash(factory):
     starknet, trie_proofs_contract = factory
-
-    print(
-        Data.from_hex('0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421').to_ints()
-    )
 
     # Inputs
     proof = trie_proofs[1]['accountProof']
@@ -89,6 +86,7 @@ async def test_get_next_element_hash(factory):
     get_next_hash_call = await trie_proofs_contract.test_get_next_hash(
         element_rlp.to_ints().values,
         element_rlp.to_ints().length,
+        rlp_item.firstByte,
         rlp_item.dataPosition,
         rlp_item.length
     ).call()
