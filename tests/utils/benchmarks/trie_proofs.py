@@ -23,6 +23,8 @@ def merkle_patricia_input_decode(input: IntsSequence) -> List[int]:
     else:
         assert False
 
+    if skip_nibbles >= input.length:
+        return []
     return words64_to_nibbles(input, skip_nibbles)
 
 
@@ -55,7 +57,8 @@ def count_shared_prefix_len(
 def extract_nibble(input: IntsSequence, position: int) -> int:
     assert position < input.length * 2
     (target_word, index) = divmod(position, 16)
-    return (input.values[target_word] >> (4*(15 - index))) & 0xF
+    word_size_bytes = 8 if target_word < len(input.values) -1 else input.length % 8
+    return (input.values[target_word] >> (4*(word_size_bytes * 2 - 1 - index))) & 0xF
 
 
 def get_next_hash(rlp: IntsSequence, node: RLPItem) -> IntsSequence:
@@ -94,13 +97,8 @@ def verify_proof(
         if i == 0:
             assert root_hash == keccak_words64(element_rlp)
         else:
-            # if next_hash != keccak_words64(element_rlp):
-            #     print(f"Expected: {Data.from_ints(next_hash).to_hex()}")
-            #     print(f"Computed: {Data.from_ints(keccak_words64(element_rlp)).to_hex()}")
-            #     print(f"Hashed: {Data.from_ints(element_rlp).to_hex()}")
-            #     print(f"I: {i}")
-            #     print(f"Element to_list: {to_list(element_rlp)}")
-            assert next_hash == keccak_words64(element_rlp)
+            if next_hash != keccak_words64(element_rlp):
+                assert next_hash == keccak_words64(element_rlp)
 
         node = to_list(element_rlp)
 

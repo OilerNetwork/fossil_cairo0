@@ -87,6 +87,8 @@ def word64_to_bytes_recursive_rev(word: int, word_len: int, accumulator = []):
     return word64_to_bytes_recursive_rev(word, word_len, accumulator) 
 
 def word64_to_nibbles_rec(word: int, nibbles_len: int, accumulator: List[int] = []) -> List[int]:
+    if not nibbles_len > 0:
+        print(f"nibbles_len: {nibbles_len}")
     assert nibbles_len > 0
     if nibbles_len == 1:
         return accumulator + [word & 0xF]

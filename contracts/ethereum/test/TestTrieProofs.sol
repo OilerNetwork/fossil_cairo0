@@ -172,7 +172,6 @@ contract TestTrieProofs {
                     } else {
                         nodeChildren = extractNibble(path32, pathOffset);
                         children = node[nodeChildren];
-                        // require(false, bytes2hex(abi.encodePacked(children.toRLPBytes())));
 
                         // Ensure that the next path item is empty, end of exclusion proof
                         require(children.toBytes().length == 0, "Invalid exclusion proof");

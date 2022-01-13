@@ -59,6 +59,11 @@ func count_shared_prefix_len{ range_check_ptr }(
         end
     end
 
+    let (local skipped_nibbles_above_size) = is_le(element_rlp.element_size_bytes, skip_nibbles)
+    if skipped_nibbles_above_size == 1:
+        return (path_offset)
+    end
+
     let (shared_prefix) = count_shared_prefix_len_rec(path_offset, path, node_path_decoded, skip_nibbles, 0)
     return (shared_prefix + path_offset)
 end
