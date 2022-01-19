@@ -173,8 +173,8 @@ end
 # options_set: transactions_root will be saved if 2nd bit of the arg is positive
 # options_set: receipts_root will be saved if 3rd bit of the arg is positive
 # options_set: uncles_hash will be saved if 4th bit of the arg is positive
-# options_set: difficulty will be saved if 4th bit of the arg is positive
-# options_set: beneficiary will be saved if 4th bit of the arg is positive
+# options_set: difficulty will be saved if 5th bit of the arg is positive
+# options_set: beneficiary will be saved if 6th bit of the arg is positive
 @external
 func process_block{
         pedersen_ptr: HashBuiltin*,
