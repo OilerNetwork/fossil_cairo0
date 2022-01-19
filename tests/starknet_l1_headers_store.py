@@ -82,7 +82,7 @@ async def test_process_block(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [0] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_block_parent_hash_call = await storage_proof.get_parent_hash(block['number']).call()
@@ -105,7 +105,7 @@ async def test_process_invalid_block(factory):
             l1_relayer_account,
             storage_proof.contract_address,
             'process_block',
-            [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+            [0] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
         )
 
 
@@ -123,14 +123,7 @@ async def test_set_state_root(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
-    )
-
-    await l1_relayer_signer.send_transaction(
-        l1_relayer_account,
-        storage_proof.contract_address,
-        'set_block_state_root',
-        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [int("100000", 2)] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_state_root_call = await storage_proof.get_state_root(block['number']).call()
@@ -153,14 +146,7 @@ async def test_set_transactions_root(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
-    )
-
-    await l1_relayer_signer.send_transaction(
-        l1_relayer_account,
-        storage_proof.contract_address,
-        'set_block_transactions_root',
-        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [int("010000", 2)] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_txns_root_call = await storage_proof.get_transactions_root(block['number']).call()
@@ -181,14 +167,7 @@ async def test_set_receipts_root(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
-    )
-
-    await l1_relayer_signer.send_transaction(
-        l1_relayer_account,
-        storage_proof.contract_address,
-        'set_block_receipts_root',
-        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [int("001000", 2)] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_receipts_root_call = await storage_proof.get_receipts_root(block['number']).call()
@@ -209,14 +188,7 @@ async def test_set_uncles_hash(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
-    )
-
-    await l1_relayer_signer.send_transaction(
-        l1_relayer_account,
-        storage_proof.contract_address,
-        'set_block_uncles_hash',
-        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [int("000100", 2)] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_uncles_hash_call = await storage_proof.get_uncles_hash(block['number']).call()
@@ -237,14 +209,7 @@ async def test_set_beneficiary(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
-    )
-
-    await l1_relayer_signer.send_transaction(
-        l1_relayer_account,
-        storage_proof.contract_address,
-        'set_block_beneficiary',
-        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [int("000001", 2)] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_beneficiary_call = await storage_proof.get_beneficiary(block['number']).call()
@@ -266,14 +231,7 @@ async def test_set_difficulty(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
-    )
-
-    await l1_relayer_signer.send_transaction(
-        l1_relayer_account,
-        storage_proof.contract_address,
-        'set_block_difficulty',
-        [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [int("000010", 2)] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_difficulty_call = await storage_proof.get_difficulty(block['number']).call()
