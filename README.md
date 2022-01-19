@@ -1,14 +1,10 @@
-### EVM Storage verifier on Starknet
+# Starknet Storage Verifier by Oiler Network
 
-Storage verifier allows to trustlessly prove a past or current storage values of L1 contracts to other L2 contracts.
-In the near future also proving other things will be possible, things like:
+The Starknet Storage Verifier will allow anyone to trustlessly prove any past or current storage values of L1 contracts to other L2 contracts.
 
-- Specific transaction was included in the block
-- A transaction consumed a given amount of gas
-- Some logs where emitted during a transaction execution
-- Some specific miner mined an uncle block
+*The Storage Verifier is being developed by [Oiler Network](https://oiler.network), and will soon power many of Oiler's Derivative Products.*
 
-### Architecure
+## Architecure
 
 The storage verifier is built out of the following components:
 
@@ -17,18 +13,13 @@ The storage verifier is built out of the following components:
 - L2 contract storing and processing L1 block headers
 - Facts registry which stores the proven facts
 
-Flow diagram attached below:
 ![alt text](https://github.com/marcellobardus/starknet-l2-storage-verifier/blob/master/.github/storage-verifier.png?raw=true)
+*Storage Verifier Flow diagram*
 
-### SETUP
+## Testing
 
-1. Make sure you're running a venv with python 3.7.12
-   To create such a virtualenv first make sure to have `pyenv` installed.
-   Then run the following commands:
+In order to run the tests, please make sure to have a python 3.7 virtual environment.
 
-- `pyenv install 3.7.12`
-- `pyenv local 3.7.12`
-- `virtualenv venv --python=$(which python3<x86>)`
-- `source venv/bin/activate`
+## Contribute
 
-NOTE: If you're using apple M1 please make sure you installed python3.7 with brew arch x86 using rosetta.
+There are countless usecases for the storage verifier and we are excited to hear what the community wants to build with it! Please reach out to <kacper@oiler.network> for any partnership, sponsorship, or other matters.
