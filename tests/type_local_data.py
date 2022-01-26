@@ -45,17 +45,17 @@ def test_to_ints_just_zeroes():
     res = Data.from_ints(input)
     assert res.to_ints() == input
 
-def test_to_ints_full_byte():
+def test_to_ints_full_word():
     input = IntsSequence([12379813738877118345], 8)
     res = Data.from_ints(input)
     assert res.to_ints() == input
 
-def test_to_ints_full_byte_and_a_bit():
+def test_to_ints_full_word_and_a_byte():
     input = IntsSequence([12379813738877118345,123], 9)
     res = Data.from_ints(input)
     assert res.to_ints() == input
 
-def test_to_ints_two_full_bytes():
+def test_to_ints_two_full_words():
     input = IntsSequence([12379813738877118345,12379813738877118345], 16)
     res = Data.from_ints(input)
     assert res.to_ints() == input
