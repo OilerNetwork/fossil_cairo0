@@ -58,7 +58,11 @@ class Data:
 
     @staticmethod
     def from_int(input: int) -> Data:
-        return Data(bytes.fromhex(hex(input)[2:]))
+        if len(hex(input)[2:]) % 2 != 0:
+            return Data(bytes.fromhex("0"+hex(input)[2:]))
+        else:
+            return Data(bytes.fromhex(hex(input)[2:]))
+
 
     @staticmethod
     def from_bytes(input: bytes) -> Data:

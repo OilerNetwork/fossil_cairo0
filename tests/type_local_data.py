@@ -152,3 +152,20 @@ def test_from_nibbles_even_len_6():
     input = [3, 5, 8, 7, 4, 7]
     res = Data.from_nibbles(input)
     assert res.to_bytes() == b'\x35\x87\x47'
+
+#from_int & to_int
+
+def test_from_int_small():
+    for input in range(0,69420):
+        res = Data.from_int(input)
+        assert res.to_int() == input
+
+def test_from_int_maxfelt():
+    input = 2**252 - 1
+    res = Data.from_int(input)
+    assert res.to_int() == input
+
+def test_from_int_maxuint256():
+    input = 2**256 - 1
+    res = Data.from_int(input)
+    assert res.to_int() == input
