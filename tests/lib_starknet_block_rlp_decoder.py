@@ -14,7 +14,11 @@ from utils.benchmarks.blockheader_rlp_extractor import (
     getTransactionsRoot,
     getReceiptsRoot,
     getDifficulty,
-    getBlocknumber
+    getBlocknumber,
+    getGasLimit,
+    getGasUsed,
+    getTimestamp,
+    getBaseFee
 )
 from mocks.blocks import mocked_blocks
 from utils.types import Data
@@ -153,9 +157,9 @@ async def test_decode_difficulty(factory):
     assert block_header.hash() == block["hash"]
 
     call = await decoder.test_decode_difficulty(block_rlp.length, block_rlp.values).call()
-    output = call.result.res
+    output = Data.from_int(call.result.res)
 
-    expected_output = getDifficulty(block_rlp)
+    expected_output = Data.from_ints(getDifficulty(block_rlp))
     assert output == expected_output
 
 @pytest.mark.asyncio
@@ -170,7 +174,75 @@ async def test_decode_block_number(factory):
     assert block_header.hash() == block["hash"]
 
     call = await decoder.test_decode_block_number(block_rlp.length, block_rlp.values).call()
-    output = call.result.res
+    output = Data.from_int(call.result.res)
 
-    expected_output = getBlocknumber(block_rlp)
+    expected_output = Data.from_ints(getBlocknumber(block_rlp))
+    assert output == expected_output
+
+@pytest.mark.asyncio
+async def test_decode_gas_limit(factory):
+    starknet, decoder = factory
+
+    # Retrieve rlp block header
+    block = mocked_blocks[0]
+    block_header = build_block_header(block)
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
+
+    assert block_header.hash() == block["hash"]
+
+    call = await decoder.test_decode_gas_limit(block_rlp.length, block_rlp.values).call()
+    output = Data.from_int(call.result.res)
+
+    expected_output = Data.from_ints(getGasLimit(block_rlp))
+    assert output == expected_output
+
+@pytest.mark.asyncio
+async def test_decode_gas_used(factory):
+    starknet, decoder = factory
+
+    # Retrieve rlp block header
+    block = mocked_blocks[0]
+    block_header = build_block_header(block)
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
+
+    assert block_header.hash() == block["hash"]
+
+    call = await decoder.test_decode_gas_used(block_rlp.length, block_rlp.values).call()
+    output = Data.from_int(call.result.res)
+
+    expected_output = Data.from_ints(getGasUsed(block_rlp))
+    assert output == expected_output
+
+@pytest.mark.asyncio
+async def test_decode_timestamp(factory):
+    starknet, decoder = factory
+
+    # Retrieve rlp block header
+    block = mocked_blocks[0]
+    block_header = build_block_header(block)
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
+
+    assert block_header.hash() == block["hash"]
+
+    call = await decoder.test_decode_timestamp(block_rlp.length, block_rlp.values).call()
+    output = Data.from_int(call.result.res)
+
+    expected_output = Data.from_ints(getTimestamp(block_rlp))
+    assert output == expected_output
+
+@pytest.mark.asyncio
+async def test_decode_base_fee(factory):
+    starknet, decoder = factory
+
+    # Retrieve rlp block header
+    block = mocked_blocks[0]
+    block_header = build_block_header(block)
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
+
+    assert block_header.hash() == block["hash"]
+
+    call = await decoder.test_decode_base_fee(block_rlp.length, block_rlp.values).call()
+    output = Data.from_int(call.result.res)
+
+    expected_output = Data.from_ints(getBaseFee(block_rlp))
     assert output == expected_output

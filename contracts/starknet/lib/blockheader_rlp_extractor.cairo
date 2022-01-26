@@ -1,7 +1,24 @@
-from starknet.lib.extract_from_rlp import extract_data, extractElement, jumpOverElement
+from starkware.cairo.common.math import assert_le
+from starknet.lib.extract_from_rlp import extract_data, extractElement, jumpOverElement, to_list
 from starknet.types import (Keccak256Hash, Address, IntsSequence)
 
 ### Elements decoder 
+const PARENT_HASH = 0
+const OMMERS_HASH = 1
+const BENEFICIARY = 2
+const STATE_ROOT = 3
+const TRANSACTION_ROOT = 4
+const RECEIPTS_ROOT = 5
+const LOGS_BLOOM = 6
+const DIFFICULTY = 7
+const BLOCK_NUMBER = 8
+const GAS_LIMIT = 9
+const GAS_USED = 10
+const TIMESTAMP = 11
+const EXTRA_DATA = 12
+const MIX_HASH = 13
+const NONCE = 14
+const BASE_FEE = 15
 
 func decode_parent_hash{ range_check_ptr }(block_rlp: IntsSequence) -> (res: Keccak256Hash):
     alloc_locals
@@ -82,15 +99,54 @@ end
 
 func decode_difficulty{ range_check_ptr }(block_rlp: IntsSequence) -> (res: felt):
     alloc_locals
-    let (local difficulty_rlp_element: IntsSequence) = extractElement(block_rlp, 448)
+    let (rlp_items, rlp_items_len) = to_list(block_rlp)
+    assert_le(DIFFICULTY, rlp_items_len + 1)
+    let (local difficulty_rlp_element: IntsSequence) = extract_data(rlp_items[DIFFICULTY].dataPosition, rlp_items[DIFFICULTY].length, block_rlp)
     local difficulty = difficulty_rlp_element.element[0]
     return (difficulty)
 end
 
 func decode_block_number{ range_check_ptr }(block_rlp: IntsSequence) -> (res: felt):
     alloc_locals
-    let (blockNumberPosition) = jumpOverElement(block_rlp, 448)
-    let (local block_number_rlp_element: IntsSequence) = extractElement(block_rlp, blockNumberPosition)
+    let (rlp_items, rlp_items_len) = to_list(block_rlp)
+    assert_le(BLOCK_NUMBER, rlp_items_len + 1)
+    let (local block_number_rlp_element: IntsSequence) = extract_data(rlp_items[BLOCK_NUMBER].dataPosition, rlp_items[BLOCK_NUMBER].length, block_rlp)
     local block_number = block_number_rlp_element.element[0]
     return (block_number)
+end
+
+func decode_gas_limit{ range_check_ptr }(block_rlp: IntsSequence) -> (res: felt):
+    alloc_locals
+    let (rlp_items, rlp_items_len) = to_list(block_rlp)
+    assert_le(GAS_LIMIT, rlp_items_len + 1)
+    let (local gas_limit_rlp_element: IntsSequence) = extract_data(rlp_items[GAS_LIMIT].dataPosition, rlp_items[GAS_LIMIT].length, block_rlp)
+    local gas_limit = gas_limit_rlp_element.element[0]
+    return (gas_limit)
+end
+
+func decode_gas_used{ range_check_ptr }(block_rlp: IntsSequence) -> (res: felt):
+    alloc_locals
+    let (rlp_items, rlp_items_len) = to_list(block_rlp)
+    assert_le(GAS_USED, rlp_items_len + 1)
+    let (local gas_used_rlp_element: IntsSequence) = extract_data(rlp_items[GAS_USED].dataPosition, rlp_items[GAS_USED].length, block_rlp)
+    local gas_used = gas_used_rlp_element.element[0]
+    return (gas_used)
+end
+
+func decode_timestamp{ range_check_ptr }(block_rlp: IntsSequence) -> (res: felt):
+    alloc_locals
+    let (rlp_items, rlp_items_len) = to_list(block_rlp)
+    assert_le(TIMESTAMP, rlp_items_len + 1)
+    let (local timestamp_rlp_element: IntsSequence) = extract_data(rlp_items[TIMESTAMP].dataPosition, rlp_items[TIMESTAMP].length, block_rlp)
+    local timestamp = timestamp_rlp_element.element[0]
+    return (timestamp)
+end
+
+func decode_base_fee{ range_check_ptr }(block_rlp: IntsSequence) -> (res: felt):
+    alloc_locals
+    let (rlp_items, rlp_items_len) = to_list(block_rlp)
+    assert_le(BASE_FEE, rlp_items_len + 1)
+    let (local base_fee_rlp_element: IntsSequence) = extract_data(rlp_items[BASE_FEE].dataPosition, rlp_items[BASE_FEE].length, block_rlp)
+    local base_fee = base_fee_rlp_element.element[0]
+    return (base_fee)
 end

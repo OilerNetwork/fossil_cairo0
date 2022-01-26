@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import List, NamedTuple
-from enum import Enum
+from enum import Enum, IntEnum
 from utils.helpers import chunk_bytes_input, ints_array_to_bytes, concat_arr
 
 
@@ -43,6 +43,9 @@ class Data:
 
         return output[1:] if self.odd_nibbles else output
 
+    def to_int(self) -> str:
+        return int(self.to_hex(), base=16)
+
     @staticmethod
     def from_ints(input: IntsSequence) -> Data:
         raw_bytes = ints_array_to_bytes(input)
@@ -52,6 +55,10 @@ class Data:
     def from_hex(input: str) -> Data:
         prefixed = input[0:2] == '0x'
         return Data(bytes.fromhex(input[2:] if prefixed else input))
+
+    @staticmethod
+    def from_int(input: int) -> Data:
+        return Data(bytes.fromhex(hex(input)[2:]))
 
     @staticmethod
     def from_bytes(input: bytes) -> Data:
@@ -77,3 +84,21 @@ class Data:
 
     def __eq__(self, __o: Data) -> bool:
         return __o.raw_bytes == self.raw_bytes
+
+class BlockHeaderIndexes(IntEnum):
+    PARENT_HASH: int = 0
+    OMMERS_HASH: int = 1
+    BENEFICIARY: int = 2
+    STATE_ROOT: int = 3
+    TRANSACTION_ROOT: int = 4
+    RECEIPTS_ROOT: int = 5
+    LOGS_BLOOM: int = 6
+    DIFFICULTY: int = 7
+    BLOCK_NUMBER: int = 8
+    GAS_LIMIT: int = 9
+    GAS_USED: int = 10
+    TIMESTAMP: int = 11
+    EXTRA_DATA: int = 12
+    MIX_HASH: int = 13
+    NONCE: int = 14
+    BASE_FEE: int = 15

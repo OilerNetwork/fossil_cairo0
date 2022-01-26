@@ -1,6 +1,6 @@
 import pytest
 from utils.block_header import build_block_header
-from utils.benchmarks.blockheader_rlp_extractor import getBeneficiary, getParentHash, getOmmersHash, getStateRoot, getBlocknumber, getDifficulty, getTransactionsRoot, getReceiptsRoot, getGasLimit, getGasUsed, getTimestamp
+from utils.benchmarks.blockheader_rlp_extractor import getBaseFee, getBeneficiary, getParentHash, getOmmersHash, getStateRoot, getBlocknumber, getDifficulty, getTransactionsRoot, getReceiptsRoot, getGasLimit, getGasUsed, getTimestamp
 from mocks.blocks import mocked_blocks
 from utils.types import Data
 
@@ -99,9 +99,9 @@ async def test_decode_difficulty():
     assert block_header.hash() == block["hash"]
     block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
-    difficulty = getDifficulty(block_rlp_formatted)
+    difficulty = Data.from_ints(getDifficulty(block_rlp_formatted))
 
-    assert block["difficulty"] == difficulty
+    assert block["difficulty"] == difficulty.to_int()
 
 @pytest.mark.asyncio
 async def test_decode_block_number():
@@ -113,9 +113,9 @@ async def test_decode_block_number():
     assert block_header.hash() == block["hash"]
     block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
-    block_number = getBlocknumber(block_rlp_formatted)
+    block_number = Data.from_ints(getBlocknumber(block_rlp_formatted))
 
-    assert block["number"] == block_number
+    assert block["number"] == block_number.to_int()
 
 
 @pytest.mark.asyncio
@@ -128,9 +128,9 @@ async def test_decode_gasLimit():
     assert block_header.hash() == block["hash"]
     block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
-    gasLimit = getGasLimit(block_rlp_formatted)
+    gasLimit = Data.from_ints(getGasLimit(block_rlp_formatted))
 
-    assert block["gasLimit"] == gasLimit
+    assert block["gasLimit"] == gasLimit.to_int()
 
 
 @pytest.mark.asyncio
@@ -143,9 +143,9 @@ async def test_decode_getGasUsed():
     assert block_header.hash() == block["hash"]
     block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
-    gasUsed = getGasUsed(block_rlp_formatted)
+    gasUsed = Data.from_ints(getGasUsed(block_rlp_formatted))
 
-    assert block["gasUsed"] == gasUsed
+    assert block["gasUsed"] == gasUsed.to_int()
 
 
 
@@ -159,6 +159,21 @@ async def test_decode_getTimestamp():
     assert block_header.hash() == block["hash"]
     block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
 
-    timestamp = getTimestamp(block_rlp_formatted)
+    timestamp = Data.from_ints(getTimestamp(block_rlp_formatted))
 
-    assert block["timestamp"] == timestamp
+    assert block["timestamp"] == timestamp.to_int()
+
+
+@pytest.mark.asyncio
+async def test_decode_getBaseFee():
+    # Retrieve rlp block header
+    block = mocked_blocks[0]
+    block_header = build_block_header(block)
+    block_rlp = block_header.raw_rlp()
+
+    assert block_header.hash() == block["hash"]
+    block_rlp_formatted = Data.from_bytes(block_rlp).to_ints()
+
+    baseFee = Data.from_ints(getBaseFee(block_rlp_formatted))
+
+    assert block["baseFeePerGas"] == baseFee.to_int()
