@@ -11,6 +11,10 @@ from starknet.lib.blockheader_rlp_extractor import (
     decode_receipts_root,
     decode_difficulty,
     decode_block_number,
+    decode_gas_limit,
+    decode_gas_used,
+    decode_timestamp,
+    decode_base_fee,
     Keccak256Hash,
     Address
 )
@@ -76,4 +80,32 @@ func test_decode_block_number{ range_check_ptr }(block_rlp_len_bytes: felt, bloc
     alloc_locals
     local input: IntsSequence = IntsSequence(block_rlp, block_rlp_len, block_rlp_len_bytes)
     return decode_block_number(input)
+end
+
+@view
+func test_decode_gas_limit{ range_check_ptr }(block_rlp_len_bytes: felt, block_rlp_len: felt, block_rlp: felt*) -> (res: felt):
+    alloc_locals
+    local input: IntsSequence = IntsSequence(block_rlp, block_rlp_len, block_rlp_len_bytes)
+    return decode_gas_limit(input)
+end
+
+@view
+func test_decode_gas_used{ range_check_ptr }(block_rlp_len_bytes: felt, block_rlp_len: felt, block_rlp: felt*) -> (res: felt):
+    alloc_locals
+    local input: IntsSequence = IntsSequence(block_rlp, block_rlp_len, block_rlp_len_bytes)
+    return decode_gas_used(input)
+end
+
+@view
+func test_decode_timestamp{ range_check_ptr }(block_rlp_len_bytes: felt, block_rlp_len: felt, block_rlp: felt*) -> (res: felt):
+    alloc_locals
+    local input: IntsSequence = IntsSequence(block_rlp, block_rlp_len, block_rlp_len_bytes)
+    return decode_timestamp(input)
+end
+
+@view
+func test_decode_base_fee{ range_check_ptr }(block_rlp_len_bytes: felt, block_rlp_len: felt, block_rlp: felt*) -> (res: felt):
+    alloc_locals
+    local input: IntsSequence = IntsSequence(block_rlp, block_rlp_len, block_rlp_len_bytes)
+    return decode_base_fee(input)
 end

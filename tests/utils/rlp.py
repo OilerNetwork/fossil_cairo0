@@ -52,7 +52,10 @@ def extractElement(rlp: IntsSequence, position: int) -> IntsSequence:
 def jumpOverElement(rlp: IntsSequence, position: int) -> int:
     _, dataPosition, length = getElement(rlp, position)
     return dataPosition + length
-    
+
+def extractDataFromRLPItem(rlp: IntsSequence, rlpItem: RLPItem) -> IntsSequence:
+    return extractData(rlp, rlpItem.dataPosition, rlpItem.length)
+
 def extractData(rlp: IntsSequence, start_pos: int, size: int) -> IntsSequence:
     start_word, left_shift = divmod(start_pos, 8)
     end_word, end_pos = divmod(start_pos + size, 8)
@@ -121,7 +124,7 @@ def extractData(rlp: IntsSequence, start_pos: int, size: int) -> IntsSequence:
 
 def count_items(rlp: IntsSequence, pos: int = 0) -> int:
     count = 0
-    (payload_pos, payload_len) = getElement(rlp, pos)
+    (_, payload_pos, payload_len) = getElement(rlp, pos)
 
     payload_end = payload_pos + payload_len
     curr_element_pos = payload_pos

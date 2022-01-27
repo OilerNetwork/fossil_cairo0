@@ -58,6 +58,7 @@ def extract_nibble(input: IntsSequence, position: int) -> int:
     assert position < input.length * 2
     (target_word, index) = divmod(position, 16)
     word_size_bytes = 8 if target_word < len(input.values) -1 else input.length % 8
+    word_size_bytes = 8 if word_size_bytes == 0 else word_size_bytes
     return (input.values[target_word] >> (4*(word_size_bytes * 2 - 1 - index))) & 0xF
 
 

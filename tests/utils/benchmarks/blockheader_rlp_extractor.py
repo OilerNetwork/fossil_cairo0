@@ -1,90 +1,51 @@
 from typing import List
-from utils.rlp import extractData, extractElement, jumpOverElement
-from utils.types import IntsSequence
-
-
-# idx  Element                 element length with 1 byte storing its length
-# ==========================================================================
-
-# Static elements (always same size):
-# 0    RLP length              1+2
-# 1    parentHash              1+32
-# 2    ommersHash              1+32
-# 3    beneficiary             1+20
-# 4    stateRoot               1+32
-# 5    TransactionRoot         1+32
-# 6    receiptsRoot            1+32
-#      logsBloom length        1+2
-# 7    logsBloom               256
-#                              =========
-
-#  Total static elements size: 448 bytes
-
-# Dynamic elements (need to read length) start at position 448
-# and each one is preceeded with 1 byte length (if element is >= 128)
-# or if element is < 128 - then length byte is skipped and it is just the 1-byte element:
-
-# 8	difficulty  - starts at pos 448
-# 9	number      - blockNumber
-# 10	gasLimit
-# 11	gasUsed
-# 12	timestamp
-# 13	extraData
-# 14	mixHash
-# 15	nonce
+from utils.rlp import extractData, extractDataFromRLPItem, extractElement, jumpOverElement, to_list
+from utils.types import IntsSequence, BlockHeaderIndexes
 
 def getParentHash(rlp: IntsSequence) -> IntsSequence:
-    return extractData(rlp, 4, 32)
+    rlpList = to_list(rlp)
+    return extractDataFromRLPItem(rlp, rlpList[BlockHeaderIndexes.PARENT_HASH])
 
 def getOmmersHash(rlp: IntsSequence) -> IntsSequence:
-    return extractData(rlp, 4+32+1, 32)
+    rlpList = to_list(rlp)
+    return extractDataFromRLPItem(rlp, rlpList[BlockHeaderIndexes.OMMERS_HASH])
 
 def getBeneficiary(rlp: IntsSequence) -> IntsSequence:
-    return extractData(rlp, 4+32+1+32+1, 20)
+    rlpList = to_list(rlp)
+    return extractDataFromRLPItem(rlp, rlpList[BlockHeaderIndexes.BENEFICIARY])
 
 def getStateRoot(rlp: IntsSequence) -> IntsSequence:
-    return extractData(rlp, 4+32+1+32+1+20+1, 32)
+    rlpList = to_list(rlp)
+    return extractDataFromRLPItem(rlp, rlpList[BlockHeaderIndexes.STATE_ROOT])
 
 def getTransactionsRoot(rlp: IntsSequence) -> IntsSequence:
-    return extractData(rlp, 4+32+1+32+1+20+1+32+1, 32)
+    rlpList = to_list(rlp)
+    return extractDataFromRLPItem(rlp, rlpList[BlockHeaderIndexes.TRANSACTION_ROOT])
 
 def getReceiptsRoot(rlp: IntsSequence) -> IntsSequence:
-    return extractData(rlp, 4+32+1+32+1+20+1+32+1+32+1, 32)
+    rlpList = to_list(rlp)
+    return extractDataFromRLPItem(rlp, rlpList[BlockHeaderIndexes.RECEIPTS_ROOT])
 
-def getDifficulty(rlp: IntsSequence) -> int:
-    return extractElement(rlp, 448).values[0]
+def getDifficulty(rlp: IntsSequence) -> IntsSequence:
+    rlpList = to_list(rlp)
+    return extractDataFromRLPItem(rlp, rlpList[BlockHeaderIndexes.DIFFICULTY])
 
-def getBlocknumber(rlp: IntsSequence) -> int:
-    #jump over difficulty
-    blockNumberPosition = jumpOverElement(rlp, 448)
-    return extractElement(rlp, blockNumberPosition).values[0]
+def getBlocknumber(rlp: IntsSequence) -> IntsSequence:
+    rlpList = to_list(rlp)
+    return extractDataFromRLPItem(rlp, rlpList[BlockHeaderIndexes.BLOCK_NUMBER])
 
-def getGasLimit(rlp: IntsSequence) -> int:
-    #jump over difficulty
-    blockNumberPosition = jumpOverElement(rlp, 448)
-    #jump over blockNumber
-    gasLimitPosition = jumpOverElement(rlp, blockNumberPosition)
+def getGasLimit(rlp: IntsSequence) -> IntsSequence:
+    rlpList = to_list(rlp)
+    return extractDataFromRLPItem(rlp, rlpList[BlockHeaderIndexes.GAS_LIMIT])
 
-    return extractElement(rlp, gasLimitPosition).values[0]
+def getGasUsed(rlp: IntsSequence) -> IntsSequence:
+    rlpList = to_list(rlp)
+    return extractDataFromRLPItem(rlp, rlpList[BlockHeaderIndexes.GAS_USED])
 
-def getGasUsed(rlp: IntsSequence) -> int:
-    #jump over difficulty
-    blockNumberPosition = jumpOverElement(rlp, 448)
-    #jump over blockNumber
-    gasLimitPosition = jumpOverElement(rlp, blockNumberPosition)
-    #jump over gasLimit
-    gasUsedPosition = jumpOverElement(rlp, gasLimitPosition)
+def getTimestamp(rlp: IntsSequence) -> IntsSequence:
+    rlpList = to_list(rlp)
+    return extractDataFromRLPItem(rlp, rlpList[BlockHeaderIndexes.TIMESTAMP])
 
-    return extractElement(rlp, gasUsedPosition).values[0]
-
-def getTimestamp(rlp: IntsSequence) -> int:
-    #jump over difficulty
-    blockNumberPosition = jumpOverElement(rlp, 448)
-    #jump over blockNumber
-    gasLimitPosition = jumpOverElement(rlp, blockNumberPosition)
-    #jump over gasLimit
-    gasUsedPosition = jumpOverElement(rlp, gasLimitPosition)
-    #jump over gasUsed
-    timestampPosition = jumpOverElement(rlp, gasUsedPosition)
-
-    return extractElement(rlp, timestampPosition).values[0]
+def getBaseFee(rlp: IntsSequence) -> IntsSequence:
+    rlpList = to_list(rlp)
+    return extractDataFromRLPItem(rlp, rlpList[BlockHeaderIndexes.BASE_FEE])
