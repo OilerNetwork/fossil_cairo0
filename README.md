@@ -1,4 +1,4 @@
-# Starknet Storage Verifier by Oiler Network
+# Fossil - Starknet Storage Verifier by Oiler
 
 The Starknet Storage Verifier will allow anyone to trustlessly prove any past or current storage values of L1 contracts to other L2 contracts.
 
