@@ -1,12 +1,12 @@
-# Starknet Storage Verifier by Oiler Network
+# Fossil - Starknet-based State Verifier by Oiler
 
-The Starknet Storage Verifier will allow anyone to trustlessly prove any past or current storage values of L1 contracts to other L2 contracts.
+Fossil will allow anyone to trustlessly prove any past or current headers, state, and storage values of L1 contracts to other L2 contracts.
 
-*The Storage Verifier is being developed by [Oiler Network](https://oiler.network), and will soon power many of Oiler's Derivative Products.*
+*Fossil is being developed by [Oiler Network](https://oiler.network), and will soon power many of Oiler's Derivative Products.*
 
 ## Architecure
 
-The storage verifier is built out of the following components:
+Fossil is built out of the following components:
 
 - L1 messaging contracts
 - L2 contract receiving L1 messages
