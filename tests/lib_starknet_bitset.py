@@ -42,3 +42,11 @@ async def test_bitset6(factory):
     bitset = int('000001', 2)
     get_bitset_position_call = await bitset_contract.test_bitset6_get(bitset, 6).call()
     assert get_bitset_position_call.result.res == 1
+
+@pytest.mark.asyncio
+async def test_bitset(factory):
+    starknet, bitset_contract = factory
+
+    bitset = int('0000001', 2)
+    get_bitset_position_call = await bitset_contract.test_bitset_get(bitset, 7, 7).call()
+    assert get_bitset_position_call.result.res == 1

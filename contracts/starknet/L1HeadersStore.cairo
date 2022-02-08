@@ -62,6 +62,18 @@ end
 func _block_difficulty(block_number: felt) -> (res: felt):
 end
 
+@storage_var
+func _block_base_fee(block_number: felt) -> (res: felt):
+end
+
+@storage_var
+func _block_timestamp(block_number: felt) -> (res: felt):
+end
+
+@storage_var
+func _block_gas_used(block_number: felt) -> (res: felt):
+end
+
 ####################################################
 #                   VIEW FUNCTIONS
 ####################################################
