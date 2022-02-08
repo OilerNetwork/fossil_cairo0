@@ -18,7 +18,7 @@ from starknet.lib.blockheader_rlp_extractor import (
     decode_uncles_hash
 )
 
-from starknet.lib.bitset import bitset6_get
+from starknet.lib.bitset import bitset_get
 
 # Temporary auth var for authenticating mocked L1 handlers
 @storage_var
@@ -141,6 +141,33 @@ func get_difficulty{
     return _block_difficulty.read(block_number)
 end
 
+@view
+func get_base_fee{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (block_number: felt) -> (res: felt):
+    return _block_base_fee.read(block_number)
+end
+
+@view
+func get_timestamp{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (block_number: felt) -> (res: felt):
+    return _block_timestamp.read(block_number)
+end
+
+@view
+func get_gas_used{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } (block_number: felt) -> (res: felt):
+    return _block_gas_used.read(block_number)
+end
+
 @external
 func initialize{
         pedersen_ptr: HashBuiltin*,
@@ -187,6 +214,9 @@ end
 # options_set: uncles_hash will be saved if 4th bit of the arg is positive
 # options_set: difficulty will be saved if 5th bit of the arg is positive
 # options_set: beneficiary will be saved if 6th bit of the arg is positive
+# options_set: base_fee will be saved if 7th bit of the arg is positive
+# options_set: timestamp will be saved if 8th bit of the arg is positive
+# options_set: gas_used will be saved if 9th bit of the arg is positive
 @external
 func process_block{
         pedersen_ptr: HashBuiltin*,
@@ -212,7 +242,7 @@ func process_block{
     _block_parent_hash.write(block_number, parent_hash)
 
     # Check whether state root should be saved
-    let (local save_state_root) = bitset6_get(options_set, 1)
+    let (local save_state_root) = bitset_get(options_set, 1, 9)
     if save_state_root == 1:
         let (local state_root: Keccak256Hash) = decode_state_root(rlp)
         _block_state_root.write(block_number, state_root)
@@ -229,7 +259,7 @@ func process_block{
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
     # Check whether transactions root should be saved
-    let (local save_txns_root) = bitset6_get(options_set, 2)
+    let (local save_txns_root) = bitset_get(options_set, 2, 9)
     if save_txns_root == 1:
         let (local transactions_root: Keccak256Hash) = decode_transactions_root(rlp)
         _block_transactions_root.write(block_number, transactions_root)
@@ -246,7 +276,7 @@ func process_block{
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
     # Check whether receipts root should be saved
-    let (local save_receipts_root) = bitset6_get(options_set, 3)
+    let (local save_receipts_root) = bitset_get(options_set, 3, 9)
     if save_receipts_root == 1:
         let (local receipts_root: Keccak256Hash) = decode_receipts_root(rlp)
         _block_receipts_root.write(block_number, receipts_root)
@@ -263,7 +293,7 @@ func process_block{
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
     # Check whether uncles hash should be saved
-    let (local save_uncles_hash) = bitset6_get(options_set, 4)
+    let (local save_uncles_hash) = bitset_get(options_set, 4, 9)
     if save_uncles_hash == 1:
         let (local uncles_hash: Keccak256Hash) = decode_uncles_hash(rlp)
         _block_uncles_hash.write(block_number, uncles_hash)
@@ -280,7 +310,7 @@ func process_block{
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
     # Check whether difficulty should be saved
-    let (local save_difficulty) = bitset6_get(options_set, 5)
+    let (local save_difficulty) = bitset_get(options_set, 5, 9)
     if save_difficulty == 1:
         let (local difficulty: felt) = decode_difficulty(rlp)
         _block_difficulty.write(block_number, difficulty)
@@ -297,7 +327,7 @@ func process_block{
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
     # Check whether beneficiary should be saved
-    let (local save_beneficiary) = bitset6_get(options_set, 6)
+    let (local save_beneficiary) = bitset_get(options_set, 6, 9)
     if save_beneficiary == 1:
         let (local beneficiary: Address) = decode_beneficiary(rlp)
         _block_beneficiary.write(block_number, beneficiary)
@@ -313,7 +343,7 @@ func process_block{
     local range_check_ptr : felt = range_check_ptr
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
-    return()
+    return ()
 end
 
 func validate_provided_header_rlp{
