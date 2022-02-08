@@ -15,6 +15,10 @@ from utils.types import Data
 
 from mocks.blocks import mocked_blocks
 
+from utils.benchmarks.blockheader_rlp_extractor import (
+    getBaseFee
+)
+
 class TestsDeps(NamedTuple):
     starknet: Starknet
     storage_proof: StarknetContract
@@ -237,5 +241,71 @@ async def test_set_difficulty(factory):
     set_difficulty_call = await storage_proof.get_difficulty(block['number']).call()
     set_difficulty = set_difficulty_call.result.res
     assert set_difficulty == block["difficulty"]
+
+
+@pytest.mark.asyncio
+async def test_set_base_fee(factory):
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
+
+    await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof)
+
+    block = mocked_blocks[1]
+    block_header = build_block_header(block)
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
+
+    await l1_relayer_signer.send_transaction(
+        l1_relayer_account,
+        storage_proof.contract_address,
+        'process_block',
+        [int("000000100", 2)] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+    )
+
+    set_base_fee_call = await storage_proof.get_base_fee(block['number']).call()
+    set_base_fee = set_base_fee_call.result.res
+    assert set_base_fee == block["baseFeePerGas"]
+
+
+@pytest.mark.asyncio
+async def test_set_timestamp(factory):
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
+
+    await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof)
+
+    block = mocked_blocks[1]
+    block_header = build_block_header(block)
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
+
+    await l1_relayer_signer.send_transaction(
+        l1_relayer_account,
+        storage_proof.contract_address,
+        'process_block',
+        [int("000000010", 2)] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+    )
+
+    set_timestamp_call = await storage_proof.get_timestamp(block['number']).call()
+    set_timestamp = set_timestamp_call.result.res
+    assert set_timestamp == block['timestamp']
+
+
+@pytest.mark.asyncio
+async def test_set_gas_used(factory):
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
+
+    await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof)
+
+    block = mocked_blocks[1]
+    block_header = build_block_header(block)
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
+
+    await l1_relayer_signer.send_transaction(
+        l1_relayer_account,
+        storage_proof.contract_address,
+        'process_block',
+        [int("000000001", 2)] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+    )
+
+    set_gas_used_call = await storage_proof.get_gas_used(block['number']).call()
+    set_gas_used = set_gas_used_call.result.res
+    assert set_gas_used == block['gasUsed']
 
     

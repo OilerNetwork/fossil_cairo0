@@ -15,7 +15,10 @@ from starknet.lib.blockheader_rlp_extractor import (
     decode_receipts_root,
     decode_difficulty,
     decode_beneficiary,
-    decode_uncles_hash
+    decode_uncles_hash,
+    decode_base_fee,
+    decode_timestamp,
+    decode_gas_used
 )
 
 from starknet.lib.bitset import bitset_get
@@ -342,6 +345,54 @@ func process_block{
     local syscall_ptr : felt* = syscall_ptr
     local range_check_ptr : felt = range_check_ptr
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
+
+    # Check whether base fee should be saved
+    let (local save_base_fee) = bitset_get(options_set, 7, 9)
+    if save_base_fee == 1:
+        let (local base_fee: felt) = decode_base_fee(rlp)
+        _block_base_fee.write(block_number, base_fee)
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    else:
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    end
+    local syscall_ptr : felt* = syscall_ptr
+    local range_check_ptr : felt = range_check_ptr
+    local pedersen_ptr : HashBuiltin* = pedersen_ptr
+
+    # Check whether timestamp should be saved
+    let (local save_timestamp) = bitset_get(options_set, 8, 9)
+    if save_timestamp == 1:
+        let (local timestamp: felt) = decode_timestamp(rlp)
+        _block_timestamp.write(block_number, timestamp)
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    else:
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    end
+    local syscall_ptr : felt* = syscall_ptr
+    local range_check_ptr : felt = range_check_ptr
+    local pedersen_ptr : HashBuiltin* = pedersen_ptr
+
+    # Check whether gas used should be saved
+    let (local save_gas_used) = bitset_get(options_set, 9, 9)
+    if save_gas_used == 1:
+        let (local gas_used: felt) = decode_gas_used(rlp)
+        _block_gas_used.write(block_number, gas_used)
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    else:
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    end
 
     return ()
 end
