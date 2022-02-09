@@ -211,15 +211,15 @@ end
 
 # options_set: indicates which element of the block header should be saved in state
 # options_set: is a felt in range 0 to 63
-# options_set: state_root will be saved if 1st bit of the arg is positive
-# options_set: transactions_root will be saved if 2nd bit of the arg is positive
-# options_set: receipts_root will be saved if 3rd bit of the arg is positive
-# options_set: uncles_hash will be saved if 4th bit of the arg is positive
-# options_set: difficulty will be saved if 5th bit of the arg is positive
-# options_set: beneficiary will be saved if 6th bit of the arg is positive
-# options_set: base_fee will be saved if 7th bit of the arg is positive
-# options_set: timestamp will be saved if 8th bit of the arg is positive
-# options_set: gas_used will be saved if 9th bit of the arg is positive
+# options_set: uncles_hash will be saved if bit 1 of the arg is positive
+# options_set: beneficiary will be saved if bit 2 of the arg is positive
+# options_set: state_root will be saved if bit 3 of the arg is positive
+# options_set: transactions_root will be saved if bit 4 of the arg is positive
+# options_set: receipts_root will be saved if bit 5 of the arg is positive
+# options_set: difficulty will be saved if bit 7 of the arg is positive
+# options_set: gas_used will be saved if bit 10 of the arg is positive
+# options_set: timestamp will be saved if bit 11 of the arg is positive
+# options_set: base_fee will be saved if bit 15 of the arg is positive
 @external
 func process_block{
         pedersen_ptr: HashBuiltin*,
@@ -244,8 +244,42 @@ func process_block{
     let (local parent_hash: Keccak256Hash) = decode_parent_hash(rlp)
     _block_parent_hash.write(block_number, parent_hash)
 
+    # Check whether uncles hash should be saved
+    let (local save_uncles_hash) = bitset_get(options_set, 1)
+    if save_uncles_hash == 1:
+        let (local uncles_hash: Keccak256Hash) = decode_uncles_hash(rlp)
+        _block_uncles_hash.write(block_number, uncles_hash)
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    else:
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    end
+    local syscall_ptr : felt* = syscall_ptr
+    local range_check_ptr : felt = range_check_ptr
+    local pedersen_ptr : HashBuiltin* = pedersen_ptr
+
+    # Check whether beneficiary should be saved
+    let (local save_beneficiary) = bitset_get(options_set, 2)
+    if save_beneficiary == 1:
+        let (local beneficiary: Address) = decode_beneficiary(rlp)
+        _block_beneficiary.write(block_number, beneficiary)
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    else:
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    end
+    local syscall_ptr : felt* = syscall_ptr
+    local range_check_ptr : felt = range_check_ptr
+    local pedersen_ptr : HashBuiltin* = pedersen_ptr
+
     # Check whether state root should be saved
-    let (local save_state_root) = bitset_get(options_set, 1, 9)
+    let (local save_state_root) = bitset_get(options_set, 3)
     if save_state_root == 1:
         let (local state_root: Keccak256Hash) = decode_state_root(rlp)
         _block_state_root.write(block_number, state_root)
@@ -262,7 +296,7 @@ func process_block{
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
     # Check whether transactions root should be saved
-    let (local save_txns_root) = bitset_get(options_set, 2, 9)
+    let (local save_txns_root) = bitset_get(options_set, 4)
     if save_txns_root == 1:
         let (local transactions_root: Keccak256Hash) = decode_transactions_root(rlp)
         _block_transactions_root.write(block_number, transactions_root)
@@ -279,7 +313,7 @@ func process_block{
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
     # Check whether receipts root should be saved
-    let (local save_receipts_root) = bitset_get(options_set, 3, 9)
+    let (local save_receipts_root) = bitset_get(options_set, 5)
     if save_receipts_root == 1:
         let (local receipts_root: Keccak256Hash) = decode_receipts_root(rlp)
         _block_receipts_root.write(block_number, receipts_root)
@@ -295,25 +329,8 @@ func process_block{
     local range_check_ptr : felt = range_check_ptr
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
-    # Check whether uncles hash should be saved
-    let (local save_uncles_hash) = bitset_get(options_set, 4, 9)
-    if save_uncles_hash == 1:
-        let (local uncles_hash: Keccak256Hash) = decode_uncles_hash(rlp)
-        _block_uncles_hash.write(block_number, uncles_hash)
-        tempvar syscall_ptr = syscall_ptr
-        tempvar range_check_ptr = range_check_ptr
-        tempvar pedersen_ptr = pedersen_ptr
-    else:
-        tempvar syscall_ptr = syscall_ptr
-        tempvar range_check_ptr = range_check_ptr
-        tempvar pedersen_ptr = pedersen_ptr
-    end
-    local syscall_ptr : felt* = syscall_ptr
-    local range_check_ptr : felt = range_check_ptr
-    local pedersen_ptr : HashBuiltin* = pedersen_ptr
-
     # Check whether difficulty should be saved
-    let (local save_difficulty) = bitset_get(options_set, 5, 9)
+    let (local save_difficulty) = bitset_get(options_set, 7)
     if save_difficulty == 1:
         let (local difficulty: felt) = decode_difficulty(rlp)
         _block_difficulty.write(block_number, difficulty)
@@ -329,28 +346,11 @@ func process_block{
     local range_check_ptr : felt = range_check_ptr
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
-    # Check whether beneficiary should be saved
-    let (local save_beneficiary) = bitset_get(options_set, 6, 9)
-    if save_beneficiary == 1:
-        let (local beneficiary: Address) = decode_beneficiary(rlp)
-        _block_beneficiary.write(block_number, beneficiary)
-        tempvar syscall_ptr = syscall_ptr
-        tempvar range_check_ptr = range_check_ptr
-        tempvar pedersen_ptr = pedersen_ptr
-    else:
-        tempvar syscall_ptr = syscall_ptr
-        tempvar range_check_ptr = range_check_ptr
-        tempvar pedersen_ptr = pedersen_ptr
-    end
-    local syscall_ptr : felt* = syscall_ptr
-    local range_check_ptr : felt = range_check_ptr
-    local pedersen_ptr : HashBuiltin* = pedersen_ptr
-
-    # Check whether base fee should be saved
-    let (local save_base_fee) = bitset_get(options_set, 7, 9)
-    if save_base_fee == 1:
-        let (local base_fee: felt) = decode_base_fee(rlp)
-        _block_base_fee.write(block_number, base_fee)
+    # Check whether gas used should be saved
+    let (local save_gas_used) = bitset_get(options_set, 10)
+    if save_gas_used == 1:
+        let (local gas_used: felt) = decode_gas_used(rlp)
+        _block_gas_used.write(block_number, gas_used)
         tempvar syscall_ptr = syscall_ptr
         tempvar range_check_ptr = range_check_ptr
         tempvar pedersen_ptr = pedersen_ptr
@@ -364,7 +364,7 @@ func process_block{
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
     # Check whether timestamp should be saved
-    let (local save_timestamp) = bitset_get(options_set, 8, 9)
+    let (local save_timestamp) = bitset_get(options_set, 11)
     if save_timestamp == 1:
         let (local timestamp: felt) = decode_timestamp(rlp)
         _block_timestamp.write(block_number, timestamp)
@@ -380,11 +380,11 @@ func process_block{
     local range_check_ptr : felt = range_check_ptr
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
-    # Check whether gas used should be saved
-    let (local save_gas_used) = bitset_get(options_set, 9, 9)
-    if save_gas_used == 1:
-        let (local gas_used: felt) = decode_gas_used(rlp)
-        _block_gas_used.write(block_number, gas_used)
+    # Check whether base fee should be saved
+    let (local save_base_fee) = bitset_get(options_set, 15)
+    if save_base_fee == 1:
+        let (local base_fee: felt) = decode_base_fee(rlp)
+        _block_base_fee.write(block_number, base_fee)
         tempvar syscall_ptr = syscall_ptr
         tempvar range_check_ptr = range_check_ptr
         tempvar pedersen_ptr = pedersen_ptr

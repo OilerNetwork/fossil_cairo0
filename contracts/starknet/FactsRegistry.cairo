@@ -9,7 +9,7 @@ from starkware.cairo.common.math import assert_not_zero
 from starknet.types import Keccak256Hash, StorageSlot, Address, IntsSequence, RLPItem, reconstruct_ints_sequence_list
 from starknet.lib.keccak import keccak256
 from starknet.lib.trie_proofs import verify_proof
-from starknet.lib.bitset import bitset4_get
+from starknet.lib.bitset import bitset_get
 from starknet.lib.extract_from_rlp import to_list, extract_list_values, extractElement, extract_data
 from starknet.lib.address import address_words64_to_160bit
 from starknet.lib.swap_endianness import swap_endianness_64
@@ -113,10 +113,10 @@ end
 
 # options_set: indicates which element of the decoded proof should be saved in state
 # options_set: is a felt in range 0 to 16
-# options_set: storage_hash will be saved if 1st bit of the arg is positive
-# options_set: code_hash will be saved if 2nd bit of the arg is positive
-# options_set: nonce will be saved if 3rd bit of the arg is positive
-# options_set: balance will be saved if 4th bit of the arg is positive
+# options_set: storage_hash will be saved if bit 0 of the arg is positive
+# options_set: code_hash will be saved if bit 1 of the arg is positive
+# options_set: nonce will be saved if bit 2 of the arg is positive
+# options_set: balance will be saved if bit 3 of the arg is positive
 @external
 func prove_account{
         syscall_ptr : felt*,
@@ -192,7 +192,7 @@ func prove_account{
     
     let (local address_160) = address_words64_to_160bit(account)
 
-    let (local save_storage_hash) = bitset4_get(options_set, 1)
+    let (local save_storage_hash) = bitset_get(options_set, 0)
     if save_storage_hash == 1:
         local storage_hash : Keccak256Hash = Keccak256Hash(
             result_values[2].element[0],
@@ -213,7 +213,7 @@ func prove_account{
     local range_check_ptr : felt = range_check_ptr
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
-    let (local save_code_hash) = bitset4_get(options_set, 2)
+    let (local save_code_hash) = bitset_get(options_set, 1)
     if save_code_hash == 1:
         local code_hash : Keccak256Hash = Keccak256Hash(
             result_values[3].element[0],
@@ -234,7 +234,7 @@ func prove_account{
     local range_check_ptr : felt = range_check_ptr
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
-    let (local save_nonce) = bitset4_get(options_set, 3)
+    let (local save_nonce) = bitset_get(options_set, 2)
     if save_nonce == 1:
         if result_values[0].element_size_bytes == 0:
             tempvar temp_nonce = 0
@@ -258,7 +258,7 @@ func prove_account{
     local range_check_ptr : felt = range_check_ptr
     local pedersen_ptr : HashBuiltin* = pedersen_ptr
 
-    let (local save_balance) = bitset4_get(options_set, 4)
+    let (local save_balance) = bitset_get(options_set, 3)
     if save_balance == 1:
         if result_values[1].element_size_bytes == 0:
             tempvar temp_balance = 0
