@@ -239,7 +239,7 @@ func process_block{
         block_header_rlp_len,
         block_header_rlp)
 
-    local rlp: IntsSequence = IntsSequence(block_header_rlp, block_header_rlp_bytes_len, block_header_rlp_len)
+    local rlp: IntsSequence = IntsSequence(block_header_rlp, block_header_rlp_len, block_header_rlp_bytes_len)
 
     let (local parent_hash: Keccak256Hash) = decode_parent_hash(rlp)
     _block_parent_hash.write(block_number, parent_hash)
