@@ -1,6 +1,7 @@
 import pytest
 import asyncio
 from typing import NamedTuple
+from random import randint
 
 from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
@@ -27,26 +28,40 @@ async def factory():
     return await setup()
 
 @pytest.mark.asyncio
-async def test_bitset4(factory):
-    starknet, bitset_contract = factory
-
-    bitset = int('0001', 2)
-
-    get_bitset_position_call = await bitset_contract.test_bitset4_get(bitset, 4).call()
-    assert get_bitset_position_call.result.res == 1
-
-@pytest.mark.asyncio
-async def test_bitset6(factory):
-    starknet, bitset_contract = factory
-
-    bitset = int('000001', 2)
-    get_bitset_position_call = await bitset_contract.test_bitset6_get(bitset, 6).call()
-    assert get_bitset_position_call.result.res == 1
-
-@pytest.mark.asyncio
 async def test_bitset(factory):
     starknet, bitset_contract = factory
 
-    bitset = int('0000001', 2)
-    get_bitset_position_call = await bitset_contract.test_bitset_get(bitset, 7, 7).call()
-    assert get_bitset_position_call.result.res == 1
+    for i in range(0, 16):
+        bitset = 2**i
+        get_bitset_position_call = await bitset_contract.test_bitset_get(bitset, i).call()
+        assert get_bitset_position_call.result.res == 1
+
+@pytest.mark.asyncio
+async def test_bitset_random(factory):
+    starknet, bitset_contract = factory
+
+    for i in range(0, 10):
+        bitset = randint(0, 2**16-1)
+        sum = 0
+        for bit in range(0, 16):
+            get_bitset_position_call = await bitset_contract.test_bitset_get(bitset, bit).call()
+            sum += get_bitset_position_call.result.res * 2**bit
+        assert sum == bitset
+
+@pytest.mark.asyncio
+async def test_bitset_all_zeroes(factory):
+    starknet, bitset_contract = factory
+
+    bitset = 0
+    for bit in range(0, 16):
+        get_bitset_position_call = await bitset_contract.test_bitset_get(bitset, bit).call()
+        assert get_bitset_position_call.result.res == 0
+
+@pytest.mark.asyncio
+async def test_bitset_all_ones(factory):
+    starknet, bitset_contract = factory
+
+    bitset = 2**16 - 1
+    for bit in range(0, 16):
+        get_bitset_position_call = await bitset_contract.test_bitset_get(bitset, bit).call()
+        assert get_bitset_position_call.result.res == 1
