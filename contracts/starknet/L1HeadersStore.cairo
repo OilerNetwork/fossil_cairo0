@@ -227,8 +227,8 @@ func process_block{
         bitwise_ptr : BitwiseBuiltin*,
         range_check_ptr
     } (options_set: felt,
-       block_header_rlp_bytes_len: felt,
        block_number: felt,
+       block_header_rlp_bytes_len: felt,
        block_header_rlp_len: felt,
        block_header_rlp: felt*
     ):
@@ -402,7 +402,18 @@ func process_block{
     return ()
 end
 
-# func process_till_block{}
+# func process_till_block{
+#         pedersen_ptr: HashBuiltin*,
+#         syscall_ptr: felt*,
+#         bitwise_ptr : BitwiseBuiltin*,
+#         range_check_ptr
+#     } (options_set: felt,
+#        block_header_rlp_bytes_len: felt,
+#        block_number: felt,
+#        block_header_rlp_len: felt,
+#        block_header_rlp: felt*
+#     ):
+# end
 
 func validate_provided_header_rlp{
         pedersen_ptr: HashBuiltin*,

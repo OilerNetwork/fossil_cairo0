@@ -86,7 +86,7 @@ async def test_process_block(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [0] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [0] + [block['number']] + [block_rlp.length] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_block_parent_hash_call = await storage_proof.get_parent_hash(block['number']).call()
@@ -109,7 +109,7 @@ async def test_process_invalid_block(factory):
             l1_relayer_account,
             storage_proof.contract_address,
             'process_block',
-            [0] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+            [0] + [block['number']] + [block_rlp.length] + [len(block_rlp.values)] + block_rlp.values
         )
 
 @pytest.mark.asyncio
@@ -126,7 +126,7 @@ async def test_set_uncles_hash(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [2**BlockHeaderIndexes.OMMERS_HASH] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [2**BlockHeaderIndexes.OMMERS_HASH] + [block['number']] + [block_rlp.length] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_uncles_hash_call = await storage_proof.get_uncles_hash(block['number']).call()
@@ -147,7 +147,7 @@ async def test_set_beneficiary(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [2**BlockHeaderIndexes.BENEFICIARY] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [2**BlockHeaderIndexes.BENEFICIARY] + [block['number']] + [block_rlp.length] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_beneficiary_call = await storage_proof.get_beneficiary(block['number']).call()
@@ -168,7 +168,7 @@ async def test_set_state_root(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',        
-        [2**BlockHeaderIndexes.STATE_ROOT] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [2**BlockHeaderIndexes.STATE_ROOT] + [block['number']] + [block_rlp.length] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_state_root_call = await storage_proof.get_state_root(block['number']).call()
@@ -191,7 +191,7 @@ async def test_set_transactions_root(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [2**BlockHeaderIndexes.TRANSACTION_ROOT] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [2**BlockHeaderIndexes.TRANSACTION_ROOT] + [block['number']] + [block_rlp.length] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_txns_root_call = await storage_proof.get_transactions_root(block['number']).call()
@@ -212,7 +212,7 @@ async def test_set_receipts_root(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [2**BlockHeaderIndexes.RECEIPTS_ROOT] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [2**BlockHeaderIndexes.RECEIPTS_ROOT] + [block['number']] + [block_rlp.length] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_receipts_root_call = await storage_proof.get_receipts_root(block['number']).call()
@@ -233,7 +233,7 @@ async def test_set_difficulty(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [2**BlockHeaderIndexes.DIFFICULTY] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [2**BlockHeaderIndexes.DIFFICULTY] + [block['number']] + [block_rlp.length] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_difficulty_call = await storage_proof.get_difficulty(block['number']).call()
@@ -254,7 +254,7 @@ async def test_set_gas_used(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [2**BlockHeaderIndexes.GAS_USED] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [2**BlockHeaderIndexes.GAS_USED] + [block['number']] + [block_rlp.length] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_gas_used_call = await storage_proof.get_gas_used(block['number']).call()
@@ -275,7 +275,7 @@ async def test_set_timestamp(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [2**BlockHeaderIndexes.TIMESTAMP] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [2**BlockHeaderIndexes.TIMESTAMP] + [block['number']] + [block_rlp.length] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_timestamp_call = await storage_proof.get_timestamp(block['number']).call()
@@ -296,7 +296,7 @@ async def test_set_base_fee(factory):
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
-        [2**BlockHeaderIndexes.BASE_FEE] + [block_rlp.length] + [block['number']] + [len(block_rlp.values)] + block_rlp.values
+        [2**BlockHeaderIndexes.BASE_FEE] + [block['number']] + [block_rlp.length] + [len(block_rlp.values)] + block_rlp.values
     )
 
     set_base_fee_call = await storage_proof.get_base_fee(block['number']).call()
