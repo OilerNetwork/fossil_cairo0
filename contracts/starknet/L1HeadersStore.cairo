@@ -210,7 +210,7 @@ end
 
 
 # options_set: indicates which element of the block header should be saved in state
-# options_set: is a felt in range 0 to 63
+# options_set: is a felt in range 0 to 2**15 - 1
 # options_set: uncles_hash will be saved if bit 1 of the arg is positive
 # options_set: beneficiary will be saved if bit 2 of the arg is positive
 # options_set: state_root will be saved if bit 3 of the arg is positive
@@ -233,7 +233,12 @@ func process_block{
        block_header_rlp: felt*
     ):
     alloc_locals
+
+    let child_block_number = (block_number + 1)
+    let (local child_block_parent_hash: Keccak256Hash) = _block_parent_hash.read(block_number=child_block_number)
+
     validate_provided_header_rlp(
+        child_block_parent_hash,
         block_number,
         block_header_rlp_bytes_len,
         block_header_rlp_len,
@@ -397,12 +402,16 @@ func process_block{
     return ()
 end
 
+# func process_till_block{}
+
 func validate_provided_header_rlp{
         pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
         bitwise_ptr : BitwiseBuiltin*,
         range_check_ptr
-    } (block_number: felt,
+    } (
+       child_block_parent_hash: Keccak256Hash,
+       block_number: felt,
        block_header_rlp_bytes_len: felt,
        block_header_rlp_len: felt,
        block_header_rlp: felt*
@@ -412,15 +421,12 @@ func validate_provided_header_rlp{
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
 
-    let child_block_number = (block_number + 1)
-    let (local child_block_parent: Keccak256Hash) = _block_parent_hash.read(block_number=child_block_number)
-
     let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(block_header_rlp, block_header_rlp_bytes_len)
 
     # Ensure child block parenthash matches provided rlp hash
-    assert child_block_parent.word_1 = provided_rlp_hash[0]
-    assert child_block_parent.word_2 = provided_rlp_hash[1]
-    assert child_block_parent.word_3 = provided_rlp_hash[2]
-    assert child_block_parent.word_4 = provided_rlp_hash[3]
+    assert child_block_parent_hash.word_1 = provided_rlp_hash[0]
+    assert child_block_parent_hash.word_2 = provided_rlp_hash[1]
+    assert child_block_parent_hash.word_3 = provided_rlp_hash[2]
+    assert child_block_parent_hash.word_4 = provided_rlp_hash[3]
     return ()
 end
