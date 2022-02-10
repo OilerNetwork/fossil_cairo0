@@ -19,6 +19,8 @@ from utils.benchmarks.blockheader_rlp_extractor import (
     getBaseFee
 )
 
+from web3 import Web3
+
 class TestsDeps(NamedTuple):
     starknet: Starknet
     storage_proof: StarknetContract
@@ -303,11 +305,12 @@ async def test_set_base_fee(factory):
     set_base_fee = set_base_fee_call.result.res
     assert set_base_fee == block["baseFeePerGas"]
 
+
 @pytest.mark.asyncio
 async def test_process_till_block(factory):
     starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
 
-    await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof, "8407da492b7df20d2fe034a942a7c480c34eef978fe8b91ae98fcea4f3767125", mocked_blocks[0]['number'] + 1)
+    await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof, mocked_blocks[0]['hash'].hex()[2:], mocked_blocks[0]['number'] + 1)
 
     newer_block = mocked_blocks[0]
     newer_block_header = build_block_header(newer_block)
@@ -317,17 +320,19 @@ async def test_process_till_block(factory):
     older_block_header = build_block_header(older_block)
     older_block_rlp = Data.from_bytes(older_block_header.raw_rlp()).to_ints()
 
-    print(older_block_rlp.values)
+    oldest_block = mocked_blocks[2]
+    oldest_block_header = build_block_header(oldest_block)
+    oldest_block_rlp = Data.from_bytes(oldest_block_header.raw_rlp()).to_ints()
 
     calldata = [
             2**BlockHeaderIndexes.STATE_ROOT, # options set
             newer_block['number'] + 1, # start_block_number
-            2, # block headers lenghts in bytes length
-            *[newer_block_rlp.length, older_block_rlp.length], # block headers lenghts in bytes
-            2, # block headers lenghts in words length
-            *[len(newer_block_rlp.values), len(older_block_rlp.values)], # block headers lenghts in words
-            len([*newer_block_rlp.values, *older_block_rlp.values]), # concat headers len
-            *[*newer_block_rlp.values, *older_block_rlp.values] # concat headers
+            3, # block headers lenghts in bytes length
+            *[newer_block_rlp.length, older_block_rlp.length, oldest_block_rlp.length], # block headers lenghts in bytes
+            3, # block headers lenghts in words length
+            *[len(newer_block_rlp.values), len(older_block_rlp.values), len(oldest_block_rlp.values)], # block headers lenghts in words
+            len([*newer_block_rlp.values, *older_block_rlp.values, *oldest_block_rlp.values]), # concat headers len
+            *[*newer_block_rlp.values, *older_block_rlp.values, *oldest_block_rlp.values] # concat headers
         ]
     
     await l1_relayer_signer.send_transaction(

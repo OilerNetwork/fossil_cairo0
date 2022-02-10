@@ -12,8 +12,7 @@ from utils.create_account import create_account
 from utils.helpers import chunk_bytes_input, bytes_to_int, Encoding, IntsSequence
 from utils.block_header import build_block_header
 
-from mocks.blocks import mocked_blocks
-from mocks.trie_proofs import trie_proofs
+from mocks.blocks import mocked_blocks[3]om mocks.trie_proofs import trie_proofs
 
 
 bytes_to_int_big = lambda word: bytes_to_int(word)
@@ -65,7 +64,7 @@ async def registry_initialized():
     await signer.send_transaction(
         account, facts_registry.contract_address, 'initialize', [storage_proof.contract_address])
 
-    block = mocked_blocks[2]
+    block = mocked_blocks[3]
     block_header = build_block_header(block)
     block_rlp = block_header.raw_rlp()
     block_rlp_chunked = chunk_bytes_input(block_rlp)
@@ -79,7 +78,7 @@ async def registry_initialized():
         l1_relayer_account,
         storage_proof.contract_address,
         'receive_from_l1',
-        [len(block_parent_hash.to_ints(Encoding.LITTLE).values)] + block_parent_hash.to_ints(Encoding.LITTLE).values + [mocked_blocks[2]['number'] + 1])
+        [len(block_parent_hash.to_ints(Encoding.LITTLE).values)] + block_parent_hash.to_ints(Encoding.LITTLE).values + [mocked_blocks[3]['number'] + 1])
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
@@ -137,7 +136,7 @@ async def test_prove_account(registry_initialized):
     l1_account_address = Data.from_hex(trie_proofs[1]['address'])
     account_words64 = l1_account_address.to_ints()
 
-    set_state_root_call = await storage_proof.get_state_root(mocked_blocks[2]['number']).call()
+    set_state_root_call = await storage_proof.get_state_root(mocked_blocks[3]['number']).call()
     set_state_root = set_state_root_call.result.res
 
     prove_account_tx = await signer.send_transaction(
@@ -146,7 +145,7 @@ async def test_prove_account(registry_initialized):
         "prove_account",
         [
             options_set,
-            mocked_blocks[2]['number'],
+            mocked_blocks[3]['number'],
             account_words64.values[0],
             account_words64.values[1],
             account_words64.values[2],
@@ -159,22 +158,22 @@ async def test_prove_account(registry_initialized):
 
     get_storage_hash_call = await facts_registry.get_verified_account_storage_hash(
         int(l1_account_address.to_hex()[2:], 16),
-        mocked_blocks[2]['number']).call()
+        mocked_blocks[3]['number']).call()
     set_storage_hash = get_storage_hash_call.result.res
 
     get_code_hash_call = await facts_registry.get_verified_account_code_hash(
         int(l1_account_address.to_hex()[2:], 16),
-        mocked_blocks[2]['number']).call()
+        mocked_blocks[3]['number']).call()
     set_code_hash = get_code_hash_call.result.res
 
     get_balance_call = await facts_registry.get_verified_account_balance(
         int(l1_account_address.to_hex()[2:], 16),
-        mocked_blocks[2]['number']).call()
+        mocked_blocks[3]['number']).call()
     set_balance = get_balance_call.result.res
 
     get_nonce_call = await facts_registry.get_verified_account_nonce(
         int(l1_account_address.to_hex()[2:], 16),
-        mocked_blocks[2]['number']).call()
+        mocked_blocks[3]['number']).call()
     set_nonce = get_nonce_call.result.res
 
     assert set_nonce == int(trie_proofs[1]['nonce'][2:], 16)
@@ -206,7 +205,7 @@ async def test_get_storage(registry_initialized):
         "prove_account",
         [
             options_set,
-            mocked_blocks[2]['number'],
+            mocked_blocks[3]['number'],
             account_words64.values[0],
             account_words64.values[1],
             account_words64.values[2],
@@ -229,7 +228,7 @@ async def test_get_storage(registry_initialized):
         flat_storage_proof_sizes_words += [len(proof_element.values)]
 
     get_balance_call = await facts_registry.get_storage(
-        mocked_blocks[2]['number'],
+        mocked_blocks[3]['number'],
         int(trie_proofs[2]['address'][2:], 16),
         tuple(slot.values),
         flat_storage_proof_sizes_bytes,

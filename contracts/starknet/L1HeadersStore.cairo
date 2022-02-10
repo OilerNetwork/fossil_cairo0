@@ -20,8 +20,8 @@ from starknet.lib.blockheader_rlp_extractor import (
     decode_timestamp,
     decode_gas_used
 )
-
 from starknet.lib.bitset import bitset_get
+from starknet.lib.swap_endianness import swap_endianness_64
 
 # Temporary auth var for authenticating mocked L1 handlers
 @storage_var
@@ -235,7 +235,6 @@ func process_block{
     alloc_locals
 
     let (local child_block_parent_hash: Keccak256Hash) = _block_parent_hash.read(block_number + 1)
-    assert child_block_parent_hash.word_1 = 265737445919148860
 
     validate_provided_header_rlp(
         child_block_parent_hash,
@@ -419,7 +418,9 @@ func process_till_block{
     ):
     alloc_locals
     assert block_headers_lens_bytes_len = block_headers_lens_words_len
+
     let (local parent_hash: Keccak256Hash) = _block_parent_hash.read(block_number=start_block_number)
+    
     let (local save_block_number: felt, local save_parent_hash: Keccak256Hash) = process_till_block_rec(
         start_block_number,
         parent_hash,
@@ -432,8 +433,21 @@ func process_till_block{
         0,
         0)
 
-    assert save_block_number = 11456152
-    assert save_parent_hash.word_1 = 265737445919148860
+    %{
+        from utils.types import Data, IntsSequence
+
+        parent_hash = Data.from_ints(IntsSequence(
+            values=[
+                ids.save_parent_hash.get_or_set_value("word_1", None),
+                ids.save_parent_hash.get_or_set_value("word_2", None),
+                ids.save_parent_hash.get_or_set_value("word_3", None),
+                ids.save_parent_hash.get_or_set_value("word_4", None)
+            ],
+            length=32
+        ))
+        print("Block number: ", ids.start_block_number)
+        print("parent hash of block {block_number} : {hash}".format(block_number=ids.start_block_number, hash=parent_hash.to_hex()))
+    %}
     
     _block_parent_hash.write(save_block_number, save_parent_hash)
 
@@ -446,9 +460,6 @@ func process_till_block{
         last_header,
         0,
         0)
-
-    assert block_headers_lens_bytes[block_headers_lens_bytes_len - 1] = 539
-    assert block_headers_lens_words[block_headers_lens_words_len - 1] = 68
 
     process_block(
         options_set,
@@ -476,9 +487,27 @@ func process_till_block_rec{
        offset: felt
     ) -> (save_block_number: felt, save_parent_hash: Keccak256Hash):
     alloc_locals
+    %{
+        print("Entering ", ids.current_index, "th iteration, block number: ", ids.start_block_number - ids.current_index)
+    %}
     # Skips last header as this will be processed by process_block
-    if current_index == block_headers_lens_bytes_len - 1:
-        return (start_block_number - current_index, current_parent_hash)
+    if current_index == block_headers_lens_bytes_len - 2:
+        let (local parent_hash_word_1_big) = swap_endianness_64(current_parent_hash.word_1, 8)
+        let (local parent_hash_word_2_big) = swap_endianness_64(current_parent_hash.word_2, 8)
+        let (local parent_hash_word_3_big) = swap_endianness_64(current_parent_hash.word_3, 8)
+        let (local parent_hash_word_4_big) = swap_endianness_64(current_parent_hash.word_4, 8)
+
+        local result_parent_hash: Keccak256Hash = Keccak256Hash(
+            parent_hash_word_1_big,
+            parent_hash_word_2_big,
+            parent_hash_word_3_big,
+            parent_hash_word_4_big)
+
+        %{
+            print("Leaving recursion")
+        %}
+
+        return (start_block_number - current_index, result_parent_hash)
     end
 
     let (local current_header: felt*) = alloc()
@@ -497,6 +526,35 @@ func process_till_block_rec{
     
     let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(current_header, block_headers_lens_bytes[current_index])
 
+    let (local provided_rlp_hash_1) = swap_endianness_64(provided_rlp_hash[0], 8)
+    let (local provided_rlp_hash_2) = swap_endianness_64(provided_rlp_hash[1], 8)
+    let (local provided_rlp_hash_3) = swap_endianness_64(provided_rlp_hash[2], 8)
+    let (local provided_rlp_hash_4) = swap_endianness_64(provided_rlp_hash[3], 8)
+    %{
+        from utils.types import Data, IntsSequence
+
+        actual_hash = Data.from_ints(IntsSequence(
+            values=[
+                ids.current_parent_hash.get_or_set_value("word_1", None),
+                ids.current_parent_hash.get_or_set_value("word_2", None),
+                ids.current_parent_hash.get_or_set_value("word_3", None),
+                ids.current_parent_hash.get_or_set_value("word_4", None)
+            ],
+            length=32
+        ))
+
+        expected_hash = Data.from_ints(IntsSequence(
+            values=[
+                ids.provided_rlp_hash_1,
+                ids.provided_rlp_hash_2,
+                ids.provided_rlp_hash_3,
+                ids.provided_rlp_hash_4
+            ],
+            length=32
+        ))
+        print("index: ", ids.current_index, " actual_hash {actual_hash}, expected: {expected_hash}".format(actual_hash=actual_hash.to_hex(), expected_hash=expected_hash.to_hex()))
+    %}
+
     assert current_parent_hash.word_1 = provided_rlp_hash[0]
     assert current_parent_hash.word_2 = provided_rlp_hash[1]
     assert current_parent_hash.word_3 = provided_rlp_hash[2]
@@ -504,6 +562,10 @@ func process_till_block_rec{
 
     local current_header_rlp: IntsSequence = IntsSequence(current_header, block_headers_lens_words[current_index], block_headers_lens_bytes[current_index])
     let (local parent_hash: Keccak256Hash) = decode_parent_hash(current_header_rlp)
+
+    %{
+        print("Went through process_till_block_rec, current_index: ", ids.current_index, " all gucci, should : ", ids.block_headers_lens_bytes_len - 1)
+    %}
 
     return process_till_block_rec(
         start_block_number,
@@ -534,9 +596,6 @@ func validate_provided_header_rlp{
     local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
-
-    assert block_header_rlp[0] = 17942930943579325832
-    assert block_header_rlp[67] = 6603287
 
     let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(block_header_rlp, block_header_rlp_bytes_len)
 
