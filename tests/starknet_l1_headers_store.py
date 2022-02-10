@@ -52,8 +52,8 @@ async def setup():
 async def factory():
     return await setup()
 
-async def submit_l1_parent_hash(l1_relayer_signer: Signer, l1_relayer_account: StarknetContract, storage_proof: StarknetContract):
-    message = bytearray.fromhex(mocked_blocks[0]["parentHash"].hex()[2:])
+async def submit_l1_parent_hash(l1_relayer_signer: Signer, l1_relayer_account: StarknetContract, storage_proof: StarknetContract, message = mocked_blocks[0]["parentHash"].hex()[2:], block_number = mocked_blocks[0]['number']):
+    message = bytearray.fromhex(message)
     chunked_message = chunk_bytes_input(message)
     formatted_words = list(map(bytes_to_int_little, chunked_message))
 
@@ -61,7 +61,7 @@ async def submit_l1_parent_hash(l1_relayer_signer: Signer, l1_relayer_account: S
         l1_relayer_account,
         storage_proof.contract_address,
         'receive_from_l1',
-        [len(formatted_words)] + formatted_words + [mocked_blocks[0]['number']]
+        [len(formatted_words)] + formatted_words + [block_number]
     )
 
 
@@ -302,3 +302,39 @@ async def test_set_base_fee(factory):
     set_base_fee_call = await storage_proof.get_base_fee(block['number']).call()
     set_base_fee = set_base_fee_call.result.res
     assert set_base_fee == block["baseFeePerGas"]
+
+@pytest.mark.asyncio
+async def test_process_till_block(factory):
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
+
+    await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof, "8407da492b7df20d2fe034a942a7c480c34eef978fe8b91ae98fcea4f3767125", mocked_blocks[0]['number'] + 1)
+
+    newer_block = mocked_blocks[0]
+    newer_block_header = build_block_header(newer_block)
+    newer_block_rlp = Data.from_bytes(newer_block_header.raw_rlp()).to_ints()
+
+    older_block = mocked_blocks[1]
+    older_block_header = build_block_header(older_block)
+    older_block_rlp = Data.from_bytes(older_block_header.raw_rlp()).to_ints()
+
+    print(older_block_rlp.values)
+
+    calldata = [
+            2**BlockHeaderIndexes.STATE_ROOT, # options set
+            newer_block['number'] + 1, # start_block_number
+            2, # block headers lenghts in bytes length
+            *[newer_block_rlp.length, older_block_rlp.length], # block headers lenghts in bytes
+            2, # block headers lenghts in words length
+            *[len(newer_block_rlp.values), len(older_block_rlp.values)], # block headers lenghts in words
+            len([*newer_block_rlp.values, *older_block_rlp.values]), # concat headers len
+            *[*newer_block_rlp.values, *older_block_rlp.values] # concat headers
+        ]
+    
+    await l1_relayer_signer.send_transaction(
+        l1_relayer_account,
+        storage_proof.contract_address,
+        'process_till_block',
+        calldata
+    )
+
+    

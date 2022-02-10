@@ -234,8 +234,8 @@ func process_block{
     ):
     alloc_locals
 
-    let child_block_number = (block_number + 1)
-    let (local child_block_parent_hash: Keccak256Hash) = _block_parent_hash.read(block_number=child_block_number)
+    let (local child_block_parent_hash: Keccak256Hash) = _block_parent_hash.read(block_number + 1)
+    assert child_block_parent_hash.word_1 = 265737445919148860
 
     validate_provided_header_rlp(
         child_block_parent_hash,
@@ -402,6 +402,7 @@ func process_block{
     return ()
 end
 
+@external
 func process_till_block{
         pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
@@ -418,7 +419,7 @@ func process_till_block{
     ):
     alloc_locals
     assert block_headers_lens_bytes_len = block_headers_lens_words_len
-    let (local parent_hash) = _block_parent_hash.read(block_number=start_block_number)
+    let (local parent_hash: Keccak256Hash) = _block_parent_hash.read(block_number=start_block_number)
     let (local save_block_number: felt, local save_parent_hash: Keccak256Hash) = process_till_block_rec(
         start_block_number,
         parent_hash,
@@ -430,6 +431,9 @@ func process_till_block{
         block_headers_concat,
         0,
         0)
+
+    assert save_block_number = 11456152
+    assert save_parent_hash.word_1 = 265737445919148860
     
     _block_parent_hash.write(save_block_number, save_parent_hash)
 
@@ -442,6 +446,9 @@ func process_till_block{
         last_header,
         0,
         0)
+
+    assert block_headers_lens_bytes[block_headers_lens_bytes_len - 1] = 539
+    assert block_headers_lens_words[block_headers_lens_words_len - 1] = 68
 
     process_block(
         options_set,
@@ -469,6 +476,7 @@ func process_till_block_rec{
        offset: felt
     ) -> (save_block_number: felt, save_parent_hash: Keccak256Hash):
     alloc_locals
+    # Skips last header as this will be processed by process_block
     if current_index == block_headers_lens_bytes_len - 1:
         return (start_block_number - current_index, current_parent_hash)
     end
@@ -526,6 +534,9 @@ func validate_provided_header_rlp{
     local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
+
+    assert block_header_rlp[0] = 17942930943579325832
+    assert block_header_rlp[67] = 6603287
 
     let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(block_header_rlp, block_header_rlp_bytes_len)
 
