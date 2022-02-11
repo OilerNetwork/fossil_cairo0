@@ -6,13 +6,14 @@ from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starkware_utils.error_handling import StarkException
 
-from utils.types import Data
+from utils.types import Data, BlockHeaderIndexes
 from utils.Signer import Signer
 from utils.create_account import create_account
 from utils.helpers import chunk_bytes_input, bytes_to_int, Encoding, IntsSequence
 from utils.block_header import build_block_header
 
-from mocks.blocks import mocked_blocks[3]om mocks.trie_proofs import trie_proofs
+from mocks.blocks import mocked_blocks
+from mocks.trie_proofs import trie_proofs
 
 
 bytes_to_int_big = lambda word: bytes_to_int(word)
@@ -66,9 +67,7 @@ async def registry_initialized():
 
     block = mocked_blocks[3]
     block_header = build_block_header(block)
-    block_rlp = block_header.raw_rlp()
-    block_rlp_chunked = chunk_bytes_input(block_rlp)
-    block_rlp_formatted = list(map(bytes_to_int_big, block_rlp_chunked))
+    block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
     block_parent_hash = Data.from_hex("0x62a8a05ef6fcd39a11b2d642d4b7ab177056e1eb4bde4454f67285164ef8ce65")
     assert block_parent_hash.to_hex() == block_header.hash().hex()
@@ -78,13 +77,13 @@ async def registry_initialized():
         l1_relayer_account,
         storage_proof.contract_address,
         'receive_from_l1',
-        [len(block_parent_hash.to_ints(Encoding.LITTLE).values)] + block_parent_hash.to_ints(Encoding.LITTLE).values + [mocked_blocks[3]['number'] + 1])
+        [len(block_parent_hash.to_ints(Encoding.BIG).values)] + block_parent_hash.to_ints(Encoding.BIG).values + [mocked_blocks[3]['number'] + 1])
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
-        'set_block_state_root',
-        [len(block_rlp)] + [block['number']] + [len(block_rlp_formatted)] + block_rlp_formatted
+        'process_block',        
+        [2**BlockHeaderIndexes.STATE_ROOT] + [block['number']] + [block_rlp.length] + [len(block_rlp.values)] + block_rlp.values
     )
 
     return RegistryTestsDeps(
