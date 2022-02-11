@@ -305,8 +305,8 @@ async def test_set_base_fee(factory):
 
 
 @pytest.mark.asyncio
-async def test_process_till_block(factory):
-    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
+async def test_process_till_block():
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
 
     await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof, mocked_blocks[0]['hash'].hex()[2:], mocked_blocks[0]['number'] + 1)
 
@@ -340,20 +340,13 @@ async def test_process_till_block(factory):
         calldata
     )
 
-    older_block_parent_hash_call = await storage_proof.get_parent_hash(older_block['number']).call()
-    older_block_parent_hash = Data.from_ints(IntsSequence(list(older_block_parent_hash_call.result.res), 32))
-    print(older_block_parent_hash.to_hex())
-    # assert older_block_parent_hash.to_hex() == '0x0000000000000000000000000000000000000000000000000000000000000000'
-
-    oldest_block_parent_hash_call = await storage_proof.get_parent_hash(oldest_block['number']).call()
-    oldest_block_parent_hash = Data.from_ints(IntsSequence(list(oldest_block_parent_hash_call.result.res), 32))
-    print(oldest_block_parent_hash.to_hex())
-    # assert oldest_block_parent_hash.to_hex() == older_block['hash'].hex()
+    newer_block_parent_hash_call = await storage_proof.get_parent_hash(newer_block['number']).call()
+    newer_block_parent_hash = Data.from_ints(IntsSequence(list(newer_block_parent_hash_call.result.res), 32))
+    assert newer_block_parent_hash.to_hex() == '0x0000000000000000000000000000000000000000000000000000000000000000'
 
     set_state_root_call = await storage_proof.get_state_root(oldest_block['number']).call()
     set_state_root = Data.from_ints(IntsSequence(list(set_state_root_call.result.res), 32))
-    print(set_state_root.to_hex())
-    # assert set_state_root.to_hex() == oldest_block["stateRoot"].hex()
+    assert set_state_root.to_hex() == oldest_block["stateRoot"].hex()
 
 
 
