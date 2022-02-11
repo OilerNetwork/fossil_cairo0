@@ -491,7 +491,7 @@ func process_till_block_rec{
         print("Entering ", ids.current_index, "th iteration, block number: ", ids.start_block_number - ids.current_index)
     %}
     # Skips last header as this will be processed by process_block
-    if current_index == block_headers_lens_bytes_len - 2:
+    if current_index == block_headers_lens_bytes_len - 1:
         let (local parent_hash_word_1_big) = swap_endianness_64(current_parent_hash.word_1, 8)
         let (local parent_hash_word_2_big) = swap_endianness_64(current_parent_hash.word_2, 8)
         let (local parent_hash_word_3_big) = swap_endianness_64(current_parent_hash.word_3, 8)
@@ -526,10 +526,15 @@ func process_till_block_rec{
     
     let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(current_header, block_headers_lens_bytes[current_index])
 
-    let (local provided_rlp_hash_1) = swap_endianness_64(provided_rlp_hash[0], 8)
-    let (local provided_rlp_hash_2) = swap_endianness_64(provided_rlp_hash[1], 8)
-    let (local provided_rlp_hash_3) = swap_endianness_64(provided_rlp_hash[2], 8)
-    let (local provided_rlp_hash_4) = swap_endianness_64(provided_rlp_hash[3], 8)
+    local provided_rlp_hash_1 = provided_rlp_hash[0]
+    local provided_rlp_hash_2 = provided_rlp_hash[1]
+    local provided_rlp_hash_3 = provided_rlp_hash[2]
+    local provided_rlp_hash_4 = provided_rlp_hash[3]
+
+    let (local swap_provided_rlp_hash_1) = swap_endianness_64(provided_rlp_hash[0], 8)
+    let (local swap_provided_rlp_hash_2) = swap_endianness_64(provided_rlp_hash[1], 8)
+    let (local swap_provided_rlp_hash_3) = swap_endianness_64(provided_rlp_hash[2], 8)
+    let (local swap_provided_rlp_hash_4) = swap_endianness_64(provided_rlp_hash[3], 8)
     %{
         from utils.types import Data, IntsSequence
 
@@ -552,19 +557,42 @@ func process_till_block_rec{
             ],
             length=32
         ))
-        print("index: ", ids.current_index, " actual_hash {actual_hash}, expected: {expected_hash}".format(actual_hash=actual_hash.to_hex(), expected_hash=expected_hash.to_hex()))
+
+        expected_hash_swapped = Data.from_ints(IntsSequence(
+            values=[
+                ids.swap_provided_rlp_hash_1,
+                ids.swap_provided_rlp_hash_2,
+                ids.swap_provided_rlp_hash_3,
+                ids.swap_provided_rlp_hash_4
+            ],
+            length=32
+        ))
+        print("index: ", ids.current_index, " actual_hash {actual_hash}, expected: {expected_hash}, expected_swapped: {swapped}".format(actual_hash=actual_hash.to_hex(), expected_hash=expected_hash.to_hex(), swapped=expected_hash_swapped.to_hex()))
     %}
 
-    assert current_parent_hash.word_1 = provided_rlp_hash[0]
-    assert current_parent_hash.word_2 = provided_rlp_hash[1]
-    assert current_parent_hash.word_3 = provided_rlp_hash[2]
-    assert current_parent_hash.word_4 = provided_rlp_hash[3]
+    assert current_parent_hash.word_1 = swap_provided_rlp_hash_1
+    assert current_parent_hash.word_2 = swap_provided_rlp_hash_2
+    assert current_parent_hash.word_3 = swap_provided_rlp_hash_3
+    assert current_parent_hash.word_4 = swap_provided_rlp_hash_4
 
     local current_header_rlp: IntsSequence = IntsSequence(current_header, block_headers_lens_words[current_index], block_headers_lens_bytes[current_index])
     let (local parent_hash: Keccak256Hash) = decode_parent_hash(current_header_rlp)
 
     %{
+        from utils.types import Data, IntsSequence
+
+        hash_passed = Data.from_ints(IntsSequence(
+            values=[
+                ids.parent_hash.get_or_set_value("word_1", None),
+                ids.parent_hash.get_or_set_value("word_2", None),
+                ids.parent_hash.get_or_set_value("word_3", None),
+                ids.parent_hash.get_or_set_value("word_4", None)
+            ],
+            length=32
+        ))
+
         print("Went through process_till_block_rec, current_index: ", ids.current_index, " all gucci, should : ", ids.block_headers_lens_bytes_len - 1)
+        print("Passing hash: ", hash_passed.to_hex(), " to next iteration")
     %}
 
     return process_till_block_rec(

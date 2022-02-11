@@ -254,6 +254,18 @@ func keccak256{range_check_ptr, keccak_ptr : felt*, bitwise_ptr : BitwiseBuiltin
     assert state[24] = 0
 
     # Run keccak recursively
-    let (output: felt*) = recursive_keccak(state=state, input=input, n_bytes=n_bytes)
-    return (output)
+    let (local output_little_endian: felt*) = recursive_keccak(state=state, input=input, n_bytes=n_bytes)
+    let (local output_big_endian: felt*) = alloc()
+
+    let (local word_1_big) = swap_endianness_64(output_little_endian[0], 8)
+    let (local word_2_big) = swap_endianness_64(output_little_endian[1], 8)
+    let (local word_3_big) = swap_endianness_64(output_little_endian[2], 8)
+    let (local word_4_big) = swap_endianness_64(output_little_endian[3], 8)
+
+    assert output_big_endian[0] = word_1_big
+    assert output_big_endian[1] = word_2_big
+    assert output_big_endian[2] = word_3_big
+    assert output_big_endian[3] = word_4_big
+
+    return (output_big_endian)
 end

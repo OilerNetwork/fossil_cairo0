@@ -54,16 +54,14 @@ async def setup():
 async def factory():
     return await setup()
 
-async def submit_l1_parent_hash(l1_relayer_signer: Signer, l1_relayer_account: StarknetContract, storage_proof: StarknetContract, message = mocked_blocks[0]["parentHash"].hex()[2:], block_number = mocked_blocks[0]['number']):
-    message = bytearray.fromhex(message)
-    chunked_message = chunk_bytes_input(message)
-    formatted_words = list(map(bytes_to_int_little, chunked_message))
+async def submit_l1_parent_hash(l1_relayer_signer: Signer, l1_relayer_account: StarknetContract, storage_proof: StarknetContract, message = mocked_blocks[0]["parentHash"].hex(), block_number = mocked_blocks[0]['number']):
+    message = Data.from_hex(message).to_ints()
 
     await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'receive_from_l1',
-        [len(formatted_words)] + formatted_words + [block_number]
+        [4] + message.values + [block_number]
     )
 
 
@@ -341,5 +339,22 @@ async def test_process_till_block(factory):
         'process_till_block',
         calldata
     )
+
+    older_block_parent_hash_call = await storage_proof.get_parent_hash(older_block['number']).call()
+    older_block_parent_hash = Data.from_ints(IntsSequence(list(older_block_parent_hash_call.result.res), 32))
+    print(older_block_parent_hash.to_hex())
+    # assert older_block_parent_hash.to_hex() == '0x0000000000000000000000000000000000000000000000000000000000000000'
+
+    oldest_block_parent_hash_call = await storage_proof.get_parent_hash(oldest_block['number']).call()
+    oldest_block_parent_hash = Data.from_ints(IntsSequence(list(oldest_block_parent_hash_call.result.res), 32))
+    print(oldest_block_parent_hash.to_hex())
+    # assert oldest_block_parent_hash.to_hex() == older_block['hash'].hex()
+
+    set_state_root_call = await storage_proof.get_state_root(oldest_block['number']).call()
+    set_state_root = Data.from_ints(IntsSequence(list(set_state_root_call.result.res), 32))
+    print(set_state_root.to_hex())
+    # assert set_state_root.to_hex() == oldest_block["stateRoot"].hex()
+
+
 
     
