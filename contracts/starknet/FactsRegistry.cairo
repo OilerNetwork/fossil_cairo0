@@ -310,18 +310,7 @@ func get_storage{
 
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
-    let (local path_raw_little) = keccak256{keccak_ptr=keccak_ptr}(slot_raw, 32)
-
-    let (local path_raw) = alloc()
-
-    let (local path_word_1) = swap_endianness_64(path_raw_little[0], 8)
-    assert path_raw[0] = path_word_1
-    let (local path_word_2) = swap_endianness_64(path_raw_little[1], 8)
-    assert path_raw[1] = path_word_2
-    let (local path_word_3) = swap_endianness_64(path_raw_little[2], 8)
-    assert path_raw[2] = path_word_3
-    let (local path_word_4) = swap_endianness_64(path_raw_little[3], 8)
-    assert path_raw[3] = path_word_4
+    let (local path_raw) = keccak256{keccak_ptr=keccak_ptr}(slot_raw, 32)
 
     local path : IntsSequence = IntsSequence(path_raw, 4, 32)
 
