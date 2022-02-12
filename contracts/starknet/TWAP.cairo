@@ -81,10 +81,6 @@ func register_computation{
     let (local tmp_2) = hash2{hash_ptr=pedersen_ptr}(tmp_1, callback_address)
     let (local computation_id) = hash2{hash_ptr=pedersen_ptr}(tmp_2, avg_header_param)
 
-    %{
-        print(ids.computation_id)
-    %}
-
     let (local computation_already_registered) = _twap_computation_cache.read(computation_id, 0)
     assert computation_already_registered = 0
 
