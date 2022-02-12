@@ -153,9 +153,7 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
 
     local current_element: IntsSequence = proof[current_index]
     let (keccak_le_ptr) = keccak256{keccak_ptr=keccak_ptr}(current_element.element, current_element.element_size_bytes)
-    local current_element_keccak_le: IntsSequence = IntsSequence(keccak_le_ptr, 4, 32)
-
-    let (local current_element_keccak: IntsSequence) = swap_endianness_four_words(current_element_keccak_le)
+    local current_element_keccak: IntsSequence = IntsSequence(keccak_le_ptr, 4, 32)
 
     if current_index == 0:
         let (local hashes_match: felt) = arr_eq(current_element_keccak.element, current_element_keccak.element_size_words, root_hash.element, root_hash.element_size_words)

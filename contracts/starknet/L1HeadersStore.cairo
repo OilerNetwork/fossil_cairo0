@@ -6,7 +6,7 @@ from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.alloc import alloc
 
-from starknet.types import (Keccak256Hash, Address, IntsSequence)
+from starknet.types import (Keccak256Hash, Address, IntsSequence, slice_arr)
 from starknet.lib.keccak import keccak256
 from starknet.lib.blockheader_rlp_extractor import (
     decode_parent_hash,
@@ -20,8 +20,8 @@ from starknet.lib.blockheader_rlp_extractor import (
     decode_timestamp,
     decode_gas_used
 )
-
 from starknet.lib.bitset import bitset_get
+from starknet.lib.swap_endianness import swap_endianness_64
 
 # Temporary auth var for authenticating mocked L1 handlers
 @storage_var
@@ -210,7 +210,7 @@ end
 
 
 # options_set: indicates which element of the block header should be saved in state
-# options_set: is a felt in range 0 to 63
+# options_set: is a felt in range 0 to 2**15 - 1
 # options_set: uncles_hash will be saved if bit 1 of the arg is positive
 # options_set: beneficiary will be saved if bit 2 of the arg is positive
 # options_set: state_root will be saved if bit 3 of the arg is positive
@@ -227,13 +227,17 @@ func process_block{
         bitwise_ptr : BitwiseBuiltin*,
         range_check_ptr
     } (options_set: felt,
-       block_header_rlp_bytes_len: felt,
        block_number: felt,
+       block_header_rlp_bytes_len: felt,
        block_header_rlp_len: felt,
        block_header_rlp: felt*
     ):
     alloc_locals
+
+    let (local child_block_parent_hash: Keccak256Hash) = _block_parent_hash.read(block_number + 1)
+
     validate_provided_header_rlp(
+        child_block_parent_hash,
         block_number,
         block_header_rlp_bytes_len,
         block_header_rlp_len,
@@ -397,12 +401,126 @@ func process_block{
     return ()
 end
 
+@external
+func process_till_block{
+        pedersen_ptr: HashBuiltin*,
+        syscall_ptr: felt*,
+        bitwise_ptr : BitwiseBuiltin*,
+        range_check_ptr
+    } (options_set: felt,
+       start_block_number: felt,
+       block_headers_lens_bytes_len: felt,
+       block_headers_lens_bytes: felt*,
+       block_headers_lens_words_len: felt,
+       block_headers_lens_words: felt*,
+       block_headers_concat_len: felt,
+       block_headers_concat: felt*
+    ):
+    alloc_locals
+    assert block_headers_lens_bytes_len = block_headers_lens_words_len
+
+    let (local parent_hash: Keccak256Hash) = _block_parent_hash.read(block_number=start_block_number)
+    
+    let (local save_block_number: felt, local save_parent_hash: Keccak256Hash) = process_till_block_rec(
+        start_block_number,
+        parent_hash,
+        block_headers_lens_bytes_len,
+        block_headers_lens_bytes,
+        block_headers_lens_words_len,
+        block_headers_lens_words,
+        block_headers_concat_len,
+        block_headers_concat,
+        0,
+        0)
+    
+    _block_parent_hash.write(save_block_number, save_parent_hash)
+
+    let (local last_header: felt*) = alloc()
+    slice_arr(
+        block_headers_concat_len - block_headers_lens_words[block_headers_lens_words_len - 1],
+        block_headers_lens_words[block_headers_lens_words_len - 1],
+        block_headers_concat,
+        block_headers_concat_len,
+        last_header,
+        0,
+        0)
+
+    process_block(
+        options_set,
+        save_block_number - 1,
+        block_headers_lens_bytes[block_headers_lens_bytes_len - 1],
+        block_headers_lens_words[block_headers_lens_words_len - 1],
+        last_header)
+    return ()
+end
+
+func process_till_block_rec{
+        pedersen_ptr: HashBuiltin*,
+        syscall_ptr: felt*,
+        bitwise_ptr : BitwiseBuiltin*,
+        range_check_ptr
+    } (start_block_number: felt,
+       current_parent_hash: Keccak256Hash,
+       block_headers_lens_bytes_len: felt,
+       block_headers_lens_bytes: felt*,
+       block_headers_lens_words_len: felt,
+       block_headers_lens_words: felt*,
+       block_headers_concat_len: felt,
+       block_headers_concat: felt*,
+       current_index: felt,
+       offset: felt
+    ) -> (save_block_number: felt, save_parent_hash: Keccak256Hash):
+    alloc_locals
+    # Skips last header as this will be processed by process_block
+    if current_index == block_headers_lens_bytes_len - 1:
+        return (start_block_number - current_index, current_parent_hash)
+    end
+
+    let (local current_header: felt*) = alloc()
+    let (offset_updated) = slice_arr(
+        offset,
+        block_headers_lens_words[current_index],
+        block_headers_concat,
+        block_headers_concat_len,
+        current_header,
+        0,
+        0)
+    
+    local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
+    let (local keccak_ptr : felt*) = alloc()
+    let keccak_ptr_start = keccak_ptr
+    
+    let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(current_header, block_headers_lens_bytes[current_index])
+
+    assert current_parent_hash.word_1 = provided_rlp_hash[0]
+    assert current_parent_hash.word_2 = provided_rlp_hash[1]
+    assert current_parent_hash.word_3 = provided_rlp_hash[2]
+    assert current_parent_hash.word_4 = provided_rlp_hash[3]
+
+    local current_header_rlp: IntsSequence = IntsSequence(current_header, block_headers_lens_words[current_index], block_headers_lens_bytes[current_index])
+    let (local parent_hash: Keccak256Hash) = decode_parent_hash(current_header_rlp)
+
+    return process_till_block_rec(
+        start_block_number,
+        parent_hash,
+        block_headers_lens_bytes_len,
+        block_headers_lens_bytes,
+        block_headers_lens_words_len,
+        block_headers_lens_words,
+        block_headers_concat_len,
+        block_headers_concat,
+        current_index + 1,
+        offset_updated)
+end
+
 func validate_provided_header_rlp{
         pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
         bitwise_ptr : BitwiseBuiltin*,
         range_check_ptr
-    } (block_number: felt,
+    } (
+       child_block_parent_hash: Keccak256Hash,
+       block_number: felt,
        block_header_rlp_bytes_len: felt,
        block_header_rlp_len: felt,
        block_header_rlp: felt*
@@ -412,15 +530,12 @@ func validate_provided_header_rlp{
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
 
-    let child_block_number = (block_number + 1)
-    let (local child_block_parent: Keccak256Hash) = _block_parent_hash.read(block_number=child_block_number)
-
     let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(block_header_rlp, block_header_rlp_bytes_len)
 
     # Ensure child block parenthash matches provided rlp hash
-    assert child_block_parent.word_1 = provided_rlp_hash[0]
-    assert child_block_parent.word_2 = provided_rlp_hash[1]
-    assert child_block_parent.word_3 = provided_rlp_hash[2]
-    assert child_block_parent.word_4 = provided_rlp_hash[3]
+    assert child_block_parent_hash.word_1 = provided_rlp_hash[0]
+    assert child_block_parent_hash.word_2 = provided_rlp_hash[1]
+    assert child_block_parent_hash.word_3 = provided_rlp_hash[2]
+    assert child_block_parent_hash.word_4 = provided_rlp_hash[3]
     return ()
 end

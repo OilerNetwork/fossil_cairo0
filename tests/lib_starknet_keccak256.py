@@ -60,7 +60,7 @@ async def test_small_input(factory):
 
 
     starknet_hashed = test_keccak_call.result.res
-    output = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed)
+    output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in starknet_hashed)
 
     assert output == web3_computed_hash
 
@@ -85,7 +85,7 @@ async def test_small_tricky_input(factory):
 
 
     starknet_hashed = test_keccak_call.result.res
-    output = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed)
+    output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in starknet_hashed)
 
     assert output == web3_computed_hash
 
@@ -172,7 +172,7 @@ async def test_huge_input(factory):
     ).call()
 
     starknet_hashed = test_keccak_call.result.res
-    output = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed)
+    output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in starknet_hashed)
 
     assert output == web3_computed_hash
 
@@ -194,6 +194,6 @@ async def test_blockheader_input(factory):
     ).call()
     starknet_hashed_big = test_keccak_call_big.result.res
 
-    output = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed_big)
+    output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in starknet_hashed_big)
     assert output == block["hash"].hex()
 
