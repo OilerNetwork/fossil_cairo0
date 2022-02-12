@@ -335,8 +335,6 @@ async def test_process_till_block():
         calldata
     )
 
-    print(tx)
-
     newer_block_parent_hash_call = await storage_proof.get_parent_hash(newer_block['number']).call()
     newer_block_parent_hash = Data.from_ints(IntsSequence(list(newer_block_parent_hash_call.result.res), 32))
     assert newer_block_parent_hash.to_hex() == '0x0000000000000000000000000000000000000000000000000000000000000000'

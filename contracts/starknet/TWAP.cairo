@@ -81,6 +81,10 @@ func register_computation{
     let (local tmp_2) = hash2{hash_ptr=pedersen_ptr}(tmp_1, callback_address)
     let (local computation_id) = hash2{hash_ptr=pedersen_ptr}(tmp_2, avg_header_param)
 
+    %{
+        print(ids.computation_id)
+    %}
+
     let (local computation_already_registered) = _twap_computation_cache.read(computation_id, 0)
     assert computation_already_registered = 0
 
@@ -91,17 +95,6 @@ func register_computation{
    assert_not_zero(current_block_hash.word_2)
    assert_not_zero(current_block_hash.word_3)
    assert_not_zero(current_block_hash.word_4)
-
-    # %{
-    #     from utils.types import Data, IntsSequence
-    #     current_block_hash = Data.from_ints(IntsSequence([
-    #         ids.current_block_hash.get_or_set_value("word_1", None),
-    #         ids.current_block_hash.get_or_set_value("word_2", None),
-    #         ids.current_block_hash.get_or_set_value("word_3", None),
-    #         ids.current_block_hash.get_or_set_value("word_4", None)
-    #     ], 32))
-    #     print(current_block_hash.to_hex())
-    # %}
 
     # Fill cache metadata
     _twap_computation_cache.write(computation_id, 0, start_block)

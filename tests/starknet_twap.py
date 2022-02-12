@@ -6,10 +6,12 @@ from typing import NamedTuple
 from starkware.starkware_utils.error_handling import StarkException
 from starkware.starknet.testing.starknet import Starknet
 from starkware.starknet.testing.contract import StarknetContract
+from starkware.cairo.lang.vm.crypto import pedersen_hash
 
 from utils.types import Data
 from utils.Signer import Signer
 from utils.create_account import create_account
+from utils.block_header import build_block_header
 
 from mocks.blocks import mocked_blocks
 
@@ -80,3 +82,54 @@ async def test_register_computation(factory):
         'register_computation',
         [mocked_blocks[0]['number'], 2, 3, 4]
     )
+
+@pytest.mark.asyncio
+async def test_compute(factory):
+    starknet, twap, account, signer, l1_relayer_account, l1_relayer_signer, storage_proof = factory
+    callback_receiver = await starknet.deploy(source="contracts/starknet/mocks/CallbackReceiverMock.cairo", cairo_path=["contracts"])
+    
+    await signer.send_transaction(
+        account,
+        twap.contract_address,
+        'register_computation',
+        [mocked_blocks[0]['number'], mocked_blocks[0]['number'] - 2, 15, callback_receiver.contract_address])
+
+    tmp_1 = pedersen_hash(mocked_blocks[0]['number'], mocked_blocks[0]['number'] - 2)
+    tmp_2 = pedersen_hash(tmp_1, callback_receiver.contract_address)
+    computation_id = pedersen_hash(tmp_2, 15)
+
+    newer_block = mocked_blocks[0]
+    newer_block_header = build_block_header(newer_block)
+    newer_block_rlp = Data.from_bytes(newer_block_header.raw_rlp()).to_ints()
+
+    older_block = mocked_blocks[1]
+    older_block_header = build_block_header(older_block)
+    older_block_rlp = Data.from_bytes(older_block_header.raw_rlp()).to_ints()
+
+    oldest_block = mocked_blocks[2]
+    oldest_block_header = build_block_header(oldest_block)
+    oldest_block_rlp = Data.from_bytes(oldest_block_header.raw_rlp()).to_ints()
+
+    calldata = [
+            computation_id,
+            3, # block headers lenghts in bytes length
+            *[newer_block_rlp.length, older_block_rlp.length, oldest_block_rlp.length], # block headers lenghts in bytes
+            3, # block headers lenghts in words length
+            *[len(newer_block_rlp.values), len(older_block_rlp.values), len(oldest_block_rlp.values)], # block headers lenghts in words
+            len([*newer_block_rlp.values, *older_block_rlp.values, *oldest_block_rlp.values]), # concat headers len
+            *[*newer_block_rlp.values, *older_block_rlp.values, *oldest_block_rlp.values] # concat headers
+        ]
+    
+    await signer.send_transaction(
+        account,
+        twap.contract_address,
+        'compute',
+        calldata
+    )
+
+    computed_twap_call = await callback_receiver.twap().call()
+    computed_twap = computed_twap_call.result.res
+
+    (expected_twap, _) = divmod(newer_block['baseFeePerGas'] + older_block['baseFeePerGas'] + oldest_block['baseFeePerGas'], 3)
+
+    assert computed_twap == expected_twap
