@@ -218,7 +218,7 @@ end
 
 # Computes the keccak256 of 'input'. Inputs of any size are supported.
 # To use this function, split the input into words of 64 bits (big endian).
-# output is an array of 4 64-bit words (little endian).
+# output is an array of 4 64-bit words (big endian).
 func keccak256{range_check_ptr, keccak_ptr : felt*, bitwise_ptr : BitwiseBuiltin*}(input : felt*, n_bytes : felt) -> (output : felt*):
     let keccak_ptr_start = keccak_ptr
     alloc_locals

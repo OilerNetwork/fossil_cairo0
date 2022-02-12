@@ -15,11 +15,6 @@ from utils.types import Data, BlockHeaderIndexes
 
 from mocks.blocks import mocked_blocks
 
-from utils.benchmarks.blockheader_rlp_extractor import (
-    getBaseFee
-)
-
-from web3 import Web3
 
 class TestsDeps(NamedTuple):
     starknet: Starknet
@@ -333,12 +328,14 @@ async def test_process_till_block():
             *[*newer_block_rlp.values, *older_block_rlp.values, *oldest_block_rlp.values] # concat headers
         ]
     
-    await l1_relayer_signer.send_transaction(
+    tx = await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_till_block',
         calldata
     )
+
+    print(tx)
 
     newer_block_parent_hash_call = await storage_proof.get_parent_hash(newer_block['number']).call()
     newer_block_parent_hash = Data.from_ints(IntsSequence(list(newer_block_parent_hash_call.result.res), 32))
