@@ -8,6 +8,7 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.hash_chain import hash_chain
 from starkware.cairo.common.hash import hash2
 from starkware.cairo.common.math import assert_not_zero, assert_le, unsigned_div_rem
+from starkware.cairo.common.math_cmp import is_le
 
 from starknet.types import (Keccak256Hash, IntsSequence, slice_arr)
 from starknet.lib.keccak import keccak256
@@ -161,8 +162,10 @@ func compute{
             val_acc,
             0,
             0)
+
+    let (local is_population_full) = is_le(last_block_number, end_block)
     
-    if last_block_number == end_block:
+    if is_population_full == 1:
         let (local twap, _) = unsigned_div_rem(val_acc + param_acc, val_len + iterations)
         let (local callback_receiver) = _twap_computation_cache.read(computation_id, 7)
 
@@ -213,7 +216,7 @@ func compute_rec{
     ) -> (last_block_number: felt, last_hash: Keccak256Hash, param_acc: felt, iterations: felt):
     alloc_locals
     # Skips last header as this will be processed by process_block
-    if current_index == block_headers_lens_bytes_len - 1:
+    if current_index == block_headers_lens_bytes_len:
         return (start_block_number - current_index, current_parent_hash, param_acc, current_index)
     end
 
