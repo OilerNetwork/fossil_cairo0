@@ -52,19 +52,23 @@ async def factory():
 async def submit_l1_parent_hash(l1_relayer_signer: Signer, l1_relayer_account: StarknetContract, storage_proof: StarknetContract, message = mocked_blocks[0]["parentHash"].hex(), block_number = mocked_blocks[0]['number']):
     message = Data.from_hex(message).to_ints()
 
-    await l1_relayer_signer.send_transaction(
+    tx = await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'receive_from_l1',
         [4] + message.values + [block_number]
     )
 
+    return tx.call_info.cairo_usage.n_steps
+
 
 @pytest.mark.asyncio
 async def test_submit_hash(factory):
     starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
     # Submit message using l1_relayer_account
-    await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof)
+    n_steps = await submit_l1_parent_hash(l1_relayer_signer, l1_relayer_account, storage_proof)
+
+    print(f"Execution number of steps: {n_steps}")
 
 
 @pytest.mark.asyncio
@@ -77,7 +81,7 @@ async def test_process_block(factory):
     block_header = build_block_header(block)
     block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
-    await l1_relayer_signer.send_transaction(
+    tx = await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
@@ -88,6 +92,8 @@ async def test_process_block(factory):
     set_parent_hash = Data.from_ints(IntsSequence(list(set_block_parent_hash_call.result.res), 32))
 
     assert set_parent_hash.to_hex() == block["parentHash"].hex()
+
+    print(f"Execution number of steps: {tx.call_info.cairo_usage.n_steps}")
 
 @pytest.mark.asyncio
 async def test_process_invalid_block(factory):
@@ -117,7 +123,7 @@ async def test_set_uncles_hash(factory):
     block_header = build_block_header(block)
     block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
-    await l1_relayer_signer.send_transaction(
+    tx = await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
@@ -127,6 +133,8 @@ async def test_set_uncles_hash(factory):
     set_uncles_hash_call = await storage_proof.get_uncles_hash(block['number']).call()
     set_uncles_hash = Data.from_ints(IntsSequence(list(set_uncles_hash_call.result.res), 32))
     assert set_uncles_hash.to_hex() == block["sha3Uncles"].hex()
+
+    print(f"Execution number of steps: {tx.call_info.cairo_usage.n_steps}")
 
 @pytest.mark.asyncio
 async def test_set_beneficiary(factory):
@@ -138,7 +146,7 @@ async def test_set_beneficiary(factory):
     block_header = build_block_header(block)
     block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
-    await l1_relayer_signer.send_transaction(
+    tx = await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
@@ -148,6 +156,8 @@ async def test_set_beneficiary(factory):
     set_beneficiary_call = await storage_proof.get_beneficiary(block['number']).call()
     set_beneficiary = Data.from_ints(IntsSequence(list(set_beneficiary_call.result.res), 20))
     assert set_beneficiary == Data.from_hex(block["miner"])
+
+    print(f"Execution number of steps: {tx.call_info.cairo_usage.n_steps}")
 
 @pytest.mark.asyncio
 async def test_set_state_root(factory):
@@ -159,7 +169,7 @@ async def test_set_state_root(factory):
     block_header = build_block_header(block)
     block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
-    await l1_relayer_signer.send_transaction(
+    tx = await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',        
@@ -170,6 +180,8 @@ async def test_set_state_root(factory):
     set_state_root = Data.from_ints(IntsSequence(list(set_state_root_call.result.res), 32))
 
     assert set_state_root.to_hex() == block["stateRoot"].hex()
+
+    print(f"Execution number of steps: {tx.call_info.cairo_usage.n_steps}")
 
 
 @pytest.mark.asyncio
@@ -182,7 +194,7 @@ async def test_set_transactions_root(factory):
     block_header = build_block_header(block)
     block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
-    await l1_relayer_signer.send_transaction(
+    tx = await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
@@ -192,6 +204,8 @@ async def test_set_transactions_root(factory):
     set_txns_root_call = await storage_proof.get_transactions_root(block['number']).call()
     set_txns_root = Data.from_ints(IntsSequence(list(set_txns_root_call.result.res), 32))
     assert set_txns_root.to_hex() == block["transactionsRoot"].hex()
+
+    print(f"Execution number of steps: {tx.call_info.cairo_usage.n_steps}")
 
 @pytest.mark.asyncio
 async def test_set_receipts_root(factory):
@@ -203,7 +217,7 @@ async def test_set_receipts_root(factory):
     block_header = build_block_header(block)
     block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
-    await l1_relayer_signer.send_transaction(
+    tx = await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
@@ -213,6 +227,8 @@ async def test_set_receipts_root(factory):
     set_receipts_root_call = await storage_proof.get_receipts_root(block['number']).call()
     set_receipts_root = Data.from_ints(IntsSequence(list(set_receipts_root_call.result.res), 32))
     assert set_receipts_root.to_hex() == block["receiptsRoot"].hex()
+
+    print(f"Execution number of steps: {tx.call_info.cairo_usage.n_steps}")
     
 @pytest.mark.asyncio
 async def test_set_difficulty(factory):
@@ -224,7 +240,7 @@ async def test_set_difficulty(factory):
     block_header = build_block_header(block)
     block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
-    await l1_relayer_signer.send_transaction(
+    tx = await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
@@ -234,6 +250,8 @@ async def test_set_difficulty(factory):
     set_difficulty_call = await storage_proof.get_difficulty(block['number']).call()
     set_difficulty = set_difficulty_call.result.res
     assert set_difficulty == block["difficulty"]
+
+    print(f"Execution number of steps: {tx.call_info.cairo_usage.n_steps}")
 
 @pytest.mark.asyncio
 async def test_set_gas_used(factory):
@@ -245,7 +263,7 @@ async def test_set_gas_used(factory):
     block_header = build_block_header(block)
     block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
-    await l1_relayer_signer.send_transaction(
+    tx = await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
@@ -255,6 +273,8 @@ async def test_set_gas_used(factory):
     set_gas_used_call = await storage_proof.get_gas_used(block['number']).call()
     set_gas_used = set_gas_used_call.result.res
     assert set_gas_used == block['gasUsed']
+
+    print(f"Execution number of steps: {tx.call_info.cairo_usage.n_steps}")
 
 @pytest.mark.asyncio
 async def test_set_timestamp(factory):
@@ -266,7 +286,7 @@ async def test_set_timestamp(factory):
     block_header = build_block_header(block)
     block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
-    await l1_relayer_signer.send_transaction(
+    tx = await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
@@ -276,6 +296,8 @@ async def test_set_timestamp(factory):
     set_timestamp_call = await storage_proof.get_timestamp(block['number']).call()
     set_timestamp = set_timestamp_call.result.res
     assert set_timestamp == block['timestamp']
+
+    print(f"Execution number of steps: {tx.call_info.cairo_usage.n_steps}")
 
 @pytest.mark.asyncio
 async def test_set_base_fee(factory):
@@ -287,7 +309,7 @@ async def test_set_base_fee(factory):
     block_header = build_block_header(block)
     block_rlp = Data.from_bytes(block_header.raw_rlp()).to_ints()
 
-    await l1_relayer_signer.send_transaction(
+    tx = await l1_relayer_signer.send_transaction(
         l1_relayer_account,
         storage_proof.contract_address,
         'process_block',
@@ -297,6 +319,8 @@ async def test_set_base_fee(factory):
     set_base_fee_call = await storage_proof.get_base_fee(block['number']).call()
     set_base_fee = set_base_fee_call.result.res
     assert set_base_fee == block["baseFeePerGas"]
+
+    print(f"Execution number of steps: {tx.call_info.cairo_usage.n_steps}")
 
 
 @pytest.mark.asyncio
@@ -342,6 +366,8 @@ async def test_process_till_block():
     set_state_root_call = await storage_proof.get_state_root(oldest_block['number']).call()
     set_state_root = Data.from_ints(IntsSequence(list(set_state_root_call.result.res), 32))
     assert set_state_root.to_hex() == oldest_block["stateRoot"].hex()
+
+    print(f"Execution number of steps: {tx.call_info.cairo_usage.n_steps}")
 
 
 

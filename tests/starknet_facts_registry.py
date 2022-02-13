@@ -138,7 +138,7 @@ async def test_prove_account(registry_initialized):
     set_state_root_call = await storage_proof.get_state_root(mocked_blocks[3]['number']).call()
     set_state_root = set_state_root_call.result.res
 
-    prove_account_tx = await signer.send_transaction(
+    tx = await signer.send_transaction(
         account,
         facts_registry.contract_address,
         "prove_account",
@@ -154,6 +154,8 @@ async def test_prove_account(registry_initialized):
             flat_proof_sizes_words +
             [len(flat_proof)] +
             flat_proof)
+
+    print(f"Prove account, execution number of steps: {tx.call_info.cairo_usage.n_steps}")
 
     get_storage_hash_call = await facts_registry.get_verified_account_storage_hash(
         int(l1_account_address.to_hex()[2:], 16),
@@ -198,7 +200,7 @@ async def test_get_storage(registry_initialized):
     l1_account_address = Data.from_hex(trie_proofs[1]['address'])
     account_words64 = l1_account_address.to_ints()
 
-    await signer.send_transaction(
+    tx = await signer.send_transaction(
         account,
         facts_registry.contract_address,
         "prove_account",
@@ -214,6 +216,8 @@ async def test_get_storage(registry_initialized):
             flat_account_proof_sizes_words +
             [len(flat_account_proof)] +
             flat_account_proof)
+
+    print(f"Prove account, execution number of steps: {tx.call_info.cairo_usage.n_steps}")
 
     slot = Data.from_hex(trie_proofs[2]['storageProof'][0]['key']).to_ints()
 
@@ -233,6 +237,8 @@ async def test_get_storage(registry_initialized):
         flat_storage_proof_sizes_bytes,
         flat_storage_proof_sizes_words,
         flat_storage_proof).call()
+
+    print(f"Get balance call n_steps: {get_balance_call.call_info.cairo_usage.n_steps}")
     
     result = Data.from_ints(IntsSequence(get_balance_call.result.res, get_balance_call.result.res_bytes_len))
     

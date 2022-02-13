@@ -120,12 +120,14 @@ async def test_compute_basefee_twap(factory):
             *[*newer_block_rlp.values, *older_block_rlp.values, *oldest_block_rlp.values] # concat headers
         ]
     
-    await signer.send_transaction(
+    tx = await signer.send_transaction(
         account,
         twap.contract_address,
         'compute',
         calldata
     )
+
+    print(f"Compute twap tx n_steps: {tx.call_info.cairo_usage.n_steps}")
 
     computed_twap_call = await callback_receiver.twap().call()
     computed_twap = computed_twap_call.result.res
@@ -172,12 +174,14 @@ async def test_compute_difficulty_twap(factory):
             *[*newer_block_rlp.values, *older_block_rlp.values, *oldest_block_rlp.values] # concat headers
         ]
     
-    await signer.send_transaction(
+    tx = await signer.send_transaction(
         account,
         twap.contract_address,
         'compute',
         calldata
     )
+
+    print(f"Compute twap tx n_steps: {tx.call_info.cairo_usage.n_steps}")
 
     computed_twap_call = await callback_receiver.twap().call()
     computed_twap = computed_twap_call.result.res
