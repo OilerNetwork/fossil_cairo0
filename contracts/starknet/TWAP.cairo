@@ -159,7 +159,7 @@ func compute{
             block_headers_lens_words,
             block_headers_concat_len,
             block_headers_concat,
-            val_acc,
+            0,
             0,
             0)
 
