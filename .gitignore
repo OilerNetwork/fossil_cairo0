@@ -11,3 +11,5 @@ build
 
 secrets.json
 .env
+
+node.json
