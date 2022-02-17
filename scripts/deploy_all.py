@@ -20,7 +20,7 @@ def get_gateway_client(gateway_url: str) -> GatewayClient:
 
 async def main():
     secrets = json.load(open('secrets.json'))
-    gateway_url = "https://alpha4.starknet.io/"
+    gateway_url = "http://localhost:5000" #"https://alpha4.starknet.io/"
     eth_provider_url = f"https://eth-goerli.alchemyapi.io/v2/{secrets['alchemy_api_key']}"
 
     starknet_core_addr = '0xde29d060D45901Fb19ED6C6e959EB22d8626708e'
