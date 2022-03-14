@@ -54,7 +54,7 @@ async def test_covert_random(factory):
     print(f"ints_to_uint256_call n_steps: {ints_to_uint256_call.call_info.cairo_usage.n_steps}")
 
 @pytest.mark.asyncio 
-async def test_covert_out_of_bound_uint(factory):
+async def test_covert_out_of_bound(factory):
     starknet, ints_to_uint256 = factory 
     num = randint(2**256, 2**512) 
     ints = uint_to_ints_array(num)

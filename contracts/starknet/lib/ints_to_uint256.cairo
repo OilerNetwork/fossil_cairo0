@@ -1,7 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
-from starkware.cairo.common.uint256 import Uint256, uint256_add, uint256_shl
+from starkware.cairo.common.uint256 import Uint256, uint256_add
 from starkware.cairo.common.math import unsigned_div_rem, assert_nn_le
 from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.pow import pow
@@ -11,14 +11,14 @@ from starknet.types import IntsSequence
 
 const MASK_LOW = 2 ** 64
 
-func ints_to_uint256{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(
-        ints: IntsSequence) -> (res : Uint256):
+func ints_to_uint256{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(ints : IntsSequence) -> (
+        res : Uint256):
     let elements = ints.element
     let elements_len = ints.element_size_words
     let elements_bytes_len = ints.element_size_bytes
     if elements_len == 1:
-        return (Uint256(elements[0],0))
-    end 
+        return (Uint256(elements[0], 0))
+    end
     assert_nn_le(elements_len, 5)  # The max int sequence length for a uint256 is 4
     let (_, rem) = unsigned_div_rem(elements_bytes_len, 8)
     let initial : Uint256 = Uint256(elements[elements_len - 1], 0)
@@ -31,7 +31,7 @@ func ints_to_uint256{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(
 end
 
 func ints_to_uint256_rec{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(
-        elements_len : felt, elements : felt*, sum : Uint256, shift : felt) -> (out : Uint256): 
+        elements_len : felt, elements : felt*, sum : Uint256, shift : felt) -> (out : Uint256):
     alloc_locals
     if elements_len == 0:
         return (sum)
@@ -40,10 +40,10 @@ func ints_to_uint256_rec{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(
     # shift < 64 just add num to low
     # 64 < shift < 128 mask bits above and below 128 and add each bit to high and low
     # shift > 128 just add num to high
-    
+
     let (case3) = is_le(128, shift)
     if case3 == 1:
-        let (factor3) = pow(2, shift - 128) 
+        let (factor3) = pow(2, shift - 128)
         let num = elements[elements_len - 1] * factor3
         let next : Uint256 = Uint256(low=0, high=num)
         let (new_sum, _) = uint256_add(sum, next)
@@ -72,4 +72,3 @@ func ints_to_uint256_rec{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(
     end
     return (out)
 end
-
