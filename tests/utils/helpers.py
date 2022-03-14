@@ -43,15 +43,6 @@ def hex_string_to_words64(hex_input: str, encoding: Encoding = Encoding.BIG) -> 
     chunked = [hex_input[i+0:i+16] for i in range(0, len(hex_input), 16)]
     return IntsSequence(list(map(hex_string_big_to_int if encoding == Encoding.BIG else hex_string_little_to_int, chunked)), int(len(hex_input)/2))
 
-# def hex_string_to_words64(hex_input: str, encoding: Encoding = Encoding.BIG) -> IntsSequence:
-#     if len(hex_input) < 2:
-#         raise Exception('Rlp string to short')
-#     prefix = hex_input[0:2]
-#     if prefix == '0x': hex_input = hex_input[2:]
-
-#     chunked = [hex_input[i+0:i+16] for i in range(0, len(hex_input), 16)]
-#     return IntsSequence(list(map(hex_string_big_to_int if encoding == Encoding.BIG else hex_string_little_to_int, chunked)), int(len(hex_input)/2))
-
 def hex_string_to_nibbles(hex_input: str, encoding: Encoding = Encoding.BIG) -> List[int]:
     if len(hex_input) < 2:
         raise Exception('Hex string to short')
