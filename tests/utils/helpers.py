@@ -15,9 +15,7 @@ class Encoding(Enum):
     LITTLE: str = 'little'
     BIG: str = 'big'
 
-
 concat_arr: Callable[[List[str]], str] = lambda arr: reduce(lambda a, b: a + b, arr)
-
 
 def bytes_to_int(word: bytes, encoding: Encoding = Encoding.BIG) -> int:
     return int.from_bytes(word, encoding.value)
@@ -31,7 +29,6 @@ string_to_byte_big: Callable[[str], int] = lambda word: int.from_bytes(word.enco
 hex_string_little_to_int: Callable[[HexStr], int] = lambda word: bytes_to_int_little(bytes.fromhex(word))
 hex_string_big_to_int: Callable[[HexStr], int] = lambda word: bytes_to_int_big(bytes.fromhex(word))
 
-
 chunk_bytes_input: Callable[[bytes], List[bytes]] = lambda input: [input[i+0:i+8] for i in range(0, len(input), 8)]
 
 print_bytes_array: Callable[[List[str]], str] = lambda arr: concat_arr(list(map(lambda a: a.hex()+'\n', arr)))
@@ -42,7 +39,7 @@ def hex_string_to_words64(hex_input: str, encoding: Encoding = Encoding.BIG) -> 
         raise Exception('Rlp string to short')
     prefix = hex_input[0:2]
     if prefix == '0x': hex_input = hex_input[2:]
-
+    if len(hex_input)%2==1: hex_input = '0'+hex_input
     chunked = [hex_input[i+0:i+16] for i in range(0, len(hex_input), 16)]
     return IntsSequence(list(map(hex_string_big_to_int if encoding == Encoding.BIG else hex_string_little_to_int, chunked)), int(len(hex_input)/2))
 
@@ -123,3 +120,9 @@ def keccak_words64(input: IntsSequence) -> IntsSequence:
 
 def compare_lists(a: List[Any], b: List[Any]):
     return reduce(lambda i, j : i and j, map(lambda m, k: m == k, a, b), True)
+
+def split_uint256_to_uint(split_uint256: Tuple):
+    return split_uint256[0] + (split_uint256[1] << 128)
+
+def uint_to_ints_array(uint) -> IntsSequence:
+    return hex_string_to_words64(hex(uint))
