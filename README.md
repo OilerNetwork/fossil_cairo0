@@ -20,6 +20,10 @@ Fossil is built out of the following components:
 
 In order to run the tests, please make sure to have a python 3.7 virtual environment.
 
+## Fossil API
+
+Oiler has built an API which allows projects to take advantage of Fossil in a much simpler manner. Unfortunately, Fossil is currently not ready for most production applications. This is because the block step limit on Starknet is too low and large requests may fail if they require too many steps. We are in contact with Starkware and are awaiting for them to increase the step limit in the near future, at which time we will complete e2e testing and officially launch Fossil. If you are interested in building with the Fossil API, we can give you API access for testing purposes prior to the official launch. Please send any inquiries to: <fossil@oiler.network>
+
 ## Contribute
 
 There are countless usecases for the storage verifier and we are excited to hear what the community wants to build with it! Please reach out to <kacper@oiler.network> for any partnership, sponsorship, or other matters.
