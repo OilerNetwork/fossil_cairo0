@@ -23,9 +23,7 @@ func bitshift_left{ range_check_ptr }(word: felt, num_bits: felt) -> (shifted: f
     assert_le(num_bits, 64)
 
     let (multiplicator) = pow(2, num_bits)
-
     let k = word * multiplicator
     let (q, r) = unsigned_div_rem(k, 2**64)
-
     return (r)
 end

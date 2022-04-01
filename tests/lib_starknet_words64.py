@@ -44,6 +44,21 @@ async def test_extract_nibble_from_single_word(factory):
             assert res == expected_res, f"Expected {res} to be equal {expected_res} for extracted position {i}"
 
 @pytest.mark.asyncio
+async def test_to_words128(factory):
+    starknet, words64 = factory
+
+    input = Data.from_hex("0xbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadadbeefdeadbeefdeadbeefdeadadea")
+
+    call = await words64.test_to_words128(input.to_ints().values).call()
+    output = call.result.res
+
+    output_word1_bin = bin(output[0])[2:]
+    input128_word1_bin = bin(input.to_ints().values[0])[2:] + bin(input.to_ints().values[1])[2:]
+    print("output: ", output_word1_bin)
+    print("input: ", input128_word1_bin)
+    assert output_word1_bin == input128_word1_bin
+
+@pytest.mark.asyncio
 async def test_extract_nibble_from_ints_sequence(factory):
     starknet, words64 = factory
 
