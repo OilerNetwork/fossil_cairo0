@@ -244,3 +244,62 @@ async def test_get_storage(registry_initialized):
     
     assert result.to_hex() == trie_proofs[2]['storageProof'][0]['value']
 
+@pytest.mark.asyncio
+async def test_get_storage_uint(registry_initialized):
+    starknet, facts_registry, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = registry_initialized
+
+    account_proof = list(map(lambda element: Data.from_hex(element).to_ints(), trie_proofs[2]['accountProof']))
+    flat_account_proof = []
+    flat_account_proof_sizes_bytes = []
+    flat_account_proof_sizes_words = []
+    for proof_element in account_proof:
+        flat_account_proof += proof_element.values
+        flat_account_proof_sizes_bytes += [proof_element.length]
+        flat_account_proof_sizes_words += [len(proof_element.values)]
+
+    options_set = 15 # saves everything in state
+
+    l1_account_address = Data.from_hex(trie_proofs[1]['address'])
+    account_words64 = l1_account_address.to_ints()
+
+    tx = await signer.send_transaction(
+        account,
+        facts_registry.contract_address,
+        "prove_account",
+        [
+            options_set,
+            mocked_blocks[3]['number'],
+            account_words64.values[0],
+            account_words64.values[1],
+            account_words64.values[2],
+            len(flat_account_proof_sizes_bytes)] +
+            flat_account_proof_sizes_bytes +
+            [len(flat_account_proof_sizes_words)] +
+            flat_account_proof_sizes_words +
+            [len(flat_account_proof)] +
+            flat_account_proof)
+
+    print(f"Prove account, execution number of steps: {tx.call_info.cairo_usage.n_steps}")
+
+    slot = Data.from_hex(trie_proofs[2]['storageProof'][0]['key']).to_ints()
+
+    storage_proof = list(map(lambda element: Data.from_hex(element).to_ints(), trie_proofs[2]['storageProof'][0]['proof']))
+    flat_storage_proof = []
+    flat_storage_proof_sizes_bytes = []
+    flat_storage_proof_sizes_words = []
+    for proof_element in storage_proof:
+        flat_storage_proof += proof_element.values
+        flat_storage_proof_sizes_bytes += [proof_element.length]
+        flat_storage_proof_sizes_words += [len(proof_element.values)]
+
+    get_balance_call = await facts_registry.get_storage_uint(
+        mocked_blocks[3]['number'],
+        int(trie_proofs[2]['address'][2:], 16),
+        tuple(slot.values),
+        flat_storage_proof_sizes_bytes,
+        flat_storage_proof_sizes_words,
+        flat_storage_proof).call()
+
+    print(f"Get balance call n_steps: {get_balance_call.call_info.cairo_usage.n_steps}")
+    
+
