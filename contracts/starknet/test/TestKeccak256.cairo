@@ -7,6 +7,7 @@ from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.alloc import alloc
 
 from starknet.lib.keccak import keccak256
+from starknet.types import IntsSequence
 
 struct Keccak256Hash:
     member word_1 : felt
@@ -21,7 +22,9 @@ func test_keccak256{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(keccak_input
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
 
-    let (keccak_hash) = keccak256{keccak_ptr=keccak_ptr}(input, keccak_input_length)
+    local input_ints_sequence: IntsSequence = IntsSequence(input, input_len, keccak_input_length)
+
+    let (keccak_hash) = keccak256{keccak_ptr=keccak_ptr}(input_ints_sequence)
 
     local hash: Keccak256Hash = Keccak256Hash(
         word_1=keccak_hash[0],

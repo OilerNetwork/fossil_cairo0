@@ -9,6 +9,8 @@ from starkware.cairo.common.math_cmp import is_le
 from starkware.cairo.common.memset import memset
 from starkware.cairo.common.pow import pow
 
+from starknet.types import IntsSequence
+
 # Runs keccak_f permutations on the given input
 # Uses packed_keccak_func from Starkware (in native Cairo)
 # Then 8 right bytes of each felt are extracted with a mask (everything to the left is considered garbage)
@@ -219,7 +221,7 @@ end
 # Computes the keccak256 of 'input'. Inputs of any size are supported.
 # To use this function, split the input into words of 64 bits (big endian).
 # output is an array of 4 64-bit words (big endian).
-func keccak256{range_check_ptr, keccak_ptr : felt*, bitwise_ptr : BitwiseBuiltin*}(input : felt*, n_bytes : felt) -> (output : felt*):
+func keccak256{range_check_ptr, keccak_ptr : felt*, bitwise_ptr : BitwiseBuiltin*}(input: IntsSequence) -> (output : felt*):
     let keccak_ptr_start = keccak_ptr
     alloc_locals
 
@@ -254,7 +256,7 @@ func keccak256{range_check_ptr, keccak_ptr : felt*, bitwise_ptr : BitwiseBuiltin
     assert state[24] = 0
 
     # Run keccak recursively
-    let (local output_little_endian: felt*) = recursive_keccak(state=state, input=input, n_bytes=n_bytes)
+    let (local output_little_endian: felt*) = recursive_keccak(state=state, input=input.element, n_bytes=input.element_size_bytes)
     let (local output_big_endian: felt*) = alloc()
 
     let (local word_1_big) = swap_endianness_64(output_little_endian[0], 8)

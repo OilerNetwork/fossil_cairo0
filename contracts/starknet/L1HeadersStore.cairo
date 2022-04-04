@@ -7,7 +7,7 @@ from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.alloc import alloc
 
 from starknet.types import (Keccak256Hash, Address, IntsSequence, slice_arr)
-from starknet.lib.keccak import keccak256
+from starknet.lib.unsafe_keccak import keccak256
 from starknet.lib.blockheader_rlp_extractor import (
     decode_parent_hash,
     decode_state_root,
@@ -490,7 +490,9 @@ func process_till_block_rec{
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
     
-    let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(current_header, block_headers_lens_bytes[current_index])
+    local current_header_ints_sequence: IntsSequence = IntsSequence(current_header, block_headers_lens_words[current_index], block_headers_lens_bytes[current_index])
+
+    let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(current_header_ints_sequence)
 
     assert current_parent_hash.word_1 = provided_rlp_hash[0]
     assert current_parent_hash.word_2 = provided_rlp_hash[1]
@@ -530,7 +532,9 @@ func validate_provided_header_rlp{
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
 
-    let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(block_header_rlp, block_header_rlp_bytes_len)
+    local header_ints_sequence: IntsSequence = IntsSequence(block_header_rlp, block_header_rlp_len, block_header_rlp_bytes_len)
+
+    let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(header_ints_sequence)
 
     # Ensure child block parenthash matches provided rlp hash
     assert child_block_parent_hash.word_1 = provided_rlp_hash[0]

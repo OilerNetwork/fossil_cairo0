@@ -8,6 +8,10 @@ from starkware.starkware_utils.error_handling import StarkException
 
 from utils.types import Data
 from utils.helpers import random_bytes
+from utils.block_header import build_block_header
+
+from mocks.blocks import mocked_blocks
+
 
 class TestsDeps(NamedTuple):
     starknet: Starknet
@@ -42,6 +46,31 @@ async def test_extract_nibble_from_single_word(factory):
             res = extract_nibble_call.result.res
             expected_res = input.to_nibbles()[i]
             assert res == expected_res, f"Expected {res} to be equal {expected_res} for extracted position {i}"
+
+@pytest.mark.asyncio
+async def test_to_words128(factory):
+    starknet, words64 = factory
+
+    block = mocked_blocks[0]
+    block_header = build_block_header(block)
+    block_rlp = block_header.raw_rlp()
+
+    block_header_input = Data.from_bytes(block_rlp)
+
+    call = await words64.test_to_words128(block_header_input.to_ints().length, block_header_input.to_ints().values).call()
+    output = call.result.res
+
+    for i in range(0, len(output)):
+        output_word_bin = bin(output[i])[2:]
+        if len(output_word_bin) < 128:
+            if len(output_word_bin) < 64:
+                input128_word_bin = bin(block_header_input.to_ints().values[i * 2])[2:].zfill(64)
+            else:
+                input128_word_bin = bin(block_header_input.to_ints().values[i * 2])[2:].zfill(64) + bin(block_header_input.to_ints().values[i * 2 + 1])[2:].zfill(64)
+        else:
+            input128_word_bin = bin(block_header_input.to_ints().values[i * 2])[2:].zfill(64) + bin(block_header_input.to_ints().values[i * 2 + 1])[2:].zfill(64)
+        # TODO byte shift
+        # assert output_word_bin.zfill(128) == input128_word_bin.zfill(128), f"Failed at iteration: {i}"
 
 @pytest.mark.asyncio
 async def test_extract_nibble_from_ints_sequence(factory):

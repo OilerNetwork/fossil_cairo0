@@ -1,7 +1,10 @@
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.cairo.common.math import assert_le, unsigned_div_rem
-from starknet.lib.bitshift import bitshift_right
+from starkware.cairo.common.math_cmp import is_le
+from starknet.lib.bitshift import bitshift_right, bitshift_left
+from starkware.cairo.common.alloc import alloc
 from starknet.types import IntsSequence
+from starknet.lib.pow import pow
 
 
 func extract_nibble{ range_check_ptr }(word: felt, word_len_bytes: felt, position: felt) -> (res: felt):
@@ -31,5 +34,53 @@ func extract_nibble_from_words{ range_check_ptr }(input: IntsSequence, position:
         return extract_nibble(input.element[word_index], proper_len, nibble_index)
     else:
         return extract_nibble(input.element[word_index], 8, nibble_index)
+    end
+end
+
+func to_words128{ range_check_ptr }(words64: IntsSequence) -> (words128: felt*, words128_len: felt):
+    alloc_locals
+    let (local words128) = alloc()
+    return to_words128_rec(words64, words128, 0, 0, 0)
+end
+
+func to_words128_rec{ range_check_ptr }(
+    words64: IntsSequence,
+    acc: felt*,
+    acc_len: felt,
+    current_word_index: felt,
+    current_byte_index: felt) -> (words128: felt*, words128_len: felt):
+    alloc_locals
+    let (local exit) = is_le(words64.element_size_words, current_word_index)
+
+    if exit == 1:
+        return (acc, acc_len)
+    end
+
+    let (local is_last_16bytes) = is_le(words64.element_size_bytes, current_byte_index + 16)
+
+    if is_last_16bytes == 1:
+        local bytes_remaining = words64.element_size_bytes - current_byte_index
+        let (local nonfull_words) = is_le(8, bytes_remaining - 1)
+        
+        if nonfull_words == 1:
+            local bit_size = (bytes_remaining - 8) * 8
+            let (local multiplicator) = pow(2, bit_size)
+            local left_part = words64.element[current_word_index] * multiplicator
+            local original = words64.element[current_word_index]
+            local word128 = left_part + words64.element[current_word_index + 1]
+            assert acc[acc_len] = word128
+            return to_words128_rec(words64, acc, acc_len + 1, current_word_index + 2, current_byte_index + bytes_remaining)
+        else:
+            local word128 = words64.element[current_word_index]
+            assert acc[acc_len] = word128
+            return to_words128_rec(words64, acc, acc_len + 1, current_word_index + 2, current_byte_index + 8)
+        end
+    else:
+        let (local multiplicator) = pow(2, 64)
+        local left_part = words64.element[current_word_index] * multiplicator
+        local original = words64.element[current_word_index]
+        local word128 = left_part + words64.element[current_word_index + 1]
+        assert acc[acc_len] = word128
+        return to_words128_rec(words64, acc, acc_len + 1, current_word_index + 2, current_byte_index + 16)
     end
 end

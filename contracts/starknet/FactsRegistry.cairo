@@ -5,10 +5,12 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.math import assert_not_zero
+from starkware.cairo.common.uint256 import Uint256
 
 from starknet.types import Keccak256Hash, StorageSlot, Address, IntsSequence, RLPItem, reconstruct_ints_sequence_list
-from starknet.lib.keccak import keccak256
+from starknet.lib.unsafe_keccak import keccak256
 from starknet.lib.trie_proofs import verify_proof
+from starknet.lib.ints_to_uint256 import ints_to_uint256
 from starknet.lib.bitset import bitset_get
 from starknet.lib.extract_from_rlp import to_list, extract_list_values, extractElement, extract_data
 from starknet.lib.address import address_words64_to_160bit
@@ -139,9 +141,11 @@ func prove_account{
     assert account_raw[1] = account.word_2
     assert account_raw[2] = account.word_3
 
+    local account_ints_sequence: IntsSequence = IntsSequence(account_raw, 3, 20)
+
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
-    let (local path_raw) = keccak256{keccak_ptr=keccak_ptr}(account_raw, 20)
+    let (local path_raw) = keccak256{keccak_ptr=keccak_ptr}(account_ints_sequence)
 
     local path : IntsSequence = IntsSequence(path_raw, 4, 32)
 
@@ -308,9 +312,11 @@ func get_storage{
     assert slot_raw[2] = slot.word_3
     assert slot_raw[3] = slot.word_4
 
+    local slot_ints_sequence: IntsSequence = IntsSequence(slot_raw, 4, 32)
+
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
-    let (local path_raw) = keccak256{keccak_ptr=keccak_ptr}(slot_raw, 32)
+    let (local path_raw) = keccak256{keccak_ptr=keccak_ptr}(slot_ints_sequence)
 
     local path : IntsSequence = IntsSequence(path_raw, 4, 32)
 
@@ -331,4 +337,38 @@ func get_storage{
     # Removed length prefix from rlp
     let (local slot_value) = extractElement(result, 0)
     return (slot_value.element_size_bytes, slot_value.element_size_words, slot_value.element)
+end
+
+@view
+func get_storage_uint{
+        syscall_ptr : felt*,
+        pedersen_ptr : HashBuiltin*,
+        range_check_ptr,
+        bitwise_ptr : BitwiseBuiltin*
+    }(
+        block: felt,
+        account_160: felt,
+        slot: StorageSlot,
+        proof_sizes_bytes_len : felt,
+        proof_sizes_bytes : felt*,
+        proof_sizes_words_len : felt,
+        proof_sizes_words : felt*,
+        proofs_concat_len : felt,
+        proofs_concat : felt*) -> (res: Uint256):
+        alloc_locals
+        let (local ints_res_bytes_len: felt, local ints_res_len: felt, local ints_res: felt*) = get_storage(
+            block,
+            account_160,
+            slot,
+            proof_sizes_bytes_len,
+            proof_sizes_bytes,
+            proof_sizes_words_len,
+            proof_sizes_words,
+            proofs_concat_len,
+            proofs_concat)
+        
+        local res_ints_sequence: IntsSequence = IntsSequence(ints_res, ints_res_len, ints_res_bytes_len)
+        let (local result_raw) = ints_to_uint256(res_ints_sequence)
+        local result: Uint256 = Uint256(result_raw.low, result_raw.high)
+        return (result)
 end
