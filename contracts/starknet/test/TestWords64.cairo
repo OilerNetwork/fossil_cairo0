@@ -18,8 +18,9 @@ func test_extract_nibble_from_words{ range_check_ptr }(words_len: felt, words: f
 end
 
 @view
-func test_to_words128{ range_check_ptr }(words64_len: felt, words64: felt*) -> (res_len: felt, res: felt*):
+func test_to_words128{ range_check_ptr }(words64_len_bytes: felt, words64_len: felt, words64: felt*) -> (res_len: felt, res: felt*):
     alloc_locals
-    let (local words128: felt*, local words128_len: felt) = to_words128(words64, words64_len)
+    local input: IntsSequence = IntsSequence(words64, words64_len, words64_len_bytes)
+    let (local words128: felt*, local words128_len: felt) = to_words128(input)
     return (words128_len, words128)
 end

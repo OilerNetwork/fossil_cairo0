@@ -5,7 +5,10 @@ from starkware.starknet.testing.contract import StarknetContract
 from starkware.starknet.testing.starknet import Starknet
 from web3 import Web3
 
-from utils.helpers import (concat_arr, bytes_to_int)
+from utils.helpers import (concat_arr, bytes_to_int, chunk_bytes_input)
+
+from utils.block_header import build_block_header
+from mocks.blocks import mocked_blocks
 
 from utils.types import Data
 
@@ -53,6 +56,29 @@ async def test_against_web3(factory):
     output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in starknet_hashed)
 
     assert output == web3_computed_hash
+
+@pytest.mark.asyncio
+async def test_hash_header(factory):
+    starknet, keccak_contract = factory
+
+    block = mocked_blocks[0]
+    block_header = build_block_header(block)
+    block_rlp = block_header.raw_rlp()
+
+    block_rlp_chunked = Data.from_bytes(block_rlp).to_ints()
+
+    print(f"block_rlp_chunked.length: {block_rlp_chunked.length}")
+
+    assert block_header.hash() == block["hash"]
+
+    test_keccak_call_big = await keccak_contract.test_unsafe_keccak256(
+        block_rlp_chunked.length,
+        block_rlp_chunked.values
+    ).call()
+    starknet_hashed_big = test_keccak_call_big.result.res
+
+    output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in starknet_hashed_big)
+    assert output == block["hash"].hex()
 
 @pytest.mark.asyncio
 async def test_against_safe_implementation(factory):

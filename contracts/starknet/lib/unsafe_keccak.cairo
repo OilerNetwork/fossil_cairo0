@@ -9,8 +9,9 @@ from starknet.types import IntsSequence
 
 func keccak256{range_check_ptr, keccak_ptr : felt*, bitwise_ptr : BitwiseBuiltin*}(input : IntsSequence) -> (output : felt*):
     alloc_locals
-    let (local input_words128, local input_words128_len) = to_words128(input.element, input.element_size_words)
+    let (local input_words128, local input_words128_len) = to_words128(input)
 
+    local last_word = input_words128[input_words128_len - 1]
     let (local high, local low) = unsafe_keccak(input_words128, input.element_size_bytes)
 
     let (local word2, local word1) = split_64(low)

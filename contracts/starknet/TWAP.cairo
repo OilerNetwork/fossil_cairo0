@@ -11,7 +11,7 @@ from starkware.cairo.common.math import assert_not_zero, assert_le, unsigned_div
 from starkware.cairo.common.math_cmp import is_le
 
 from starknet.types import (Keccak256Hash, IntsSequence, slice_arr)
-from starknet.lib.keccak import keccak256
+from starknet.lib.unsafe_keccak import keccak256
 from starknet.lib.blockheader_rlp_extractor import (
     decode_parent_hash,
     decode_state_root,
@@ -233,8 +233,10 @@ func compute_rec{
     local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
+
+    local current_header_ints_sequence: IntsSequence = IntsSequence(current_header, block_headers_lens_words[current_index], block_headers_lens_bytes[current_index])
     
-    let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(current_header, block_headers_lens_bytes[current_index])
+    let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(current_header_ints_sequence)
 
     assert current_parent_hash.word_1 = provided_rlp_hash[0]
     assert current_parent_hash.word_2 = provided_rlp_hash[1]

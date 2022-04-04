@@ -4,7 +4,7 @@ from starkware.cairo.common.alloc import alloc
 
 from starknet.lib.extract_from_rlp import extract_data, to_list, is_rlp_list, is_rlp_list_rlp_item
 from starknet.lib.words64 import extract_nibble, extract_nibble_from_words
-from starknet.lib.keccak import keccak256
+from starknet.lib.unsafe_keccak import keccak256
 from starknet.lib.comp_arr import arr_eq
 from starknet.lib.swap_endianness import swap_endianness_four_words
 
@@ -152,7 +152,7 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
     end
 
     local current_element: IntsSequence = proof[current_index]
-    let (keccak_le_ptr) = keccak256{keccak_ptr=keccak_ptr}(current_element.element, current_element.element_size_bytes)
+    let (keccak_le_ptr) = keccak256{keccak_ptr=keccak_ptr}(current_element)
     local current_element_keccak: IntsSequence = IntsSequence(keccak_le_ptr, 4, 32)
 
     if current_index == 0:
@@ -188,10 +188,7 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
                     current_index=current_index + 1)
             else:
                 let (local element_data_extracted: IntsSequence) = extract_data(children.dataPosition, children.length, current_element)
-                let (local next_hash_words_le: felt*) = keccak256{keccak_ptr=keccak_ptr}(
-                    element_data_extracted.element,
-                    element_data_extracted.element_size_bytes)
-
+                let (local next_hash_words_le: felt*) = keccak256{keccak_ptr=keccak_ptr}(element_data_extracted)
                 local next_hash_le: IntsSequence = IntsSequence(next_hash_words_le, 4, 32)
                 let (local next_hash: IntsSequence) = swap_endianness_four_words(next_hash_le)
 
@@ -243,9 +240,7 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
             else:
                 let (local element_data_extracted: IntsSequence) = extract_data(children.dataPosition, children.length, current_element)
 
-                let (local next_hash_words_le: felt*) = keccak256{keccak_ptr=keccak_ptr}(
-                    element_data_extracted.element,
-                    element_data_extracted.element_size_bytes)
+                let (local next_hash_words_le: felt*) = keccak256{keccak_ptr=keccak_ptr}(element_data_extracted)
 
                 local next_hash_le: IntsSequence = IntsSequence(next_hash_words_le, 4, 32)
                 let (local next_hash: IntsSequence) = swap_endianness_four_words(next_hash_le)
