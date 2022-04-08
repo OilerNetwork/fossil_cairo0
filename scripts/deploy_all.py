@@ -109,7 +109,7 @@ async def test_deploy():
     twap_contract_init_tx = InvokeFunction(
             contract_address=twap_contract_address,
             entry_point_selector=get_selector_from_name('initialize'),
-            calldata=[int(l1_contract_addr, 16)],
+            calldata=[l2_headers_contract_address],
             signature=[])
     await gateway_client.add_transaction(twap_contract_init_tx)
 
