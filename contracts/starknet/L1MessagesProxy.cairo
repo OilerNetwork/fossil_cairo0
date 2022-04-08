@@ -38,6 +38,15 @@ end
 ####################################################
 
 @view
+func get_initialized{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } () -> (res: felt):
+    return _initialized.read()
+end
+
+@view
 func get_l1_messages_sender{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,

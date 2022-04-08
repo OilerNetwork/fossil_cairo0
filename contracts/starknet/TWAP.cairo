@@ -49,6 +49,33 @@ end
 func _twap_computation_cache(computation_id: felt, slot: felt) -> (res: felt):
 end
 
+@view
+func get_initialized{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    }() -> (res: felt):
+    return _initialized.read()
+end
+
+@view
+func get_l1_headers_store_addr{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    }() -> (res: felt):
+    return _l1_headers_store_addr.read()
+end
+
+@view
+func get_twap_computation_cache{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    }(computation_id: felt, slot: felt) -> (res: felt):
+    return _twap_computation_cache.read(computation_id, slot)
+end
+
 @external
 func initialize{
         pedersen_ptr: HashBuiltin*,

@@ -60,6 +60,14 @@ func _verified_account_nonce(account : felt, block : felt) -> (res : felt):
 end
 
 @view
+func get_initialized{
+        syscall_ptr: felt*,
+        pedersen_ptr : HashBuiltin*,
+        range_check_ptr } () -> (res: felt):
+    return _initialized.read()
+end
+
+@view
 func get_l1_headers_store_addr{
         syscall_ptr: felt*,
         pedersen_ptr : HashBuiltin*,

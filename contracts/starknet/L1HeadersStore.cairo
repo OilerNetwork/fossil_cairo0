@@ -82,6 +82,15 @@ end
 ####################################################
 
 @view
+func get_initialized{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } () -> (res: felt):
+    return _initialized.read()
+end
+
+@view
 func get_parent_hash{
         syscall_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
