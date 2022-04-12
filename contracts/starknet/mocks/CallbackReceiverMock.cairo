@@ -21,7 +21,7 @@ func twap_callback{
         pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
         range_check_ptr
-    } (twap: felt):
+    } (computation_id: felt, twap: felt):
     _twap.write(twap)
     return ()
 end

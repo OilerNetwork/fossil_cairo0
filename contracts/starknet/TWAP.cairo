@@ -33,7 +33,7 @@ end
 
 @contract_interface
 namespace CallbackReceiver:
-    func twap_callback(res: felt):
+    func twap_callback(computation_id: felt, res: felt):
     end
 end
 
@@ -207,7 +207,7 @@ func compute{
         _twap_computation_cache.write(computation_id, 8, 0)
         _twap_computation_cache.write(computation_id, 9, 0)
         _twap_computation_cache.write(computation_id, 10, 0)
-        CallbackReceiver.twap_callback(callback_receiver, twap)
+        CallbackReceiver.twap_callback(callback_receiver, computation_id, twap)
         return ()
     else:
         _twap_computation_cache.write(computation_id, 9, val_acc + param_acc)
