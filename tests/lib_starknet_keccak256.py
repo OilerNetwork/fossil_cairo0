@@ -58,6 +58,7 @@ async def test_small_input(factory):
         len(concat_arr(keccak_input)), list(map(bytes_to_int_big, keccak_input))
     ).call()
 
+    print(test_keccak_call)
 
     starknet_hashed = test_keccak_call.result.res
     output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in starknet_hashed)
@@ -193,6 +194,8 @@ async def test_blockheader_input(factory):
         list(map(bytes_to_int_big, block_rlp_chunked))
     ).call()
     starknet_hashed_big = test_keccak_call_big.result.res
+
+    print(test_keccak_call_big)
 
     output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in starknet_hashed_big)
     assert output == block["hash"].hex()
