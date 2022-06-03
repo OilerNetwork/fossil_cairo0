@@ -4,7 +4,11 @@ from starkware.cairo.common.alloc import alloc
 
 from starknet.lib.extract_from_rlp import extract_data, to_list, is_rlp_list, is_rlp_list_rlp_item
 from starknet.lib.words64 import extract_nibble, extract_nibble_from_words
-from starknet.lib.unsafe_keccak import keccak256
+
+from starknet.lib.keccak import keccak256
+# from starknet.lib.unsafe_keccak import keccak256
+# from starknet.lib.keccak_std_be import keccak256
+
 from starknet.lib.comp_arr import arr_eq
 from starknet.lib.swap_endianness import swap_endianness_four_words
 
@@ -145,15 +149,14 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
     alloc_locals
 
     let (local keccak_ptr : felt*) = alloc()
-    let keccak_ptr_start = keccak_ptr
 
     if current_index == proof_len + 1:
         assert 1 = 0
     end
 
     local current_element: IntsSequence = proof[current_index]
-    let (keccak_le_ptr) = keccak256{keccak_ptr=keccak_ptr}(current_element)
-    local current_element_keccak: IntsSequence = IntsSequence(keccak_le_ptr, 4, 32)
+    let (keccak_output) = keccak256{keccak_ptr=keccak_ptr}(current_element)
+    local current_element_keccak: IntsSequence = IntsSequence(keccak_output, 4, 32)
 
     if current_index == 0:
         let (local hashes_match: felt) = arr_eq(current_element_keccak.element, current_element_keccak.element_size_words, root_hash.element, root_hash.element_size_words)

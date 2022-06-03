@@ -56,9 +56,46 @@ async def test_against_web3(factory):
     starknet_hashed = test_keccak_call.result.res
     output = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed)
 
-    print(test_keccak_call)
+    print("Number of steps: ", test_keccak_call.call_info.execution_resources.n_steps)
 
     assert output == web3_computed_hash
+
+
+@pytest.mark.asyncio
+async def test_against_web3_multiple_inputs(factory):
+    starknet, keccak_contract = factory
+
+    keccak_input_1 = [
+        b'\xf9\x02\x18\xa0\x03\xb0\x16\xcc',
+        b'\x93\x87\xcb\x3c\xef\x86\xd9\xd4',
+        b'\xaf\xb5\x2c\x37\x89\x52\x8c\x53',
+        b'\x0c\x00\x20\x87\x95\xac\x93\x7c',
+        b'\x00\x00\x00\x00\x00\x00\x00\x77',
+    ]
+
+    block = mocked_blocks[0]
+    block_header = build_block_header(block)
+    block_rlp = block_header.raw_rlp()
+    block_rlp_chunked = Data.from_bytes(block_rlp).to_ints(Encoding.LITTLE)
+    
+    web3_computed_hash_1 = Web3.keccak(concat_arr(keccak_input_1)).hex()
+    web3_computed_hash_2 = block["hash"].hex()
+
+    test_keccak_call = await keccak_contract.test_keccak256_std_multiple(
+        len(concat_arr(keccak_input_1)), list(map(bytes_to_int_le, keccak_input_1)),
+        block_rlp_chunked.length, block_rlp_chunked.values
+    ).call()
+
+    starknet_hashed_1 = test_keccak_call.result.res_1
+    starknet_hashed_2 = test_keccak_call.result.res_2
+
+    output_1 = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed_1)
+    output_2 = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed_2)
+
+    print("Number of steps: ", test_keccak_call.call_info.execution_resources.n_steps)
+
+    assert output_1 == web3_computed_hash_1
+    assert output_2 == web3_computed_hash_2
 
 
 @pytest.mark.asyncio

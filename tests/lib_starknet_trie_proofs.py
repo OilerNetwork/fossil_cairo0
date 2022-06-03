@@ -131,6 +131,8 @@ async def test_verify_valid_account_proof(factory):
         flat_proof
     ).call()
 
+    print("Steps :", verify_proof_call.call_info.execution_resources.n_steps)
+
     result = Data.from_ints(IntsSequence(verify_proof_call.result.res, verify_proof_call.result.res_size_bytes))
 
     assert result == expected_key
