@@ -5,8 +5,7 @@ from starkware.cairo.common.alloc import alloc
 from starknet.lib.extract_from_rlp import extract_data, to_list, is_rlp_list, is_rlp_list_rlp_item
 from starknet.lib.words64 import extract_nibble, extract_nibble_from_words
 
-from starknet.lib.keccak import keccak256
-# from starknet.lib.unsafe_keccak import keccak256
+from starknet.lib.unsafe_keccak import keccak256
 # from starknet.lib.keccak_std_be import keccak256
 
 from starknet.lib.comp_arr import arr_eq
