@@ -82,7 +82,7 @@ async def test_against_web3_be(factory):
     starknet_hashed = test_keccak_call.result.res
     output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in starknet_hashed)
 
-    print(test_keccak_call)
+    print("Number of steps: ", test_keccak_call.call_info.execution_resources.n_steps)
 
     assert output == web3_computed_hash
 
@@ -97,8 +97,6 @@ async def test_hash_header(factory):
 
     block_rlp_chunked = Data.from_bytes(block_rlp).to_ints(Encoding.LITTLE)
 
-    print(f"block_rlp_chunked.length: {block_rlp_chunked.length}")
-
     assert block_header.hash() == block["hash"]
 
     test_keccak_call_big = await keccak_contract.test_keccak256_std(
@@ -107,7 +105,7 @@ async def test_hash_header(factory):
     ).call()
     starknet_hashed_big = test_keccak_call_big.result.res
 
-    print(test_keccak_call_big)
+    print("Number of steps: ", test_keccak_call_big.call_info.execution_resources.n_steps)
 
     output = '0x' + ''.join(v.to_bytes(8, 'little').hex() for v in starknet_hashed_big)
     assert output == block["hash"].hex()
