@@ -9,7 +9,7 @@ from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.cairo_keccak.keccak import keccak_as_words, finalize_keccak
 
 from starknet.types import IntsSequence
-from starknet.lib.keccak_std_be import keccak256
+from starknet.lib.keccak_std_be import keccak256_auto_finalize
 
 struct Keccak256Hash:
     member word_1 : felt
@@ -88,10 +88,9 @@ end
 func test_keccak256_std_be{range_check_ptr, bitwise_ptr : BitwiseBuiltin*}(keccak_input_length: felt, input_len : felt, input : felt*) -> (res: Keccak256Hash):
     alloc_locals
     let (local keccak_ptr : felt*) = alloc()
-    let keccak_ptr_start = keccak_ptr
 
     local input_be: IntsSequence = IntsSequence(input, input_len, keccak_input_length)
-    let (local result) = keccak256{keccak_ptr=keccak_ptr}(input_be)
+    let (local result) = keccak256_auto_finalize{keccak_ptr=keccak_ptr}(input_be)
 
     local hash: Keccak256Hash = Keccak256Hash(
         word_1=result[0],

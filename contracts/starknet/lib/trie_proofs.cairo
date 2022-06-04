@@ -5,13 +5,16 @@ from starkware.cairo.common.alloc import alloc
 from starknet.lib.extract_from_rlp import extract_data, to_list, is_rlp_list, is_rlp_list_rlp_item
 from starknet.lib.words64 import extract_nibble, extract_nibble_from_words
 
-from starknet.lib.unsafe_keccak import keccak256
-# from starknet.lib.keccak_std_be import keccak256
+# from starknet.lib.unsafe_keccak import keccak256
+from starknet.lib.keccak_std_be import keccak256
 
 from starknet.lib.comp_arr import arr_eq
 from starknet.lib.swap_endianness import swap_endianness_four_words
 
 from starknet.types import Keccak256Hash, IntsSequence, RLPItem
+
+from starkware.cairo.common.cairo_keccak.keccak import finalize_keccak
+
 
 # TODO check for safety
 func is_empty_keccak(input: IntsSequence) -> (res: felt):
@@ -115,6 +118,9 @@ func verify_proof{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
     proof_len: felt) -> (res: IntsSequence):
     alloc_locals
 
+    let (local keccak_ptr : felt*) = alloc()
+    let keccak_ptr_start = keccak_ptr
+
     if proof_len == 0:
         let (is_root_zero) = is_empty_keccak(root_hash)
         assert is_root_zero = 1
@@ -126,7 +132,7 @@ func verify_proof{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
     let (empty_arr) = alloc()
     local empty_hash: IntsSequence = IntsSequence(empty_arr, 0 , 0)
 
-    return verify_proof_rec(
+    let (local res: IntsSequence) = verify_proof_rec{keccak_ptr=keccak_ptr}(
         path,
         root_hash,
         proof,
@@ -134,10 +140,13 @@ func verify_proof{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
         empty_hash,
         0,
         0)
+    
+    finalize_keccak(keccak_ptr_start=keccak_ptr_start, keccak_ptr_end=keccak_ptr)
+    return (res)
 end
 
 
-func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
+func verify_proof_rec{ keccak_ptr: felt*, range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
     path: IntsSequence,
     root_hash: IntsSequence,
     proof: IntsSequence*,
@@ -147,7 +156,7 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
     current_index: felt) -> (res: IntsSequence):
     alloc_locals
 
-    let (local keccak_ptr : felt*) = alloc()
+    # let (local keccak_ptr : felt*) = alloc()
 
     if current_index == proof_len + 1:
         assert 1 = 0
@@ -180,7 +189,7 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
             let (local is_list) = is_rlp_list_rlp_item(children, current_element)
             if is_list == 0:
                 let (local next_hash: IntsSequence) = get_next_hash(current_element, children)
-                return verify_proof_rec(
+                return verify_proof_rec{keccak_ptr=keccak_ptr}(
                     path=path,
                     root_hash=root_hash,
                     proof=proof,
@@ -194,7 +203,7 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
                 local next_hash_le: IntsSequence = IntsSequence(next_hash_words_le, 4, 32)
                 let (local next_hash: IntsSequence) = swap_endianness_four_words(next_hash_le)
 
-                return verify_proof_rec(
+                return verify_proof_rec{keccak_ptr=keccak_ptr}(
                     path=path,
                     root_hash=root_hash,
                     proof=proof,
@@ -247,7 +256,7 @@ func verify_proof_rec{ range_check_ptr, bitwise_ptr : BitwiseBuiltin* }(
                 local next_hash_le: IntsSequence = IntsSequence(next_hash_words_le, 4, 32)
                 let (local next_hash: IntsSequence) = swap_endianness_four_words(next_hash_le)
 
-                return verify_proof_rec(
+                return verify_proof_rec{keccak_ptr=keccak_ptr}(
                     path=path,
                     root_hash=root_hash,
                     proof=proof,

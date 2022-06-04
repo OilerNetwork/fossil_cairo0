@@ -9,13 +9,19 @@ from starkware.cairo.common.cairo_keccak.keccak import keccak_as_words, finalize
 from starknet.lib.swap_endianness import swap_endianness_64
 from starknet.types import IntsSequence
 
-func keccak256{range_check_ptr, keccak_ptr : felt*, bitwise_ptr : BitwiseBuiltin*}(input: IntsSequence) -> (output : felt*):
+func keccak256_auto_finalize{range_check_ptr, keccak_ptr : felt*, bitwise_ptr : BitwiseBuiltin*}(input: IntsSequence) -> (output : felt*):
     alloc_locals
     let keccak_ptr_start = keccak_ptr
+    let (local output) = keccak256{keccak_ptr=keccak_ptr}(input)
+    finalize_keccak(keccak_ptr_start=keccak_ptr_start, keccak_ptr_end=keccak_ptr)
+    return (output)
+end
+
+func keccak256{range_check_ptr, keccak_ptr : felt*, bitwise_ptr : BitwiseBuiltin*}(input: IntsSequence) -> (output : felt*):
+    alloc_locals
     let (local input_le: IntsSequence) = to_le(input)
 
     let (keccak_hash) = keccak_as_words{keccak_ptr=keccak_ptr}(input_le.element, input_le.element_size_bytes)
-    finalize_keccak(keccak_ptr_start=keccak_ptr_start, keccak_ptr_end=keccak_ptr)
 
     local word_1_le = keccak_hash[0]
     local word_2_le = keccak_hash[1]
