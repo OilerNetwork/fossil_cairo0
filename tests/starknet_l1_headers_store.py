@@ -61,7 +61,6 @@ async def submit_l1_parent_hash(l1_relayer_signer: Signer, l1_relayer_account: S
 
     return tx.call_info.execution_resources.n_steps
 
-
 @pytest.mark.asyncio
 async def test_submit_hash(factory):
     starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
@@ -70,6 +69,29 @@ async def test_submit_hash(factory):
 
     print(f"Execution number of steps: {n_steps}")
 
+@pytest.mark.asyncio
+async def test_submit_hash_update_latest_block(factory):
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
+
+    block_number = 10
+
+    original_latest = (await storage_proof.get_latest_l1_block().call()).result.res
+
+    assert original_latest == 0
+
+    # Submit message using l1_relayer_account
+    n_steps = await submit_l1_parent_hash(
+        l1_relayer_signer,
+        l1_relayer_account,
+        storage_proof,
+        mocked_blocks[0]["parentHash"].hex(),
+        block_number)
+
+    current_latest = (await storage_proof.get_latest_l1_block().call()).result.res
+
+    assert current_latest == block_number 
+
+    print(f"Execution number of steps: {n_steps}")
 
 @pytest.mark.asyncio
 async def test_process_block(factory):

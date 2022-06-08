@@ -5,6 +5,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.alloc import alloc
+from starkware.cairo.common.math_cmp import is_le
 
 from starknet.types import (Keccak256Hash, Address, IntsSequence, slice_arr)
 from starknet.lib.unsafe_keccak import keccak256
@@ -31,6 +32,10 @@ end
 # Indicates that the contract has been initialized
 @storage_var
 func _initialized() -> (res: felt):
+end
+
+@storage_var
+func _latest_l1_block() -> (res: felt):
 end
 
 ####################################################
@@ -97,6 +102,15 @@ func get_parent_hash{
         range_check_ptr
     } (block_number: felt) -> (res: Keccak256Hash):
     return _block_parent_hash.read(block_number)
+end
+
+@view
+func get_latest_l1_block{
+        syscall_ptr: felt*,
+        pedersen_ptr: HashBuiltin*,
+        range_check_ptr
+    } () -> (res: felt):
+    return _latest_l1_block.read()
 end
 
 @view
@@ -214,7 +228,16 @@ func receive_from_l1{
         word_4=parent_hash[3]
     )
     _block_parent_hash.write(block_number, hash)
-    return ()
+
+    let (local current_latest) = _latest_l1_block.read()
+    let (local update_latest) = is_le(current_latest, block_number)
+
+    if update_latest == 1:
+        _latest_l1_block.write(block_number)
+        return ()
+    else:
+        return ()
+    end
 end
 
 
@@ -409,6 +432,7 @@ func process_block{
 
     return ()
 end
+
 
 @external
 func process_till_block{
