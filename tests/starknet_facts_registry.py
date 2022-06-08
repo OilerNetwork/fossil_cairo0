@@ -155,7 +155,7 @@ async def test_prove_account(registry_initialized):
             [len(flat_proof)] +
             flat_proof)
 
-    print(f"Prove account, execution number of steps: {tx.call_info.cairo_usage.n_steps}")
+    print(f"Prove account, execution number of steps: {tx.call_info.execution_resources.n_steps}")
 
     get_storage_hash_call = await facts_registry.get_verified_account_storage_hash(
         int(l1_account_address.to_hex()[2:], 16),
@@ -217,7 +217,7 @@ async def test_get_storage(registry_initialized):
             [len(flat_account_proof)] +
             flat_account_proof)
 
-    print(f"Prove account, execution number of steps: {tx.call_info.cairo_usage.n_steps}")
+    print(f"Prove account, execution number of steps: {tx.call_info.execution_resources.n_steps}")
 
     slot = Data.from_hex(trie_proofs[2]['storageProof'][0]['key']).to_ints()
 
@@ -238,7 +238,7 @@ async def test_get_storage(registry_initialized):
         flat_storage_proof_sizes_words,
         flat_storage_proof).call()
 
-    print(f"Get balance call n_steps: {get_balance_call.call_info.cairo_usage.n_steps}")
+    print(f"Get balance call n_steps: {get_balance_call.call_info.execution_resources.n_steps}")
     
     result = Data.from_ints(IntsSequence(get_balance_call.result.res, get_balance_call.result.res_bytes_len))
     
@@ -279,7 +279,7 @@ async def test_get_storage_uint(registry_initialized):
             [len(flat_account_proof)] +
             flat_account_proof)
 
-    print(f"Prove account, execution number of steps: {tx.call_info.cairo_usage.n_steps}")
+    print(f"Prove account, execution number of steps: {tx.call_info.execution_resources.n_steps}")
 
     slot = Data.from_hex(trie_proofs[2]['storageProof'][0]['key']).to_ints()
 
@@ -300,6 +300,6 @@ async def test_get_storage_uint(registry_initialized):
         flat_storage_proof_sizes_words,
         flat_storage_proof).call()
 
-    print(f"Get balance call n_steps: {get_balance_call.call_info.cairo_usage.n_steps}")
+    print(f"Get balance call n_steps: {get_balance_call.call_info.execution_resources.n_steps}")
     
 

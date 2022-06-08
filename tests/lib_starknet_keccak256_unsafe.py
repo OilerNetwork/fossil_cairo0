@@ -67,8 +67,6 @@ async def test_hash_header(factory):
 
     block_rlp_chunked = Data.from_bytes(block_rlp).to_ints()
 
-    print(f"block_rlp_chunked.length: {block_rlp_chunked.length}")
-
     assert block_header.hash() == block["hash"]
 
     test_keccak_call_big = await keccak_contract.test_unsafe_keccak256(
@@ -76,6 +74,8 @@ async def test_hash_header(factory):
         block_rlp_chunked.values
     ).call()
     starknet_hashed_big = test_keccak_call_big.result.res
+
+    print("Number of steps: ", test_keccak_call_big.call_info.execution_resources.n_steps)
 
     output = '0x' + ''.join(v.to_bytes(8, 'big').hex() for v in starknet_hashed_big)
     assert output == block["hash"].hex()

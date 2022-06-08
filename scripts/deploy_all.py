@@ -78,6 +78,8 @@ async def test_deploy():
 
     # Initialize L1HeadersStore contract - Starknet
     l2_headers_contract_init_tx = InvokeFunction(
+            max_fee=0,
+            version=0,
             contract_address=l2_headers_contract_address,
             entry_point_selector=get_selector_from_name('initialize'),
             calldata=[l2_msg_contract_address],
@@ -87,6 +89,8 @@ async def test_deploy():
     l2_msg_contract_owner = 0x02a57f0737b8c4beb1ddfb013f046520680a5f0e056505e6420c0ff827b0c45c
 
     l2_msg_contract_init_tx = InvokeFunction(
+            max_fee=0,
+            version=0,
             contract_address=l2_msg_contract_address,
             entry_point_selector=get_selector_from_name('initialize'),
             calldata=[int(l1_contract_addr, 16), l2_headers_contract_address, l2_msg_contract_owner],
@@ -107,6 +111,8 @@ async def test_deploy():
     twap_contract_address = int(twap_dep_gateway_response["address"], 16)
     assert (twap_dep_gateway_response["code"] == StarkErrorCode.TRANSACTION_RECEIVED.name)
     twap_contract_init_tx = InvokeFunction(
+            max_fee=0,
+            version=0,
             contract_address=twap_contract_address,
             entry_point_selector=get_selector_from_name('initialize'),
             calldata=[l2_headers_contract_address],
@@ -125,9 +131,11 @@ async def test_deploy():
     facts_registry_contract_address = int(facts_registry_dep_gateway_response["address"], 16)
     assert (facts_registry_dep_gateway_response["code"] == StarkErrorCode.TRANSACTION_RECEIVED.name)
     facts_registry_contract_init_tx = InvokeFunction(
+            max_fee=0,
+            version=0,
             contract_address=facts_registry_contract_address,
             entry_point_selector=get_selector_from_name('initialize'),
-            calldata=[int(l1_contract_addr, 16)],
+            calldata=[l2_headers_contract_address],
             signature=[])
     await gateway_client.add_transaction(facts_registry_contract_init_tx)
 
