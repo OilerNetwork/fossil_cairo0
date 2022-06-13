@@ -71,7 +71,7 @@ async def test_submit_hash(factory):
 
 @pytest.mark.asyncio
 async def test_submit_hash_update_latest_block(factory):
-    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = factory
+    starknet, storage_proof, account, signer, l1_relayer_account, l1_relayer_signer = await setup()
 
     block_number = 10
 

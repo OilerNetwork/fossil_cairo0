@@ -10,8 +10,12 @@ from starkware.cairo.common.hash import hash2
 from starkware.cairo.common.math import assert_not_zero, assert_le, unsigned_div_rem
 from starkware.cairo.common.math_cmp import is_le
 
+from starknet.lib.keccak_std_be import keccak256
+from starkware.cairo.common.cairo_keccak.keccak import finalize_keccak
+
 from starknet.types import (Keccak256Hash, IntsSequence, slice_arr)
-from starknet.lib.unsafe_keccak import keccak256
+
+
 from starknet.lib.blockheader_rlp_extractor import (
     decode_parent_hash,
     decode_state_root,
@@ -172,11 +176,14 @@ func compute{
         current_block_hash_word_3,
         current_block_hash_word_4)
 
+    let (local keccak_ptr : felt*) = alloc()
+    let keccak_ptr_start = keccak_ptr
+
     let (
         local last_block_number: felt,
         local last_hash: Keccak256Hash,
         local param_acc: felt,
-        local iterations: felt) = compute_rec(
+        local iterations: felt) = compute_rec{keccak_ptr=keccak_ptr}(
             avg_header_param,
             current_block,
             current_block_hash,
@@ -189,6 +196,7 @@ func compute{
             0,
             0,
             0)
+    finalize_keccak(keccak_ptr_start, keccak_ptr)
 
     let (local is_population_full) = is_le(last_block_number, end_block)
     
@@ -224,6 +232,7 @@ func compute{
 end
 
 func compute_rec{
+        keccak_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
         bitwise_ptr : BitwiseBuiltin*,
@@ -258,8 +267,6 @@ func compute_rec{
         0)
     
     local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
-    let (local keccak_ptr : felt*) = alloc()
-    let keccak_ptr_start = keccak_ptr
 
     local current_header_ints_sequence: IntsSequence = IntsSequence(current_header, block_headers_lens_words[current_index], block_headers_lens_bytes[current_index])
     

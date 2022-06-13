@@ -7,8 +7,10 @@ from starkware.starknet.common.syscalls import get_caller_address
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.math_cmp import is_le
 
+from starknet.lib.keccak_std_be import keccak256
+from starkware.cairo.common.cairo_keccak.keccak import finalize_keccak
+
 from starknet.types import (Keccak256Hash, Address, IntsSequence, slice_arr)
-from starknet.lib.unsafe_keccak import keccak256
 from starknet.lib.blockheader_rlp_extractor import (
     decode_parent_hash,
     decode_state_root,
@@ -453,8 +455,11 @@ func process_till_block{
     assert block_headers_lens_bytes_len = block_headers_lens_words_len
 
     let (local parent_hash: Keccak256Hash) = _block_parent_hash.read(block_number=start_block_number)
+
+    let (local keccak_ptr : felt*) = alloc()
+    let keccak_ptr_start = keccak_ptr
     
-    let (local save_block_number: felt, local save_parent_hash: Keccak256Hash) = process_till_block_rec(
+    let (local save_block_number: felt, local save_parent_hash: Keccak256Hash) = process_till_block_rec{keccak_ptr=keccak_ptr}(
         start_block_number,
         parent_hash,
         block_headers_lens_bytes_len,
@@ -465,6 +470,7 @@ func process_till_block{
         block_headers_concat,
         0,
         0)
+    finalize_keccak(keccak_ptr_start, keccak_ptr)
     
     _block_parent_hash.write(save_block_number, save_parent_hash)
 
@@ -488,6 +494,7 @@ func process_till_block{
 end
 
 func process_till_block_rec{
+        keccak_ptr: felt*,
         pedersen_ptr: HashBuiltin*,
         syscall_ptr: felt*,
         bitwise_ptr : BitwiseBuiltin*,
@@ -520,8 +527,6 @@ func process_till_block_rec{
         0)
     
     local bitwise_ptr: BitwiseBuiltin* = bitwise_ptr
-    let (local keccak_ptr : felt*) = alloc()
-    let keccak_ptr_start = keccak_ptr
     
     local current_header_ints_sequence: IntsSequence = IntsSequence(current_header, block_headers_lens_words[current_index], block_headers_lens_bytes[current_index])
 
@@ -568,6 +573,7 @@ func validate_provided_header_rlp{
     local header_ints_sequence: IntsSequence = IntsSequence(block_header_rlp, block_header_rlp_len, block_header_rlp_bytes_len)
 
     let (provided_rlp_hash) = keccak256{keccak_ptr=keccak_ptr}(header_ints_sequence)
+    finalize_keccak(keccak_ptr_start, keccak_ptr)
 
     # Ensure child block parenthash matches provided rlp hash
     assert child_block_parent_hash.word_1 = provided_rlp_hash[0]

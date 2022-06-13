@@ -1,19 +1,20 @@
 from starkware.cairo.common.cairo_builtins import BitwiseBuiltin
 from starkware.cairo.common.math_cmp import is_le
+from starkware.cairo.common.math import assert_not_equal
+
 from starkware.cairo.common.alloc import alloc
 
 from starknet.lib.extract_from_rlp import extract_data, to_list, is_rlp_list, is_rlp_list_rlp_item
 from starknet.lib.words64 import extract_nibble, extract_nibble_from_words
 
-# from starknet.lib.unsafe_keccak import keccak256
 from starknet.lib.keccak_std_be import keccak256
+from starkware.cairo.common.cairo_keccak.keccak import finalize_keccak
 
 from starknet.lib.comp_arr import arr_eq
 from starknet.lib.swap_endianness import swap_endianness_four_words
 
 from starknet.types import Keccak256Hash, IntsSequence, RLPItem
 
-from starkware.cairo.common.cairo_keccak.keccak import finalize_keccak
 
 
 # TODO check for safety
@@ -38,8 +39,7 @@ func count_shared_prefix_len{ range_check_ptr }(
         node_path_item.dataPosition,
         node_path_item.length,
         element_rlp)
-
-    # TODO assert input_decoded len > 0
+    assert_not_equal(node_path_decoded.element_size_bytes, 0)
 
     # Extract node_path
     # Assumption that the first word of the proof element will be always a full word(8 bytes)

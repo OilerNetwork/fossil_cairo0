@@ -8,7 +8,10 @@ from starkware.cairo.common.math import assert_not_zero
 from starkware.cairo.common.uint256 import Uint256
 
 from starknet.types import Keccak256Hash, StorageSlot, Address, IntsSequence, RLPItem, reconstruct_ints_sequence_list
-from starknet.lib.unsafe_keccak import keccak256
+
+from starknet.lib.keccak_std_be import keccak256
+from starkware.cairo.common.cairo_keccak.keccak import finalize_keccak
+
 from starknet.lib.trie_proofs import verify_proof
 from starknet.lib.ints_to_uint256 import ints_to_uint256
 from starknet.lib.bitset import bitset_get
@@ -154,6 +157,7 @@ func prove_account{
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
     let (local path_raw) = keccak256{keccak_ptr=keccak_ptr}(account_ints_sequence)
+    finalize_keccak(keccak_ptr_start=keccak_ptr_start, keccak_ptr_end=keccak_ptr)
 
     local path : IntsSequence = IntsSequence(path_raw, 4, 32)
 
@@ -325,6 +329,8 @@ func get_storage{
     let (local keccak_ptr : felt*) = alloc()
     let keccak_ptr_start = keccak_ptr
     let (local path_raw) = keccak256{keccak_ptr=keccak_ptr}(slot_ints_sequence)
+    finalize_keccak(keccak_ptr_start=keccak_ptr_start, keccak_ptr_end=keccak_ptr)
+    
 
     local path : IntsSequence = IntsSequence(path_raw, 4, 32)
 
