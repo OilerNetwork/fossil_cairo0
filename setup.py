@@ -2,7 +2,7 @@ from setuptools import setup
 
 if __name__ == "__main__":
     try:
-        setup(use_scm_version={"version_scheme": "no-guess-dev"}, install_requires=["cairo-lang==0.8.2", "cairo-nile==0.6.1"])
+        setup(use_scm_version={"version_scheme": "no-guess-dev"}, install_requires=["cairo-lang==0.9.0", "cairo-nile==0.6.1"])
     except:  # noqa
         print(
             "\n\nAn error occurred while building the project, "

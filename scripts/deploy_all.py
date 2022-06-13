@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 import json
-from services.external_api.base_client import RetryConfig
+# from services.everest.external_api.base_client import RetryConfig
 
 from starkware.starknet.services.api.gateway.gateway_client import GatewayClient
 from starkware.starknet.services.api.gateway.transaction import Deploy, InvokeFunction
@@ -15,8 +15,8 @@ from web3 import Account
 
 def get_gateway_client(gateway_url: str) -> GatewayClient:
     # Limit the number of retries.
-    retry_config = RetryConfig(n_retries=1)
-    return GatewayClient(url=gateway_url, retry_config=retry_config)
+    # retry_config = RetryConfig(n_retries=1)
+    return GatewayClient(url=gateway_url)
 
 @pytest.mark.asyncio
 async def test_deploy():
@@ -33,7 +33,8 @@ async def test_deploy():
         constructor_calldata=[],
         contract_definition=compile_starknet_files(
                 files=['contracts/starknet/L1MessagesProxy.cairo'], debug_info=True, cairo_path=['contracts']
-            )
+            ),
+        version=0
     )
 
     msg_dep_gateway_response = await gateway_client.add_transaction(msg_dep_contract_tx)
@@ -46,7 +47,8 @@ async def test_deploy():
         constructor_calldata=[],
         contract_definition=compile_starknet_files(
                 files=['contracts/starknet/L1HeadersStore.cairo'], debug_info=True, cairo_path=['contracts']
-            )
+            ),
+        version=0
     )
     headers_dep_gateway_response = await gateway_client.add_transaction(headers_dep_contract_tx)
     l2_headers_contract_address = int(headers_dep_gateway_response["address"], 16)

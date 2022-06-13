@@ -28,11 +28,12 @@ func test_count_shared_prefix_len{ range_check_ptr }(
 
     let node_path_item: RLPItem = RLPItem(node_path_item_firstByte, node_path_item_data_pos, node_path_item_length)
 
-    return count_shared_prefix_len(
+    let (local res) = count_shared_prefix_len(
         path_offset,
         path,
         element_rlp,
         node_path_item)
+    return (res)
 end
 
 
