@@ -9,7 +9,7 @@ contract L1MessagesSender {
     IStarknetCore public immutable starknetCore;
     uint256 public immutable l2RecipientAddr;
 
-    // TODO - describe
+    /// @dev starknetSelector(receive_from_l1)
     uint256 constant SUBMIT_L1_BLOCKHASH_SELECTOR = 598342674068027518481179578557554850038206119856216505601406522348670006916;
 
     // TODO - describe

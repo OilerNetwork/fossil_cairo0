@@ -41,6 +41,22 @@ namespace CallbackReceiver:
     end
 end
 
+@event
+func computation_registered(
+    start_block: felt,
+    end_block: felt,
+    avg_header_param: felt,
+    callback_address: felt,
+    computation_id: felt
+):
+end
+
+@event
+func computation_finalized(
+    computation_id: felt
+):
+end
+
 @storage_var
 func _initialized() -> (res: felt):
 end
@@ -119,11 +135,6 @@ func register_computation{
     let (local l1_headers_store_addr) = _l1_headers_store_addr.read()
     let (local current_block_hash) = IL1HeadersStore.get_parent_hash(l1_headers_store_addr, start_block + 1)
 
-   assert_not_zero(current_block_hash.word_1)
-   assert_not_zero(current_block_hash.word_2)
-   assert_not_zero(current_block_hash.word_3)
-   assert_not_zero(current_block_hash.word_4)
-
     # Fill cache metadata
     _twap_computation_cache.write(computation_id, 0, start_block)
     _twap_computation_cache.write(computation_id, 1, end_block)
@@ -136,6 +147,13 @@ func register_computation{
     _twap_computation_cache.write(computation_id, 8, avg_header_param)
     _twap_computation_cache.write(computation_id, 9, 0)
     _twap_computation_cache.write(computation_id, 10, 0)
+
+    computation_registered.emit(
+        start_block=start_block,
+        end_block=end_block,
+        avg_header_param=avg_header_param,
+        callback_address=callback_address,
+        computation_id=computation_id)
     return ()
 end
 
@@ -155,15 +173,52 @@ func compute{
     ):
     alloc_locals
 
-    let (local val_acc) = _twap_computation_cache.read(computation_id, 9)
-    let (local val_len) = _twap_computation_cache.read(computation_id, 10)
+    let (local start_block) = _twap_computation_cache.read(computation_id, 0)
     let (local end_block) = _twap_computation_cache.read(computation_id, 1)
     let (local current_block) = _twap_computation_cache.read(computation_id, 2)
+
     let (local avg_header_param) = _twap_computation_cache.read(computation_id, 8)
-    let (local current_block_hash_word_1) = _twap_computation_cache.read(computation_id, 3)
-    let (local current_block_hash_word_2) = _twap_computation_cache.read(computation_id, 4)
-    let (local current_block_hash_word_3) = _twap_computation_cache.read(computation_id, 5)
-    let (local current_block_hash_word_4) = _twap_computation_cache.read(computation_id, 6)
+    let (local val_acc) = _twap_computation_cache.read(computation_id, 9)
+    let (local val_len) = _twap_computation_cache.read(computation_id, 10)
+
+    let (local current_block_hash_word_1_tmp) = _twap_computation_cache.read(computation_id, 3)
+    let (local current_block_hash_word_2_tmp) = _twap_computation_cache.read(computation_id, 4)
+    let (local current_block_hash_word_3_tmp) = _twap_computation_cache.read(computation_id, 5)
+    let (local current_block_hash_word_4_tmp) = _twap_computation_cache.read(computation_id, 6)
+
+    local current_block_hash_empty = current_block_hash_word_1_tmp + current_block_hash_word_2_tmp + current_block_hash_word_3_tmp + current_block_hash_word_4_tmp
+
+    local current_block_hash_word_1
+    local current_block_hash_word_2
+    local current_block_hash_word_3
+    local current_block_hash_word_4
+
+    local pedersen_ptr: HashBuiltin* = pedersen_ptr
+    local syscall_ptr: felt* = syscall_ptr
+    local range_check_ptr = range_check_ptr
+
+    if current_block_hash_empty == 0:
+        let (local l1_headers_store_addr) = _l1_headers_store_addr.read()
+        let (local current_block_hash) = IL1HeadersStore.get_parent_hash(l1_headers_store_addr, start_block + 1)
+
+        current_block_hash_word_1 = current_block_hash.word_1
+        current_block_hash_word_2 = current_block_hash.word_2
+        current_block_hash_word_3 = current_block_hash.word_3
+        current_block_hash_word_4 = current_block_hash.word_4
+
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    else:
+        current_block_hash_word_1 = current_block_hash_word_1_tmp
+        current_block_hash_word_2 = current_block_hash_word_2_tmp
+        current_block_hash_word_3 = current_block_hash_word_3_tmp
+        current_block_hash_word_4 = current_block_hash_word_4_tmp
+
+        tempvar syscall_ptr = syscall_ptr
+        tempvar range_check_ptr = range_check_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+    end
 
     assert_not_zero(current_block_hash_word_1)
     assert_not_zero(current_block_hash_word_2)
@@ -215,6 +270,7 @@ func compute{
         _twap_computation_cache.write(computation_id, 8, 0)
         _twap_computation_cache.write(computation_id, 9, 0)
         _twap_computation_cache.write(computation_id, 10, 0)
+        computation_finalized.emit(computation_id=computation_id)
         CallbackReceiver.twap_callback(callback_receiver, computation_id, twap)
         return ()
     else:

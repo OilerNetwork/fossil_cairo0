@@ -150,5 +150,4 @@ async def test_deploy():
 
     assert 1 == 1
 
-# asyncio.run(main())
 
